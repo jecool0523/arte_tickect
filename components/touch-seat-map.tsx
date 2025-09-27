@@ -1,9 +1,11 @@
 "use client"
 import { Button } from "@/components/ui/button"
+import type React from "react"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Theater, ZoomIn, ZoomOut, RotateCcw, Database } from "lucide-react"
-import { useState } from "react"
+import { useState, useRef } from "react"
 
 interface SeatGrade {
   grade: string
@@ -11,7 +13,7 @@ interface SeatGrade {
   color: string
 }
 
-interface MobileSeatMapProps {
+interface TouchSeatMapProps {
   seatGrades: SeatGrade[]
   selectedSeats: string[]
   onSeatClick: (seatId: string, grade: string) => void
@@ -25,7 +27,7 @@ interface MobileSeatMapProps {
   selectedSeatGrade: string
 }
 
-export default function MobileSeatMap({
+export default function TouchSeatMap({
   seatGrades,
   selectedSeats,
   onSeatClick,
@@ -33,9 +35,63 @@ export default function MobileSeatMap({
   statistics,
   connectionStatus,
   selectedSeatGrade,
-}: MobileSeatMapProps) {
+}: TouchSeatMapProps) {
   const [selectedFloor, setSelectedFloor] = useState<"1층" | "2층">("1층")
   const [zoomLevel, setZoomLevel] = useState(0.8)
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [lastTouchDistance, setLastTouchDistance] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // 터치 이벤트 핸들러
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      // 핀치 제스처 시작
+      const touch1 = e.touches[0]
+      const touch2 = e.touches[1]
+      const distance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) + Math.pow(touch2.clientY - touch1.clientY, 2),
+      )
+      setLastTouchDistance(distance)
+    } else if (e.touches.length === 1) {
+      // 팬 제스처 시작
+      setIsDragging(true)
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault()
+
+    if (e.touches.length === 2) {
+      // 핀치 줌
+      const touch1 = e.touches[0]
+      const touch2 = e.touches[1]
+      const distance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) + Math.pow(touch2.clientY - touch1.clientY, 2),
+      )
+
+      if (lastTouchDistance > 0) {
+        const scale = distance / lastTouchDistance
+        const newZoom = Math.min(Math.max(zoomLevel * scale, 0.5), 2.0)
+        setZoomLevel(newZoom)
+      }
+      setLastTouchDistance(distance)
+    } else if (e.touches.length === 1 && isDragging) {
+      // 팬 이동
+      const touch = e.touches[0]
+      const rect = containerRef.current?.getBoundingClientRect()
+      if (rect) {
+        const deltaX = touch.clientX - rect.left - rect.width / 2
+        const deltaY = touch.clientY - rect.top - rect.height / 2
+        setPanOffset({ x: deltaX * 0.5, y: deltaY * 0.5 })
+      }
+    }
+  }
+
+  const handleTouchEnd = () => {
+    setIsDragging(false)
+    setLastTouchDistance(0)
+  }
 
   // 좌석 상태 확인
   const getSeatStatus = (seatId: string, grade: string) => {
@@ -247,8 +303,8 @@ export default function MobileSeatMap({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setZoomLevel(Math.max(0.6, zoomLevel - 0.1))}
-            disabled={zoomLevel <= 0.6}
+            onClick={() => setZoomLevel(Math.max(0.5, zoomLevel - 0.1))}
+            disabled={zoomLevel <= 0.5}
             className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 w-8 h-8 p-0"
           >
             <ZoomOut className="h-4 w-4" />
@@ -257,8 +313,8 @@ export default function MobileSeatMap({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setZoomLevel(Math.min(1.2, zoomLevel + 0.1))}
-            disabled={zoomLevel >= 1.2}
+            onClick={() => setZoomLevel(Math.min(2.0, zoomLevel + 0.1))}
+            disabled={zoomLevel >= 2.0}
             className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 w-8 h-8 p-0"
           >
             <ZoomIn className="h-4 w-4" />
@@ -266,7 +322,10 @@ export default function MobileSeatMap({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setZoomLevel(0.8)}
+            onClick={() => {
+              setZoomLevel(0.8)
+              setPanOffset({ x: 0, y: 0 })
+            }}
             className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 w-8 h-8 p-0"
           >
             <RotateCcw className="h-4 w-4" />
@@ -284,51 +343,65 @@ export default function MobileSeatMap({
         </CardHeader>
         <CardContent>
           <div
-            className="space-y-4 p-4 bg-gray-50 rounded-xl overflow-x-auto min-w-max"
-            style={{ transform: `scale(${zoomLevel})`, transformOrigin: "top left" }}
+            ref={containerRef}
+            className="relative overflow-hidden rounded-xl bg-gray-50 h-96"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            style={{ touchAction: "none" }}
           >
-            {/* 무대 */}
-            <div className="text-center mb-6">
-              <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-6 rounded-xl inline-block shadow-lg">
-                <span className="font-bold text-sm">🎭 무 대 🎭</span>
-              </div>
-            </div>
-
-            {/* 1층 구조 */}
-            {selectedFloor === "1층" && (
-              <div className="space-y-4">
-                {renderSeatSection("앞블럭", 1, 9, "VIP")}
-                <div className="text-center py-2">
-                  <div className="border-t-2 border-dashed border-gray-400 w-full"></div>
-                  <span className="bg-gray-50 px-4 text-gray-600 text-sm">통로</span>
+            <div
+              className="absolute inset-0 p-4 space-y-4 min-w-max"
+              style={{
+                transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
+                transformOrigin: "center center",
+                transition: isDragging ? "none" : "transform 0.2s ease-out",
+              }}
+            >
+              {/* 무대 */}
+              <div className="text-center mb-6">
+                <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-6 rounded-xl inline-block shadow-lg">
+                  <span className="font-bold text-sm">🎭 무 대 🎭</span>
                 </div>
-                {renderSeatSection("뒷블럭", 1, 8, "R")}
               </div>
-            )}
 
-            {/* 2층 구조 */}
-            {selectedFloor === "2층" && <div className="space-y-4">{renderSeatSection("전체", 1, 8, "S")}</div>}
+              {/* 1층 구조 */}
+              {selectedFloor === "1층" && (
+                <div className="space-y-4">
+                  {renderSeatSection("앞블럭", 1, 9, "VIP")}
+                  <div className="text-center py-2">
+                    <div className="border-t-2 border-dashed border-gray-400 w-full"></div>
+                    <span className="bg-gray-50 px-4 text-gray-600 text-sm">통로</span>
+                  </div>
+                  {renderSeatSection("뒷블럭", 1, 8, "R")}
+                </div>
+              )}
 
-            {/* 범례 */}
-            <div className="flex justify-center gap-4 text-sm font-medium text-gray-600 flex-wrap pt-4">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-gray-100 border-2 border-gray-300 rounded"></div>
-                <span>선택가능</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-purple-500 border-2 border-purple-600 rounded"></div>
-                <span>선택됨</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-gray-300 border-2 border-gray-400 rounded"></div>
-                <span>예매완료</span>
+              {/* 2층 구조 */}
+              {selectedFloor === "2층" && <div className="space-y-4">{renderSeatSection("전체", 1, 8, "S")}</div>}
+
+              {/* 범례 */}
+              <div className="flex justify-center gap-4 text-sm font-medium text-gray-600 flex-wrap pt-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gray-100 border-2 border-gray-300 rounded"></div>
+                  <span>선택가능</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-purple-500 border-2 border-purple-600 rounded"></div>
+                  <span>선택됨</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gray-300 border-2 border-gray-400 rounded"></div>
+                  <span>예매완료</span>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-sm text-blue-700">
-              <strong>💡 사용법:</strong> 원하는 좌석을 직접 터치하여 선택하세요. 같은 등급의 좌석만 선택 가능합니다.
+              <strong>💡 사용법:</strong> 두 손가락으로 핀치하여 확대/축소, 한 손가락으로 드래그하여 이동, 좌석을
+              터치하여 선택하세요.
             </p>
           </div>
         </CardContent>

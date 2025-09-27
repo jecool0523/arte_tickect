@@ -3,8 +3,9 @@
 import type React from "react"
 import HomeScreen from "@/components/home-screen"
 import MusicalDetail from "@/components/musical-detail"
-import MobileSeatMap from "@/components/mobile-seat-map"
+import TouchSeatMap from "@/components/touch-seat-map"
 import SeatSelectionButton from "@/components/seat-selection-button"
+import MobileSeatSelector from "@/components/mobile-seat-selector"
 import { getMusicalById } from "@/data/musicals"
 
 import { useState, useEffect } from "react"
@@ -348,16 +349,136 @@ export default function MusicalBookingSite() {
   // 좌석 선택 페이지
   if (currentPage === "seat-selection") {
     return (
-      <MobileSeatMap
-        seatGrades={musicalInfo.seatGrades}
-        selectedSeats={selectedSeats}
-        onSeatClick={handleSeatClick}
-        unavailableSeats={unavailableSeats}
-        statistics={statistics}
-        connectionStatus={connectionStatus}
-        selectedSeatGrade={bookingData.seatGrade}
-        onClose={() => setCurrentPage("booking")}
-      />
+      <div className="min-h-screen bg-gray-50 py-4 px-4 relative">
+        <div className="max-w-2xl mx-auto">
+          {/* 헤더 */}
+          <div className="sticky top-0 z-20 bg-gray-50/90 backdrop-blur-sm -mx-4 px-4 py-4 mb-4">
+            <div className="flex items-center">
+              <Button
+                onClick={() => setCurrentPage("booking")}
+                variant="ghost"
+                size="icon"
+                className="p-2 rounded-full hover:bg-gray-100"
+              >
+                <ArrowLeft className="h-5 w-5 text-gray-900" />
+              </Button>
+              <h1 className="flex-1 text-center text-lg font-bold text-gray-900 pr-10">좌석 선택</h1>
+            </div>
+          </div>
+
+          {/* 작품 정보 */}
+          <Card className="mb-4 border border-gray-200 bg-white shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-bold text-gray-900 text-lg">{musicalInfo.title}</h2>
+                  <p className="text-gray-600 text-sm">
+                    {musicalInfo.date} {musicalInfo.time}
+                  </p>
+                  <p className="text-gray-500 text-sm">{musicalInfo.venue}</p>
+                </div>
+                <Badge className="bg-purple-100 text-purple-700 text-xs border-purple-200">
+                  {musicalInfo.genre.replace(/[{}]/g, "")}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 좌석 선택 방식 선택 */}
+          <div className="mb-4 flex gap-2">
+            <Button
+              variant={selectedSeats.length === 0 ? "default" : "outline"}
+              onClick={() => {
+                setSelectedSeats([])
+                setBookingData((prev) => ({ ...prev, seatGrade: "" }))
+              }}
+              className="flex-1"
+            >
+              자동 선택
+            </Button>
+            <Button variant={selectedSeats.length > 0 ? "default" : "outline"} className="flex-1">
+              직접 선택
+            </Button>
+          </div>
+
+          {/* 좌석 선택 컴포넌트 */}
+          {isLoadingSeats ? (
+            <Card className="border border-gray-200 bg-white shadow-sm">
+              <CardContent className="p-8 text-center">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-purple-600" />
+                <p className="text-gray-600">좌석 정보를 불러오는 중...</p>
+              </CardContent>
+            </Card>
+          ) : selectedSeats.length === 0 ? (
+            <MobileSeatSelector
+              seatGrades={musicalInfo.seatGrades}
+              selectedSeats={selectedSeats}
+              onSeatSelectionChange={(seats, grade) => {
+                setSelectedSeats(seats)
+                setBookingData((prev) => ({ ...prev, seatGrade: grade }))
+              }}
+              unavailableSeats={unavailableSeats}
+              statistics={statistics}
+              connectionStatus={connectionStatus}
+            />
+          ) : (
+            <TouchSeatMap
+              seatGrades={musicalInfo.seatGrades}
+              selectedSeats={selectedSeats}
+              onSeatClick={handleSeatClick}
+              unavailableSeats={unavailableSeats}
+              statistics={statistics}
+              connectionStatus={connectionStatus}
+              selectedSeatGrade={bookingData.seatGrade}
+            />
+          )}
+
+          {/* 선택 완료 버튼 */}
+          {selectedSeats.length > 0 && (
+            <div className="fixed bottom-20 left-4 right-4 z-30">
+              <Button
+                onClick={() => setCurrentPage("booking")}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 text-lg shadow-lg"
+                size="lg"
+              >
+                선택 완료 ({selectedSeats.length}매)
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Fixed Bottom Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
+          <div className="flex justify-around items-start pt-1 pb-2">
+            <Button
+              variant="ghost"
+              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-purple-600 transition-colors h-auto p-2"
+              onClick={handleNavigateToHome}
+            >
+              <Home className="h-5 w-5" />
+              <span className="text-xs">홈</span>
+            </Button>
+            <Button variant="ghost" className="flex flex-col items-center space-y-1 text-purple-600 h-auto p-2">
+              <Music className="h-5 w-5" />
+              <span className="text-xs font-bold">뮤지컬</span>
+            </Button>
+            <Button
+              variant="ghost"
+              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-purple-600 transition-colors h-auto p-2"
+            >
+              <Ticket className="h-5 w-5" />
+              <span className="text-xs">내 티켓</span>
+            </Button>
+            <Button
+              variant="ghost"
+              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-purple-600 transition-colors h-auto p-2"
+            >
+              <User className="h-5 w-5" />
+              <span className="text-xs">프로필</span>
+            </Button>
+          </div>
+        </div>
+      </div>
     )
   }
 

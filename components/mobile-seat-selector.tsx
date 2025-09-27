@@ -37,19 +37,19 @@ export default function MobileSeatSelector({
   const [selectedGrade, setSelectedGrade] = useState<string>("")
   const [seatCount, setSeatCount] = useState<number>(1)
 
-  // 등급별 사용 가능한 좌석 수 계산 (업데이트된 좌석 수)
+  // 등급별 사용 가능한 좌석 수 계산
   const getAvailableSeatsCount = (grade: string) => {
     let totalSeats = 0
     let unavailableCount = 0
 
     if (grade === "VIP") {
-      totalSeats = 216 // 9줄 × 24석
+      totalSeats = 9 * 24 // 9줄 × 24석
       unavailableCount = unavailableSeats["1층"]?.["VIP"]?.length || 0
     } else if (grade === "R") {
-      totalSeats = 192 // 8줄 × 24석
+      totalSeats = 8 * 24 // 8줄 × 24석
       unavailableCount = unavailableSeats["1층"]?.["R"]?.length || 0
     } else if (grade === "S") {
-      totalSeats = 96 // 8줄 × 12석 (2층은 12석으로 조정)
+      totalSeats = 8 * 24 // 8줄 × 24석
       unavailableCount = unavailableSeats["2층"]?.["S"]?.length || 0
     }
 
@@ -63,8 +63,8 @@ export default function MobileSeatSelector({
     if (grade === "VIP") {
       // 1층 앞블럭 중앙부터 선택
       for (let row = 1; row <= 9 && availableSeats.length < count; row++) {
-        for (let seat = 10; seat <= 15 && availableSeats.length < count; seat++) {
-          const seatId = `1층-앞-${row}줄-${seat}번`
+        for (let seat = 6; seat <= 7 && availableSeats.length < count; seat++) {
+          const seatId = `1층-앞-${row}줄-중앙-${seat}번`
           if (!unavailableSeats["1층"]?.["VIP"]?.includes(seatId)) {
             availableSeats.push(seatId)
           }
@@ -73,8 +73,8 @@ export default function MobileSeatSelector({
     } else if (grade === "R") {
       // 1층 뒷블럭 중앙부터 선택
       for (let row = 1; row <= 8 && availableSeats.length < count; row++) {
-        for (let seat = 10; seat <= 15 && availableSeats.length < count; seat++) {
-          const seatId = `1층-뒤-${row}줄-${seat}번`
+        for (let seat = 6; seat <= 7 && availableSeats.length < count; seat++) {
+          const seatId = `1층-뒤-${row}줄-중앙-${seat}번`
           if (!unavailableSeats["1층"]?.["R"]?.includes(seatId)) {
             availableSeats.push(seatId)
           }
@@ -83,8 +83,8 @@ export default function MobileSeatSelector({
     } else if (grade === "S") {
       // 2층 중앙부터 선택
       for (let row = 1; row <= 8 && availableSeats.length < count; row++) {
-        for (let seat = 5; seat <= 8 && availableSeats.length < count; seat++) {
-          const seatId = `2층-${row}줄-${seat}번`
+        for (let seat = 6; seat <= 7 && availableSeats.length < count; seat++) {
+          const seatId = `2층-${row}줄-중앙-${seat}번`
           if (!unavailableSeats["2층"]?.["S"]?.includes(seatId)) {
             availableSeats.push(seatId)
           }
@@ -96,9 +96,9 @@ export default function MobileSeatSelector({
     if (availableSeats.length < count) {
       if (grade === "VIP") {
         for (let row = 1; row <= 9 && availableSeats.length < count; row++) {
-          for (let seat = 1; seat <= 24 && availableSeats.length < count; seat++) {
-            if (seat >= 10 && seat <= 15) continue // 이미 선택된 중앙 좌석 스킵
-            const seatId = `1층-앞-${row}줄-${seat}번`
+          for (let seat = 1; seat <= 12 && availableSeats.length < count; seat++) {
+            if (seat >= 6 && seat <= 7) continue // 이미 선택된 중앙 좌석 스킵
+            const seatId = `1층-앞-${row}줄-중앙-${seat}번`
             if (!unavailableSeats["1층"]?.["VIP"]?.includes(seatId)) {
               availableSeats.push(seatId)
             }
@@ -106,9 +106,9 @@ export default function MobileSeatSelector({
         }
       } else if (grade === "R") {
         for (let row = 1; row <= 8 && availableSeats.length < count; row++) {
-          for (let seat = 1; seat <= 24 && availableSeats.length < count; seat++) {
-            if (seat >= 10 && seat <= 15) continue
-            const seatId = `1층-뒤-${row}줄-${seat}번`
+          for (let seat = 1; seat <= 12 && availableSeats.length < count; seat++) {
+            if (seat >= 6 && seat <= 7) continue
+            const seatId = `1층-뒤-${row}줄-중앙-${seat}번`
             if (!unavailableSeats["1층"]?.["R"]?.includes(seatId)) {
               availableSeats.push(seatId)
             }
@@ -117,8 +117,8 @@ export default function MobileSeatSelector({
       } else if (grade === "S") {
         for (let row = 1; row <= 8 && availableSeats.length < count; row++) {
           for (let seat = 1; seat <= 12 && availableSeats.length < count; seat++) {
-            if (seat >= 5 && seat <= 8) continue
-            const seatId = `2층-${row}줄-${seat}번`
+            if (seat >= 6 && seat <= 7) continue
+            const seatId = `2층-${row}줄-중앙-${seat}번`
             if (!unavailableSeats["2층"]?.["S"]?.includes(seatId)) {
               availableSeats.push(seatId)
             }
@@ -174,7 +174,6 @@ export default function MobileSeatSelector({
         <CardContent className="space-y-3">
           {seatGrades.map((seat) => {
             const availableCount = getAvailableSeatsCount(seat.grade)
-            const totalSeats = seat.grade === "VIP" ? 216 : seat.grade === "R" ? 192 : 96
             const isSelected = selectedGrade === seat.grade
 
             return (
@@ -191,7 +190,6 @@ export default function MobileSeatSelector({
                     <div>
                       <h3 className="font-bold text-gray-900">{seat.grade}석</h3>
                       <p className="text-sm text-gray-600">{seat.description}</p>
-                      <p className="text-xs text-gray-500">총 {totalSeats}석</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -288,7 +286,7 @@ export default function MobileSeatSelector({
               <div className="flex flex-wrap gap-1">
                 {selectedSeats.slice(0, 6).map((seatId, index) => (
                   <Badge key={index} variant="outline" className="text-xs bg-white text-purple-700 border-purple-300">
-                    {seatId.split("-").slice(-1)[0]}
+                    {seatId.split("-").slice(-2).join("-")}
                   </Badge>
                 ))}
                 {selectedSeats.length > 6 && (
