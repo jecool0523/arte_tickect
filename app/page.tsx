@@ -3,9 +3,8 @@
 import type React from "react"
 import HomeScreen from "@/components/home-screen"
 import MusicalDetail from "@/components/musical-detail"
-import TouchSeatMap from "@/components/touch-seat-map"
+import MobileSeatMap from "@/components/mobile-seat-map"
 import SeatSelectionButton from "@/components/seat-selection-button"
-import MobileSeatSelector from "@/components/mobile-seat-selector"
 import { getMusicalById } from "@/data/musicals"
 
 import { useState, useEffect } from "react"
@@ -384,24 +383,7 @@ export default function MusicalBookingSite() {
             </CardContent>
           </Card>
 
-          {/* 좌석 선택 방식 선택 */}
-          <div className="mb-4 flex gap-2">
-            <Button
-              variant={selectedSeats.length === 0 ? "default" : "outline"}
-              onClick={() => {
-                setSelectedSeats([])
-                setBookingData((prev) => ({ ...prev, seatGrade: "" }))
-              }}
-              className="flex-1"
-            >
-              자동 선택
-            </Button>
-            <Button variant={selectedSeats.length > 0 ? "default" : "outline"} className="flex-1">
-              직접 선택
-            </Button>
-          </div>
-
-          {/* 좌석 선택 컴포넌트 */}
+          {/* 좌석 선택 맵 */}
           {isLoadingSeats ? (
             <Card className="border border-gray-200 bg-white shadow-sm">
               <CardContent className="p-8 text-center">
@@ -409,20 +391,8 @@ export default function MusicalBookingSite() {
                 <p className="text-gray-600">좌석 정보를 불러오는 중...</p>
               </CardContent>
             </Card>
-          ) : selectedSeats.length === 0 ? (
-            <MobileSeatSelector
-              seatGrades={musicalInfo.seatGrades}
-              selectedSeats={selectedSeats}
-              onSeatSelectionChange={(seats, grade) => {
-                setSelectedSeats(seats)
-                setBookingData((prev) => ({ ...prev, seatGrade: grade }))
-              }}
-              unavailableSeats={unavailableSeats}
-              statistics={statistics}
-              connectionStatus={connectionStatus}
-            />
           ) : (
-            <TouchSeatMap
+            <MobileSeatMap
               seatGrades={musicalInfo.seatGrades}
               selectedSeats={selectedSeats}
               onSeatClick={handleSeatClick}
