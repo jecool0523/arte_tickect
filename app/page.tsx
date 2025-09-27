@@ -4,6 +4,7 @@ import type React from "react"
 import HomeScreen from "@/components/home-screen"
 import MusicalDetail from "@/components/musical-detail"
 import MobileSeatMap from "@/components/mobile-seat-map"
+import SeatSelectionButton from "@/components/seat-selection-button"
 import { getMusicalById } from "@/data/musicals"
 
 import { useState, useEffect } from "react"
@@ -17,7 +18,7 @@ import { Badge } from "@/components/ui/badge"
 import { User, CheckCircle, Ticket, ArrowLeft, Loader2, Home, Music } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
-type PageType = "info" | "booking" | "success"
+type PageType = "info" | "booking" | "seat-selection" | "success"
 type ScreenType = "home" | "musical"
 
 interface BookingData {
@@ -70,7 +71,7 @@ export default function MusicalBookingSite() {
 
   // 좌석 상태 로드 (작품별)
   useEffect(() => {
-    if (!selectedMusicalId && currentPage === "booking") return
+    if (currentPage !== "seat-selection" && currentPage !== "booking") return
 
     const loadSeatStatus = async () => {
       setIsLoadingSeats(true)
@@ -304,10 +305,11 @@ export default function MusicalBookingSite() {
             <div className="bg-blue-50 p-4 rounded-lg mb-6 text-sm text-gray-700">
               <p className="font-semibold text-blue-600 mb-2">안내사항</p>
               <ul className="text-left space-y-1 text-blue-700">
-                <li>• 공연 30분 전까지 입장해주세요</li>
-                <li>• 학생증을 지참해주세요</li>
-                <li>• 예매번호를 기억해두세요</li>
-                <li>• 문의: 010-9928-6375</li>
+                <li>• 공연 시간에 맞게 입장해주세요</li>
+                <li>• 자리를 기억해두세요</li>
+                <li>• 학번 이름을 통해 자리를 조회할 수 있습니다.</li>
+                <li>• 공연 문의: 아르떼 공식 인스타로 :)</li>
+                <li>• 사이트 제작: 1323 제시원</li>
               </ul>
             </div>
 
@@ -340,6 +342,22 @@ export default function MusicalBookingSite() {
           </CardContent>
         </Card>
       </div>
+    )
+  }
+
+  // 좌석 선택 페이지
+  if (currentPage === "seat-selection") {
+    return (
+      <MobileSeatMap
+        seatGrades={musicalInfo.seatGrades}
+        selectedSeats={selectedSeats}
+        onSeatClick={handleSeatClick}
+        unavailableSeats={unavailableSeats}
+        statistics={statistics}
+        connectionStatus={connectionStatus}
+        selectedSeatGrade={bookingData.seatGrade}
+        onClose={() => setCurrentPage("booking")}
+      />
     )
   }
 
@@ -381,25 +399,13 @@ export default function MusicalBookingSite() {
             </CardContent>
           </Card>
 
-          {/* 모바일 좌석 선택기 */}
-          {isLoadingSeats ? (
-            <Card className="border border-gray-200 bg-white shadow-sm">
-              <CardContent className="p-8 text-center">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-purple-600" />
-                <p className="text-gray-600">좌석 정보를 불러오는 중...</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <MobileSeatMap
-              seatGrades={musicalInfo.seatGrades}
-              selectedSeats={selectedSeats}
-              onSeatClick={handleSeatClick}
-              unavailableSeats={unavailableSeats}
-              statistics={statistics}
-              connectionStatus={connectionStatus}
-              selectedSeatGrade={bookingData.seatGrade}
+          {/* 좌석 선택 버튼 */}
+          <div className="mb-4">
+            <SeatSelectionButton
+              onNavigateToSeatSelection={() => setCurrentPage("seat-selection")}
+              selectedSeatsCount={selectedSeats.length}
             />
-          )}
+          </div>
 
           {/* 신청자 정보 */}
           <Card className="mt-4 border border-gray-200 bg-white shadow-sm">
@@ -445,13 +451,13 @@ export default function MusicalBookingSite() {
 
                 <div className="space-y-2">
                   <Label htmlFor="specialRequest" className="font-medium text-sm text-gray-700">
-                    특별 요청사항
+                    다수 예매
                   </Label>
                   <Textarea
                     id="specialRequest"
                     value={bookingData.specialRequest}
                     onChange={(e) => handleInputChange("specialRequest", e.target.value)}
-                    placeholder="특별한 요청사항이 있으시면 적어주세요."
+                    placeholder="*여러명 동시 예매라면 인원 전부 이름, 학번 기재해주세요!"
                     rows={3}
                     className="border-gray-300 focus:border-purple-500 bg-white text-gray-900"
                     disabled={isSubmitting}
