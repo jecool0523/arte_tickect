@@ -179,7 +179,7 @@ export default function BookingForm({
                     id="specialRequest"
                     value={bookingData.specialRequest}
                     onChange={(e) => onInputChange("specialRequest", e.target.value)}
-                    placeholder="특별한 요청사항이 있으시면 적어주세요."
+                    placeholder="여러 자리 예약이라면 관람자 다 학번 이름 적어주세요"
                     rows={3}
                     disabled={isSubmitting}
                     className="border-gray-300 focus:border-purple-500 bg-white text-gray-900"
