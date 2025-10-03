@@ -388,43 +388,55 @@ export default function SeatSelectionWindow({
                 minHeight: `${100 / zoomLevel}%`,
               }}
             >
-              {/* Stage */}
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2.5 px-6 rounded-xl shadow-lg">
-                  <Theater className="h-4 w-4" />
-                  <span className="font-bold text-sm">무 대</span>
-                  <Theater className="h-4 w-4" />
+              {/* Stage - 좌석 배열과 동일한 너비 */}
+              <div className="mb-6 flex justify-start">
+                <div className="w-12 flex-shrink-0"></div> {/* 줄 번호 공간 */}
+                <div className="flex-1 flex justify-center">
+                  <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2.5 px-6 rounded-xl shadow-lg">
+                    <Theater className="h-4 w-4" />
+                    <span className="font-bold text-sm">무 대</span>
+                    <Theater className="h-4 w-4" />
+                  </div>
                 </div>
               </div>
 
               {/* Seat Sections - 1층 */}
               {selectedFloor === "1층" && (
                 <div className="space-y-4" key="floor-1">
-                  {/* VIP 앞블럭 */}
-                  {renderHorizontalSeatSection("앞블럭", 1, 9, "VIP", "1층")}
+                  <div className="inline-block">
+                    {/* VIP 앞블럭 */}
+                    {renderHorizontalSeatSection("앞블럭", 1, 9, "VIP", "1층")}
+                  </div>
 
-                  {/* 통로 구분선 */}
-                  <div className="relative py-6 my-4">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t-4 border-dashed border-gray-400"></div>
-                    </div>
-                    <div className="relative flex justify-center">
-                      <span className="bg-gray-50 px-8 py-2 text-gray-700 text-sm font-bold rounded-full border-2 border-gray-400 shadow-md">
-                        통 로
-                      </span>
+                  {/* 통로 구분선 - 좌석 배열과 동일한 너비 */}
+                  <div className="relative py-6 my-4 flex">
+                    <div className="w-12 flex-shrink-0"></div>
+                    <div className="flex-1 relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t-4 border-dashed border-gray-400"></div>
+                      </div>
+                      <div className="relative flex justify-center">
+                        <span className="bg-gray-50 px-8 py-2 text-gray-700 text-sm font-bold rounded-full border-2 border-gray-400 shadow-md">
+                          통 로
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* R석 뒷블럭 */}
-                  {renderHorizontalSeatSection("뒷블럭", 1, 8, "R석", "1층")}
+                  <div className="inline-block">
+                    {/* R석 뒷블럭 */}
+                    {renderHorizontalSeatSection("뒷블럭", 1, 8, "R석", "1층")}
+                  </div>
                 </div>
               )}
 
               {/* Seat Sections - 2층 */}
               {selectedFloor === "2층" && (
                 <div className="space-y-4" key="floor-2">
-                  {/* S석 전체 */}
-                  {renderHorizontalSeatSection("전체", 1, 8, "S", "2층")}
+                  <div className="inline-block">
+                    {/* S석 전체 */}
+                    {renderHorizontalSeatSection("전체", 1, 8, "S석", "2층")}
+                  </div>
                 </div>
               )}
             </div>
