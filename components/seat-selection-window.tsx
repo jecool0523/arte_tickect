@@ -388,14 +388,37 @@ export default function SeatSelectionWindow({
                 minHeight: `${100 / zoomLevel}%`,
               }}
             >
-              {/* Stage - 좌석 배열과 동일한 너비 */}
-              <div className="mb-6 flex justify-start">
+              {/* Stage - 중앙 6, 7번 좌석 위에 배치 */}
+              <div className="mb-6 flex items-start">
                 <div className="w-12 flex-shrink-0"></div> {/* 줄 번호 공간 */}
-                <div className="flex-1 flex justify-center">
-                  <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2.5 px-6 rounded-xl shadow-lg">
-                    <Theater className="h-4 w-4" />
-                    <span className="font-bold text-sm">무 대</span>
-                    <Theater className="h-4 w-4" />
+                {/* 왼쪽 6석 공간 */}
+                <div className="flex gap-1 flex-shrink-0">
+                  {Array(6)
+                    .fill(0)
+                    .map((_, i) => (
+                      <div key={i} className="w-8"></div>
+                    ))}
+                </div>
+                {/* 통로 공간 */}
+                <div className="px-3 flex-shrink-0">
+                  <div className="w-1"></div>
+                </div>
+                {/* 중앙 1-5번 공간 */}
+                <div className="flex gap-1 flex-shrink-0">
+                  {Array(5)
+                    .fill(0)
+                    .map((_, i) => (
+                      <div key={i} className="w-8"></div>
+                    ))}
+                </div>
+                {/* 무대 아이콘 - 중앙 6, 7번 위 */}
+                <div className="flex gap-1 flex-shrink-0">
+                  <div className="w-16 flex items-center justify-center">
+                    <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-4 rounded-xl shadow-lg whitespace-nowrap">
+                      <Theater className="h-3.5 w-3.5" />
+                      <span className="font-bold text-xs">무 대</span>
+                      <Theater className="h-3.5 w-3.5" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -408,19 +431,39 @@ export default function SeatSelectionWindow({
                     {renderHorizontalSeatSection("앞블럭", 1, 9, "VIP", "1층")}
                   </div>
 
-                  {/* 통로 구분선 - 좌석 배열과 동일한 너비 */}
-                  <div className="relative py-6 my-4 flex">
+                  {/* 통로 구분선 - 중앙 6, 7번 위에 통로 아이콘 배치 */}
+                  <div className="relative py-6 my-4 flex items-center">
                     <div className="w-12 flex-shrink-0"></div>
-                    <div className="flex-1 relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t-4 border-dashed border-gray-400"></div>
-                      </div>
-                      <div className="relative flex justify-center">
-                        <span className="bg-gray-50 px-8 py-2 text-gray-700 text-sm font-bold rounded-full border-2 border-gray-400 shadow-md">
+                    {/* 왼쪽 6석 공간 */}
+                    <div className="flex gap-1 flex-shrink-0">
+                      {Array(6)
+                        .fill(0)
+                        .map((_, i) => (
+                          <div key={i} className="w-8"></div>
+                        ))}
+                    </div>
+                    {/* 통로 공간 */}
+                    <div className="px-3 flex-shrink-0">
+                      <div className="w-1"></div>
+                    </div>
+                    {/* 중앙 1-5번 공간 */}
+                    <div className="flex gap-1 flex-shrink-0">
+                      {Array(5)
+                        .fill(0)
+                        .map((_, i) => (
+                          <div key={i} className="w-8"></div>
+                        ))}
+                    </div>
+                    {/* 통로 라벨 - 중앙 6, 7번 위 */}
+                    <div className="flex gap-1 flex-shrink-0 relative">
+                      <div className="w-16 flex items-center justify-center">
+                        <span className="bg-gray-50 px-6 py-1.5 text-gray-700 text-xs font-bold rounded-full border-2 border-gray-400 shadow-md whitespace-nowrap relative z-10">
                           통 로
                         </span>
                       </div>
                     </div>
+                    {/* 구분선 - 전체 너비 */}
+                    <div className="absolute left-12 right-0 top-1/2 -translate-y-1/2 border-t-4 border-dashed border-gray-400 -z-0"></div>
                   </div>
 
                   <div className="inline-block">
@@ -483,7 +526,7 @@ export default function SeatSelectionWindow({
         )}
 
         {/* Action Buttons */}
-        <div className="p-3">
+        <div className="p-3 space-y-2">
           <div className="flex gap-2">
             <Button
               onClick={onBack}
@@ -500,6 +543,11 @@ export default function SeatSelectionWindow({
               <Check className="h-4 w-4 mr-1.5" />
               좌석 선택 완료 ({selectedSeats.length}매)
             </Button>
+          </div>
+
+          {/* 관람 안내 메시지 */}
+          <div className="text-center py-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+            <p className="text-purple-700 font-serif font-bold text-2xl leading-5">ARTE</p>
           </div>
         </div>
       </footer>
