@@ -297,17 +297,31 @@ export default function MobileSeatMap({
             {/* 1층 구조 */}
             {selectedFloor === "1층" && (
               <div className="space-y-4">
+                {/* VIP 앞블럭 */}
                 {renderSeatSection("앞블럭", 1, 9, "VIP")}
-                <div className="text-center py-2">
-                  <div className="border-t-2 border-dashed border-gray-400 w-full"></div>
-                  <span className="bg-gray-50 px-4 text-gray-600 text-sm">통로</span>
+
+                {/* 통로 구분선 */}
+                <div className="relative py-3">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t-2 border-dashed border-gray-400"></div>
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-gray-50 px-4 text-gray-600 text-sm font-medium">통로</span>
+                  </div>
                 </div>
-                {renderSeatSection("뒷블럭", 1, 8, "R")}
+
+                {/* R석 뒷블럭 */}
+                {renderSeatSection("뒷블럭", 1, 8, "R석")}
               </div>
             )}
 
             {/* 2층 구조 */}
-            {selectedFloor === "2층" && <div className="space-y-4">{renderSeatSection("전체", 1, 8, "S")}</div>}
+            {selectedFloor === "2층" && (
+              <div className="space-y-4">
+                {/* S석 전체 */}
+                {renderSeatSection("전체", 1, 8, "S")}
+              </div>
+            )}
 
             {/* 범례 */}
             <div className="flex justify-center gap-4 text-sm font-medium text-gray-600 flex-wrap pt-4">
@@ -328,7 +342,7 @@ export default function MobileSeatMap({
 
           <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-sm text-blue-700">
-              <strong>💡 사용법:</strong> 원하는 좌석을 직접 터치하여 선택하세요. 같은 등급의 좌석만 선택 가능합니다.
+              <strong>💡 사용법:</strong> 원하는 좌석을 직접 터치하여 선택하세요.
             </p>
           </div>
         </CardContent>

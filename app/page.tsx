@@ -3,22 +3,17 @@
 import type React from "react"
 import HomeScreen from "@/components/home-screen"
 import MusicalDetail from "@/components/musical-detail"
-import MobileSeatMap from "@/components/mobile-seat-map"
-import SeatSelectionButton from "@/components/seat-selection-button"
+import BookingForm from "@/components/booking-form"
+import SeatSelectionWindow from "@/components/seat-selection-window"
 import { getMusicalById } from "@/data/musicals"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
-import { User, CheckCircle, Ticket, ArrowLeft, Loader2, Home, Music } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { CheckCircle, Ticket, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
-type PageType = "info" | "booking" | "seat-selection" | "success"
+type PageType = "info" | "form" | "seats" | "success"
 type ScreenType = "home" | "musical"
 
 interface BookingData {
@@ -71,7 +66,7 @@ export default function MusicalBookingSite() {
 
   // 좌석 상태 로드 (작품별)
   useEffect(() => {
-    if (currentPage !== "seat-selection" && currentPage !== "booking") return
+    if (!selectedMusicalId && currentPage === "booking") return
 
     const loadSeatStatus = async () => {
       setIsLoadingSeats(true)
@@ -175,6 +170,22 @@ export default function MusicalBookingSite() {
       ...prev,
       [field]: value,
     }))
+  }
+
+  const handleSeatSelectionConfirm = () => {
+    if (selectedSeats.length === 0) {
+      toast({
+        title: "좌석 미선택",
+        description: "좌석을 선택해주세요.",
+        variant: "destructive",
+      })
+      return
+    }
+    setCurrentPage("form")
+    toast({
+      title: "좌석 선택 완료",
+      description: `${selectedSeats.length}개의 좌석이 선택되었습니다.`,
+    })
   }
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
@@ -305,11 +316,10 @@ export default function MusicalBookingSite() {
             <div className="bg-blue-50 p-4 rounded-lg mb-6 text-sm text-gray-700">
               <p className="font-semibold text-blue-600 mb-2">안내사항</p>
               <ul className="text-left space-y-1 text-blue-700">
-                <li>• 공연 시간에 맞게 입장해주세요</li>
-                <li>• 자리를 기억해두세요</li>
-                <li>• 학번 이름을 통해 자리를 조회할 수 있습니다.</li>
-                <li>• 공연 문의: 아르떼 공식 인스타로 :)</li>
-                <li>• 사이트 제작: 1323 제시원</li>
+                <li>• 공연 30분 전까지 입장해주세요</li>
+                <li>• 학생증을 지참해주세요</li>
+                <li>• 예매번호를 기억해두세요</li>
+                <li>• 문의: 010-9928-6375</li>
               </ul>
             </div>
 
@@ -345,287 +355,47 @@ export default function MusicalBookingSite() {
     )
   }
 
-  // 좌석 선택 페이지
-  if (currentPage === "seat-selection") {
+  // 신청서 페이지
+  if (currentPage === "form") {
     return (
-      <div className="min-h-screen bg-gray-50 py-4 px-4 relative">
-        <div className="max-w-2xl mx-auto">
-          {/* 헤더 */}
-          <div className="sticky top-0 z-20 bg-gray-50/90 backdrop-blur-sm -mx-4 px-4 py-4 mb-4">
-            <div className="flex items-center">
-              <Button
-                onClick={() => setCurrentPage("booking")}
-                variant="ghost"
-                size="icon"
-                className="p-2 rounded-full hover:bg-gray-100"
-              >
-                <ArrowLeft className="h-5 w-5 text-gray-900" />
-              </Button>
-              <h1 className="flex-1 text-center text-lg font-bold text-gray-900 pr-10">좌석 선택</h1>
-            </div>
-          </div>
-
-          {/* 작품 정보 */}
-          <Card className="mb-4 border border-gray-200 bg-white shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-bold text-gray-900 text-lg">{musicalInfo.title}</h2>
-                  <p className="text-gray-600 text-sm">
-                    {musicalInfo.date} {musicalInfo.time}
-                  </p>
-                  <p className="text-gray-500 text-sm">{musicalInfo.venue}</p>
-                </div>
-                <Badge className="bg-purple-100 text-purple-700 text-xs border-purple-200">
-                  {musicalInfo.genre.replace(/[{}]/g, "")}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 좌석 선택 맵 */}
-          {isLoadingSeats ? (
-            <Card className="border border-gray-200 bg-white shadow-sm">
-              <CardContent className="p-8 text-center">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-purple-600" />
-                <p className="text-gray-600">좌석 정보를 불러오는 중...</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <MobileSeatMap
-              seatGrades={musicalInfo.seatGrades}
-              selectedSeats={selectedSeats}
-              onSeatClick={handleSeatClick}
-              unavailableSeats={unavailableSeats}
-              statistics={statistics}
-              connectionStatus={connectionStatus}
-              selectedSeatGrade={bookingData.seatGrade}
-            />
-          )}
-
-          {/* 선택 완료 버튼 */}
-          {selectedSeats.length > 0 && (
-            <div className="fixed bottom-20 left-4 right-4 z-30">
-              <Button
-                onClick={() => setCurrentPage("booking")}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 text-lg shadow-lg"
-                size="lg"
-              >
-                선택 완료 ({selectedSeats.length}매)
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Fixed Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
-          <div className="flex justify-around items-start pt-1 pb-2">
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-purple-600 transition-colors h-auto p-2"
-              onClick={handleNavigateToHome}
-            >
-              <Home className="h-5 w-5" />
-              <span className="text-xs">홈</span>
-            </Button>
-            <Button variant="ghost" className="flex flex-col items-center space-y-1 text-purple-600 h-auto p-2">
-              <Music className="h-5 w-5" />
-              <span className="text-xs font-bold">뮤지컬</span>
-            </Button>
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-purple-600 transition-colors h-auto p-2"
-            >
-              <Ticket className="h-5 w-5" />
-              <span className="text-xs">내 티켓</span>
-            </Button>
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-purple-600 transition-colors h-auto p-2"
-            >
-              <User className="h-5 w-5" />
-              <span className="text-xs">프로필</span>
-            </Button>
-          </div>
-        </div>
-      </div>
+      <BookingForm
+        musicalInfo={musicalInfo}
+        bookingData={bookingData}
+        selectedSeats={selectedSeats}
+        onInputChange={handleInputChange}
+        onNavigateToSeatSelection={() => setCurrentPage("seats")}
+        onBack={() => setCurrentPage("info")}
+        onNavigateToHome={handleNavigateToHome}
+      />
     )
   }
 
-  // 예매 페이지
-  if (currentPage === "booking") {
+  // 좌석 선택 페이지
+  if (currentPage === "seats") {
+    if (isLoadingSeats) {
+      return (
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-purple-600" />
+            <p className="text-gray-600">좌석 정보를 불러오는 중...</p>
+          </div>
+        </div>
+      )
+    }
+
     return (
-      <div className="min-h-screen bg-gray-50 py-4 px-4 relative">
-        <div className="max-w-2xl mx-auto">
-          {/* 헤더 */}
-          <div className="sticky top-0 z-20 bg-gray-50/90 backdrop-blur-sm -mx-4 px-4 py-4 mb-4">
-            <div className="flex items-center">
-              <Button
-                onClick={() => setCurrentPage("info")}
-                variant="ghost"
-                size="icon"
-                className="p-2 rounded-full hover:bg-gray-100"
-              >
-                <ArrowLeft className="h-5 w-5 text-gray-900" />
-              </Button>
-              <h1 className="flex-1 text-center text-lg font-bold text-gray-900 pr-10">관람 신청</h1>
-            </div>
-          </div>
-
-          {/* 작품 정보 */}
-          <Card className="mb-4 border border-gray-200 bg-white shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-bold text-gray-900 text-lg">{musicalInfo.title}</h2>
-                  <p className="text-gray-600 text-sm">
-                    {musicalInfo.date} {musicalInfo.time}
-                  </p>
-                  <p className="text-gray-500 text-sm">{musicalInfo.venue}</p>
-                </div>
-                <Badge className="bg-purple-100 text-purple-700 text-xs border-purple-200">
-                  {musicalInfo.genre.replace(/[{}]/g, "")}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 좌석 선택 버튼 */}
-          <div className="mb-4">
-            <SeatSelectionButton
-              onNavigateToSeatSelection={() => setCurrentPage("seat-selection")}
-              selectedSeatsCount={selectedSeats.length}
-            />
-          </div>
-
-          {/* 신청자 정보 */}
-          <Card className="mt-4 border border-gray-200 bg-white shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-gray-900">
-                <User className="h-5 w-5" />
-                신청자 정보
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleBookingSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="font-medium text-sm text-gray-700">
-                      이름 <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="name"
-                      value={bookingData.name}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
-                      placeholder="홍길동"
-                      required
-                      className="border-gray-300 focus:border-purple-500 bg-white text-gray-900"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="studentId" className="font-medium text-sm text-gray-700">
-                      학번 <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="studentId"
-                      value={bookingData.studentId}
-                      onChange={(e) => handleInputChange("studentId", e.target.value)}
-                      placeholder="1323"
-                      required
-                      className="border-gray-300 focus:border-purple-500 bg-white text-gray-900"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="specialRequest" className="font-medium text-sm text-gray-700">
-                    다수 예매
-                  </Label>
-                  <Textarea
-                    id="specialRequest"
-                    value={bookingData.specialRequest}
-                    onChange={(e) => handleInputChange("specialRequest", e.target.value)}
-                    placeholder="*여러명 동시 예매라면 인원 전부 이름, 학번 기재해주세요!"
-                    rows={3}
-                    className="border-gray-300 focus:border-purple-500 bg-white text-gray-900"
-                    disabled={isSubmitting}
-                  />
-                </div>
-
-                {/* 약관 동의 */}
-                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="agreeTerms"
-                      checked={bookingData.agreeTerms}
-                      onCheckedChange={(checked) => handleInputChange("agreeTerms", checked as boolean)}
-                      disabled={isSubmitting}
-                      className="border-gray-400 data-[state=checked]:bg-purple-600 data-[state=checked]:text-white"
-                    />
-                    <Label htmlFor="agreeTerms" className="text-sm text-gray-700">
-                      관람 예절을 지키겠습니다. <span className="text-red-500">*</span>
-                    </Label>
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 mt-6"
-                  size="lg"
-                  disabled={isSubmitting || selectedSeats.length === 0}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                      처리중...
-                    </>
-                  ) : (
-                    <>
-                      <Ticket className="h-5 w-5 mr-2" />
-                      신청하기 ({selectedSeats.length}매)
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Fixed Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
-          <div className="flex justify-around items-start pt-1 pb-2">
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-purple-600 transition-colors h-auto p-2"
-              onClick={handleNavigateToHome}
-            >
-              <Home className="h-5 w-5" />
-              <span className="text-xs">홈</span>
-            </Button>
-            <Button variant="ghost" className="flex flex-col items-center space-y-1 text-purple-600 h-auto p-2">
-              <Music className="h-5 w-5" />
-              <span className="text-xs font-bold">뮤지컬</span>
-            </Button>
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-purple-600 transition-colors h-auto p-2"
-            >
-              <Ticket className="h-5 w-5" />
-              <span className="text-xs">내 티켓</span>
-            </Button>
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center space-y-1 text-gray-600 hover:text-purple-600 transition-colors h-auto p-2"
-            >
-              <User className="h-5 w-5" />
-              <span className="text-xs">프로필</span>
-            </Button>
-          </div>
-        </div>
-      </div>
+      <SeatSelectionWindow
+        seatGrades={musicalInfo.seatGrades}
+        selectedSeats={selectedSeats}
+        onSeatClick={handleSeatClick}
+        unavailableSeats={unavailableSeats}
+        statistics={statistics}
+        connectionStatus={connectionStatus}
+        selectedSeatGrade={bookingData.seatGrade}
+        onBack={() => setCurrentPage("form")}
+        onConfirm={handleSeatSelectionConfirm}
+        musicalTitle={musicalInfo.title}
+      />
     )
   }
 
@@ -635,7 +405,7 @@ export default function MusicalBookingSite() {
       <MusicalDetail
         musicalInfo={musicalInfo}
         onNavigateBack={handleNavigateToHome}
-        onNavigateToBooking={() => setCurrentPage("booking")}
+        onNavigateToBooking={() => setCurrentPage("form")}
         isMobile={isMobile}
       />
     )

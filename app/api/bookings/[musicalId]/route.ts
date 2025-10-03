@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 
 // 뮤지컬 ID를 테이블명으로 변환
@@ -11,130 +11,143 @@ function getTableName(musicalId: string): string {
   return tableMap[musicalId] || "dead_poets_society_bookings"
 }
 
-export async function POST(request: Request, { params }: { params: { musicalId: string } }) {
+export async function POST(request: NextRequest, { params }: { params: { musicalId: string } }) {
   try {
     const musicalId = params.musicalId
     const tableName = getTableName(musicalId)
-    const supabase = createServerClient()
-
     const body = await request.json()
     const { name, studentId, seatGrade, selectedSeats, specialRequest } = body
 
-    // 입력 검증
+    // 입력 데이터 검증
     if (!name || !studentId || !seatGrade || !selectedSeats || selectedSeats.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "필수 정보가 누락되었습니다.",
-        },
-        { status: 400 },
-      )
+      return NextResponse.json({ error: "필수 정보가 누락되었습니다." }, { status: 400 })
     }
 
+    const supabase = createServerClient()
+
     // 먼저 테이블 존재 여부 확인
-    const { data: tableCheck, error: tableError } = await supabase
-      .from(tableName)
-      .select("count", { count: "exact", head: true })
+    const { error: tableCheckError } = await supabase.from(tableName).select("count", { count: "exact", head: true })
 
-    if (tableError) {
-      console.error("테이블 확인 오류:", tableError)
+    if (tableCheckError) {
+      console.error("테이블 확인 오류:", tableCheckError)
 
-      if (tableError.code === "42P01" || tableError.message.includes("does not exist")) {
+      if (tableCheckError.code === "42P01" || tableCheckError.message.includes("does not exist")) {
         return NextResponse.json(
           {
-            success: false,
-            error: `${musicalId} 데이터베이스 테이블이 생성되지 않았습니다. SQL 스크립트를 실행해주세요.`,
+            error: `${musicalId} 데이터베이스 테이블이 생성되지 않았습니다. 관리자에게 문의하세요.`,
             needsSetup: true,
           },
           { status: 500 },
         )
       }
-
-      return NextResponse.json(
-        {
-          success: false,
-          error: "데이터베이스 연결 오류가 발생했습니다.",
-        },
-        { status: 500 },
-      )
     }
 
-    // 좌석 중복 확인
+    // 선택한 좌석들이 이미 예매되었는지 확인
     const { data: existingBookings, error: checkError } = await supabase
       .from(tableName)
       .select("selected_seats")
       .eq("status", "confirmed")
 
     if (checkError) {
-      console.error("좌석 중복 확인 오류:", checkError)
-      return NextResponse.json(
-        {
-          success: false,
-          error: "좌석 확인 중 오류가 발생했습니다.",
-        },
-        { status: 500 },
-      )
+      console.error("좌석 확인 오류:", checkError)
+      return NextResponse.json({ error: "좌석 확인 중 오류가 발생했습니다." }, { status: 500 })
     }
 
-    // 이미 예매된 좌석 찾기
+    // 이미 예매된 좌석들을 추출
     const bookedSeats = new Set<string>()
     existingBookings?.forEach((booking) => {
       booking.selected_seats?.forEach((seat: string) => bookedSeats.add(seat))
     })
 
+    // 선택한 좌석 중 이미 예매된 좌석이 있는지 확인
     const conflictSeats = selectedSeats.filter((seat: string) => bookedSeats.has(seat))
-
     if (conflictSeats.length > 0) {
       return NextResponse.json(
         {
-          success: false,
           error: "선택한 좌석 중 이미 예매된 좌석이 있습니다.",
-          conflictSeats,
+          conflictSeats: conflictSeats,
         },
         { status: 409 },
       )
     }
 
     // 예매 정보 저장
-    const { data, error } = await supabase
+    const { data: bookingData, error: insertError } = await supabase
       .from(tableName)
-      .insert([
-        {
-          name,
-          student_id: studentId,
-          seat_grade: seatGrade,
-          selected_seats: selectedSeats,
-          special_request: specialRequest || null,
-          status: "confirmed",
-        },
-      ])
+      .insert({
+        name,
+        student_id: studentId,
+        seat_grade: seatGrade,
+        selected_seats: selectedSeats,
+        special_request: specialRequest || null,
+        status: "confirmed",
+      })
       .select()
+      .single()
 
-    if (error) {
-      console.error("예매 저장 오류:", error)
-      return NextResponse.json(
-        {
-          success: false,
-          error: "예매 정보 저장 중 오류가 발생했습니다.",
-        },
-        { status: 500 },
-      )
+    if (insertError) {
+      console.error("예매 저장 오류:", insertError)
+      return NextResponse.json({ error: "예매 저장 중 오류가 발생했습니다." }, { status: 500 })
     }
 
     return NextResponse.json({
       success: true,
+      bookingId: bookingData.id,
+      bookingDate: bookingData.booking_date,
       message: "뮤지컬 관람 신청이 완료되었습니다.",
-      bookingId: data[0]?.id,
-      bookingDate: data[0]?.booking_date,
     })
   } catch (error) {
-    console.error("예매 처리 중 예외 발생:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: "서버 오류가 발생했습니다.",
-      },
-      { status: 500 },
-    )
+    console.error("예매 처리 중 오류:", error)
+    return NextResponse.json({ error: "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요." }, { status: 500 })
+  }
+}
+
+export async function GET(request: NextRequest, { params }: { params: { musicalId: string } }) {
+  try {
+    const musicalId = params.musicalId
+    const tableName = getTableName(musicalId)
+    const supabase = createServerClient()
+
+    // 테이블 존재 여부 확인
+    const { error: tableCheckError } = await supabase.from(tableName).select("count", { count: "exact", head: true })
+
+    if (tableCheckError) {
+      console.error("테이블 확인 오류:", tableCheckError)
+
+      if (tableCheckError.code === "42P01" || tableCheckError.message.includes("does not exist")) {
+        return NextResponse.json({
+          success: false,
+          error: `${musicalId} 데이터베이스 테이블이 생성되지 않았습니다.`,
+          bookings: [],
+          needsSetup: true,
+        })
+      }
+    }
+
+    // 모든 예매 정보 조회
+    const { data: bookings, error } = await supabase
+      .from(tableName)
+      .select("*")
+      .order("booking_date", { ascending: false })
+
+    if (error) {
+      console.error("예매 조회 오류:", error)
+      return NextResponse.json({ error: "예매 정보 조회 중 오류가 발생했습니다." }, { status: 500 })
+    }
+
+    // 좌석 수 계산
+    const bookingsWithSeatCount =
+      bookings?.map((booking) => ({
+        ...booking,
+        seat_count: booking.selected_seats?.length || 0,
+      })) || []
+
+    return NextResponse.json({
+      success: true,
+      bookings: bookingsWithSeatCount,
+    })
+  } catch (error) {
+    console.error("예매 조회 중 오류:", error)
+    return NextResponse.json({ error: "데이터 조회 중 오류가 발생했습니다." }, { status: 500 })
   }
 }

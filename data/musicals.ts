@@ -91,11 +91,11 @@ export const musicals: Record<string, MusicalInfo> = {
     venue: "신관 4층 강당",
     date: "2025년 12월 14일 (금) (예정)",
     time: "방과후 1~2타임",
-    posterImage: "/placeholder.svg?height=594&width=420",
+    posterImage: "/rent_poster_re.png",
     cast: [
       {
         name: "로저",
-        actor: "김승현",
+        actor: "곽승현",
         intro: "HIV에 감염된 뮤지션으로, 사랑과 예술에 대한 열정을 가지고 있다.",
         image: "/placeholder.svg?height=96&width=96",
       },
@@ -107,7 +107,7 @@ export const musicals: Record<string, MusicalInfo> = {
       },
       {
         name: "마크",
-        actor: "",
+        actor: "김승현",
         intro: "영화감독 지망생으로, 친구들의 삶을 기록하려 한다.",
         image: "/placeholder.svg?height=96&width=96",
       },
