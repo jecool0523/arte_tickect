@@ -526,7 +526,7 @@ export default function SeatSelectionWindow({
         )}
 
         {/* Action Buttons */}
-        <div className="p-3 space-y-2">
+        <div className="p-3 leading-7 space-y-3">
           <div className="flex gap-2">
             <Button
               onClick={onBack}
@@ -546,8 +546,8 @@ export default function SeatSelectionWindow({
           </div>
 
           {/* 관람 안내 메시지 */}
-          <div className="text-center py-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
-            <p className="text-purple-700 font-serif font-bold text-2xl leading-5">ARTE</p>
+          <div className="text-center bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 py-3 my-px leading-8">
+            <p className="text-purple-700 font-serif font-bold leading-5 text-3xl">ARTE</p>
           </div>
         </div>
       </footer>
