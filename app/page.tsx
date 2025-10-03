@@ -364,8 +364,10 @@ export default function MusicalBookingSite() {
         selectedSeats={selectedSeats}
         onInputChange={handleInputChange}
         onNavigateToSeatSelection={() => setCurrentPage("seats")}
+        onSubmit={handleBookingSubmit}
         onBack={() => setCurrentPage("info")}
         onNavigateToHome={handleNavigateToHome}
+        isSubmitting={isSubmitting}
       />
     )
   }
