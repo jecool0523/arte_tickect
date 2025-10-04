@@ -65,7 +65,7 @@ export default function MusicalBookingSite() {
   const currentMusical = selectedMusicalId ? getMusicalById(selectedMusicalId) : getMusicalById("dead-poets-society")
   const musicalInfo = currentMusical!
 
-  // 좌석 상태 로드 (작품별)
+  // 좌석 상태 로드 (작품별) - 캐시 방지
   useEffect(() => {
     if (!selectedMusicalId && currentPage === "booking") return
 
@@ -74,7 +74,15 @@ export default function MusicalBookingSite() {
       const musicalId = selectedMusicalId || "dead-poets-society"
 
       try {
-        const response = await fetch(`/api/seats/${musicalId}`)
+        // 캐시 방지를 위한 타임스탬프 추가
+        const timestamp = new Date().getTime()
+        const response = await fetch(`/api/seats/${musicalId}?t=${timestamp}`, {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        })
 
         if (!response.ok) {
           console.warn(`API 응답 오류: ${response.status} ${response.statusText}`)
@@ -91,6 +99,8 @@ export default function MusicalBookingSite() {
         if (data.success) {
           setUnavailableSeats(data.unavailableSeats || {})
           setStatistics(data.statistics || { total_bookings: 0, total_seats_booked: 0, unique_students: 0 })
+
+          console.log(`[${data.timestamp}] 좌석 상태 업데이트:`, data.statistics)
 
           if (data.needsSetup) {
             setConnectionStatus("error")
@@ -132,6 +142,16 @@ export default function MusicalBookingSite() {
     }
 
     loadSeatStatus()
+
+    // 좌석 선택 화면에서는 5초마다 자동 새로고침
+    let intervalId: NodeJS.Timeout | null = null
+    if (currentPage === "seats") {
+      intervalId = setInterval(loadSeatStatus, 5000)
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId)
+    }
   }, [toast, selectedMusicalId, currentPage])
 
   const handleSeatClick = (seatId: string, seatGrade: string) => {
@@ -205,11 +225,15 @@ export default function MusicalBookingSite() {
     const musicalId = selectedMusicalId || "dead-poets-society"
 
     try {
-      const response = await fetch(`/api/bookings/${musicalId}`, {
+      // 캐시 방지
+      const timestamp = new Date().getTime()
+      const response = await fetch(`/api/bookings/${musicalId}?t=${timestamp}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
         },
+        cache: "no-store",
         body: JSON.stringify({
           name: bookingData.name,
           studentId: bookingData.studentId,
@@ -224,11 +248,13 @@ export default function MusicalBookingSite() {
         if (response.status === 409 && errorData.conflictSeats) {
           toast({
             title: "좌석 충돌",
-            description: `선택한 좌석 중 이미 예매된 좌석이 있습니다: ${errorData.conflictSeats.join(", ")}`,
+            description: `선택한 좌석 중 이미 예매된 좌석이 있습니다. 페이지를 새로고침합니다.`,
             variant: "destructive",
           })
           // 좌석 상태 새로고침
-          window.location.reload()
+          setTimeout(() => {
+            window.location.reload()
+          }, 2000)
           return
         }
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
@@ -348,7 +374,7 @@ export default function MusicalBookingSite() {
                 처음으로
               </Button>
               <Button
-                onClick={() => setCurrentPage("booking")}
+                onClick={() => setCurrentPage("form")}
                 className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
               >
                 추가 신청
@@ -384,7 +410,7 @@ export default function MusicalBookingSite() {
         <div className="min-h-screen bg-white flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-purple-600" />
-            <p className="text-gray-600">좌석 정보를 불러오는 중...</p>
+            <p className="text-gray-600">최신 좌석 정보를 불러오는 중...</p>
           </div>
         </div>
       )
