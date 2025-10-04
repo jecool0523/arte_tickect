@@ -319,7 +319,7 @@ export default function MusicalBookingSite() {
                 <li>• 공연 30분 전까지 입장해주세요</li>
                 <li>• 학생증을 지참해주세요</li>
                 <li>• 예매번호를 기억해두세요</li>
-                <li>• 문의: 010-9928-6375</li>
+                <li>• 문의: 아르떼 인스타로    </li>
               </ul>
             </div>
 
