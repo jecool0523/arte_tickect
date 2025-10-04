@@ -2,16 +2,17 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Home, Music, Ticket, User } from "lucide-react"
+import { Search, Home, Music, Ticket, User, CheckCircle2 } from "lucide-react"
 import Image from "next/image"
 import { getAllMusicals } from "@/data/musicals"
 
 interface HomeScreenProps {
   onNavigateToMusical: (musicalId: string) => void
   isMobile: boolean
+  onNavigateToVerification: () => void
 }
 
-export default function HomeScreen({ onNavigateToMusical, isMobile }: HomeScreenProps) {
+export default function HomeScreen({ onNavigateToMusical, isMobile, onNavigateToVerification }: HomeScreenProps) {
   const allMusicals = getAllMusicals()
 
   const popularTickets = allMusicals.map((musical, index) => ({
@@ -69,22 +70,14 @@ export default function HomeScreen({ onNavigateToMusical, isMobile }: HomeScreen
           </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex gap-2 px-4 pb-4">
-          <Button className="rounded-full bg-purple-600 hover:bg-purple-700 px-4 py-1.5 text-sm font-semibold text-white">
-            전체
-          </Button>
+        {/* 예매 확인 버튼 */}
+        <div className="px-4 pb-4">
           <Button
-            variant="secondary"
-            className="rounded-full bg-gray-200 dark:bg-gray-800/50 hover:bg-gray-300 dark:hover:bg-gray-700 px-4 py-1.5 text-sm font-medium text-gray-900 dark:text-white"
+            onClick={onNavigateToVerification}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg shadow-md"
           >
-            오늘
-          </Button>
-          <Button
-            variant="secondary"
-            className="rounded-full bg-gray-200 dark:bg-gray-800/50 hover:bg-gray-300 dark:hover:bg-gray-700 px-4 py-1.5 text-sm font-medium text-gray-900 dark:text-white"
-          >
-            내일
+            <CheckCircle2 className="h-5 w-5 mr-2" />
+            예매 확인
           </Button>
         </div>
       </header>
@@ -158,6 +151,7 @@ export default function HomeScreen({ onNavigateToMusical, isMobile }: HomeScreen
           <Button
             variant="ghost"
             className="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            onClick={onNavigateToVerification}
           >
             <Ticket className="h-6 w-6" />
             <span className="text-xs font-medium">내 티켓</span>

@@ -5,6 +5,7 @@ import HomeScreen from "@/components/home-screen"
 import MusicalDetail from "@/components/musical-detail"
 import BookingForm from "@/components/booking-form"
 import SeatSelectionWindow from "@/components/seat-selection-window"
+import BookingVerification from "@/components/booking-verification"
 import { getMusicalById } from "@/data/musicals"
 
 import { useState, useEffect } from "react"
@@ -14,7 +15,7 @@ import { CheckCircle, Ticket, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 type PageType = "info" | "form" | "seats" | "success"
-type ScreenType = "home" | "musical"
+type ScreenType = "home" | "musical" | "verification"
 
 interface BookingData {
   seatGrade: string
@@ -274,6 +275,10 @@ export default function MusicalBookingSite() {
     setCurrentScreen("home")
   }
 
+  const handleNavigateToVerification = () => {
+    setCurrentScreen("verification")
+  }
+
   // 성공 페이지
   if (currentPage === "success") {
     return (
@@ -319,7 +324,7 @@ export default function MusicalBookingSite() {
                 <li>• 공연 30분 전까지 입장해주세요</li>
                 <li>• 학생증을 지참해주세요</li>
                 <li>• 예매번호를 기억해두세요</li>
-                <li>• 문의: 아르떼 인스타로    </li>
+                <li>• 문의: 아르떼 인스타로</li>
               </ul>
             </div>
 
@@ -401,6 +406,11 @@ export default function MusicalBookingSite() {
     )
   }
 
+  // Verification Screen
+  if (currentScreen === "verification") {
+    return <BookingVerification onBack={handleNavigateToHome} />
+  }
+
   // 작품 소개 페이지
   if (currentScreen === "musical") {
     return (
@@ -414,5 +424,11 @@ export default function MusicalBookingSite() {
   }
 
   // Home Screen
-  return <HomeScreen onNavigateToMusical={handleNavigateToMusical} isMobile={isMobile} />
+  return (
+    <HomeScreen
+      onNavigateToMusical={handleNavigateToMusical}
+      isMobile={isMobile}
+      onNavigateToVerification={handleNavigateToVerification}
+    />
+  )
 }
