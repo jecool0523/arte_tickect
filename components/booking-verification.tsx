@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Calendar, Loader2, CheckCircle2, Ticket } from "lucide-react"
+import { ArrowLeft, Calendar, Loader2, CheckCircle2, Ticket, Theater } from "lucide-react"
 import { useState } from "react"
 import { getAllMusicals } from "@/data/musicals"
 import { useToast } from "@/hooks/use-toast"
@@ -56,7 +56,6 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
       const data = await response.json()
 
       if (data.success && data.bookings) {
-        // 학번과 이름이 일치하는 예매 찾기
         const matching = data.bookings.find(
           (booking: BookingInfo) => booking.student_id === studentId && booking.name.trim() === name.trim(),
         )
@@ -95,6 +94,75 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
 
   const selectedMusical = musicals.find((m) => m.id === selectedMusicalId)
 
+  // 좌석 렌더링 함수
+  const renderSeatRow = (
+    floor: string,
+    section: string,
+    rowNum: number,
+    selectedSeats: string[],
+    gradeColor: string,
+  ) => {
+    const seats = []
+
+    // 왼쪽 6석
+    for (let i = 1; i <= 6; i++) {
+      const seatId =
+        floor === "1층"
+          ? `1층-${section === "앞블럭" ? "앞" : "뒤"}-${rowNum}줄-왼쪽-${i}번`
+          : `2층-${rowNum}줄-왼쪽-${i}번`
+      const isSelected = selectedSeats.includes(seatId)
+      seats.push(
+        <div
+          key={`left-${i}`}
+          className={`h-2 w-2 rounded-sm ${isSelected ? "bg-purple-600 dark:bg-purple-500" : gradeColor}`}
+        ></div>,
+      )
+    }
+
+    // 통로
+    seats.push(<div key="aisle-1" className="w-1"></div>)
+
+    // 중앙 12석
+    for (let i = 1; i <= 12; i++) {
+      const seatId =
+        floor === "1층"
+          ? `1층-${section === "앞블럭" ? "앞" : "뒤"}-${rowNum}줄-중앙-${i}번`
+          : `2층-${rowNum}줄-중앙-${i}번`
+      const isSelected = selectedSeats.includes(seatId)
+      seats.push(
+        <div
+          key={`center-${i}`}
+          className={`h-2 w-2 rounded-sm ${isSelected ? "bg-purple-600 dark:bg-purple-500" : gradeColor}`}
+        ></div>,
+      )
+    }
+
+    // 통로
+    seats.push(<div key="aisle-2" className="w-1"></div>)
+
+    // 오른쪽 6석
+    for (let i = 1; i <= 6; i++) {
+      const seatId =
+        floor === "1층"
+          ? `1층-${section === "앞블럭" ? "앞" : "뒤"}-${rowNum}줄-오른쪽-${i}번`
+          : `2층-${rowNum}줄-오른쪽-${i}번`
+      const isSelected = selectedSeats.includes(seatId)
+      seats.push(
+        <div
+          key={`right-${i}`}
+          className={`h-2 w-2 rounded-sm ${isSelected ? "bg-purple-600 dark:bg-purple-500" : gradeColor}`}
+        ></div>,
+      )
+    }
+
+    return (
+      <div key={`row-${rowNum}`} className="flex items-center gap-0.5 justify-center">
+        <span className="text-[8px] w-4 text-center text-gray-500 dark:text-gray-400">{rowNum}</span>
+        {seats}
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
@@ -108,12 +176,12 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
           >
             <ArrowLeft className="h-5 w-5 text-gray-900 dark:text-white" />
           </Button>
-          <h1 className="flex-1 text-center text-lg font-bold text-gray-900 dark:text-white pr-10">좌석 정보 확인</h1>
+          <h1 className="flex-1 text-center text-lg font-bold text-gray-900 dark:text-white pr-10">예매 좌석 정보 확인</h1>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 space-y-4">
+      <main className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* 조회 폼 */}
         <Card className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
           <CardContent className="p-6 space-y-4">
@@ -216,7 +284,7 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
                     </div>
                   </div>
 
-                  {/* 나의 좌석 */}
+                  {/* 나의 좌석 정보 */}
                   <div className="text-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-4 border-2 border-purple-200 dark:border-purple-800">
                     <p className="text-gray-600 dark:text-gray-400 text-xs mb-1">나의 좌석</p>
                     <p className="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -234,105 +302,112 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
                     </div>
                   </div>
 
-                  {/* 간소화된 좌석 배치 - 한 화면에 맞게 축소 */}
+                  {/* 실제 좌석 배치도 */}
                   <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <Theater className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <h3 className="text-sm font-bold text-gray-900 dark:text-white">좌석 배치도</h3>
+                    </div>
+
                     {/* 무대 */}
                     <div className="text-center mb-3">
                       <div className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold py-1.5 px-4 rounded-lg shadow-sm">
-                        STAGE
+                        🎭 STAGE 🎭
                       </div>
                     </div>
 
-                    {/* 축소된 좌석 그리드 - 전체가 한 화면에 보이도록 */}
-                    <div className="space-y-2">
-                      {/* VIP 구역 표시 */}
-                      {bookingInfo.selected_seats.some((seat) => seat.includes("앞")) && (
-                        <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded p-2">
-                          <div className="text-xs font-semibold text-yellow-700 dark:text-yellow-500 mb-1">VIP석</div>
-                          <div className="grid grid-cols-12 gap-0.5">
-                            {Array(36)
-                              .fill(0)
-                              .map((_, i) => {
-                                const isSelected = bookingInfo.selected_seats.some(
-                                  (seat) => seat.includes("VIP") || seat.includes("앞"),
-                                )
-                                return (
-                                  <div
-                                    key={i}
-                                    className={`h-3 rounded-sm ${
-                                      isSelected && i >= 15 && i <= 20
-                                        ? "bg-purple-600 dark:bg-purple-500"
-                                        : "bg-gray-200 dark:bg-gray-700"
-                                    }`}
-                                  ></div>
-                                )
-                              })}
-                          </div>
+                    {/* 통로 */}
+                      <div className="relative py-2">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t-2 border-dashed border-gray-400 dark:border-gray-600"></div>
                         </div>
-                      )}
+                        <div className="relative flex justify-center">
+                          <span className="bg-gray-50 dark:bg-gray-900 px-3 text-gray-600 dark:text-gray-400 text-xs font-medium">
+                          1층
+                          </span>
+                        </div>
+                      </div>
 
-                      {/* R석 구역 표시 */}
-                      {bookingInfo.selected_seats.some((seat) => seat.includes("R") || seat.includes("뒤")) && (
-                        <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded p-2">
-                          <div className="text-xs font-semibold text-red-700 dark:text-red-500 mb-1">R석</div>
-                          <div className="grid grid-cols-12 gap-0.5">
-                            {Array(36)
-                              .fill(0)
-                              .map((_, i) => {
-                                const isSelected = bookingInfo.selected_seats.some(
-                                  (seat) => seat.includes("R석") || seat.includes("뒤"),
-                                )
-                                return (
-                                  <div
-                                    key={i}
-                                    className={`h-3 rounded-sm ${
-                                      isSelected && i >= 15 && i <= 20
-                                        ? "bg-purple-600 dark:bg-purple-500"
-                                        : "bg-gray-200 dark:bg-gray-700"
-                                    }`}
-                                  ></div>
-                                )
-                              })}
-                          </div>
+                    <div className="space-y-3">
+                      {/* 1층 VIP석 (9줄 × 24석 = 216석) */}
+                      <div className="bg-yellow-50 dark:bg-yellow-900/10 border-2 border-yellow-300 dark:border-yellow-800 rounded-lg p-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-xs font-bold text-yellow-700 dark:text-yellow-500">1층 VIP석</div>
+                          <div className="text-[10px] text-yellow-600 dark:text-yellow-600">9줄 × 24석 = 216석</div>
                         </div>
-                      )}
+                        <div className="space-y-0.5">
+                          {Array.from({ length: 9 }, (_, i) =>
+                            renderSeatRow(
+                              "1층",
+                              "앞블럭",
+                              i + 1,
+                              bookingInfo.selected_seats,
+                              "bg-yellow-200 dark:bg-yellow-900/30",
+                            ),
+                          )}
+                        </div>
+                      </div>
 
-                      {/* S석 구역 표시 */}
-                      {bookingInfo.selected_seats.some((seat) => seat.includes("S") || seat.includes("2층")) && (
-                        <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded p-2">
-                          <div className="text-xs font-semibold text-purple-700 dark:text-purple-500 mb-1">S석 (2층)</div>
-                          <div className="grid grid-cols-12 gap-0.5">
-                            {Array(36)
-                              .fill(0)
-                              .map((_, i) => {
-                                const isSelected = bookingInfo.selected_seats.some(
-                                  (seat) => seat.includes("S석") || seat.includes("2층"),
-                                )
-                                return (
-                                  <div
-                                    key={i}
-                                    className={`h-3 rounded-sm ${
-                                      isSelected && i >= 15 && i <= 20
-                                        ? "bg-purple-600 dark:bg-purple-500"
-                                        : "bg-gray-200 dark:bg-gray-700"
-                                    }`}
-                                  ></div>
-                                )
-                              })}
-                          </div>
+                      {/* 1층 R석 (8줄 × 24석 = 192석) */}
+                      <div className="bg-red-50 dark:bg-red-900/10 border-2 border-red-300 dark:border-red-800 rounded-lg p-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-xs font-bold text-red-700 dark:text-red-500">1층 R석</div>
+                          <div className="text-[10px] text-red-600 dark:text-red-600">8줄 × 24석 = 192석</div>
                         </div>
-                      )}
+                        <div className="space-y-0.5">
+                          {Array.from({ length: 8 }, (_, i) =>
+                            renderSeatRow(
+                              "1층",
+                              "뒷블럭",
+                              i + 1,
+                              bookingInfo.selected_seats,
+                              "bg-red-200 dark:bg-red-900/30",
+                            ),
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 통로 */}
+                      <div className="relative py-2">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t-2 border-dashed border-gray-400 dark:border-gray-600"></div>
+                        </div>
+                        <div className="relative flex justify-center">
+                          <span className="bg-gray-50 dark:bg-gray-900 px-3 text-gray-600 dark:text-gray-400 text-xs font-medium">
+                            2층
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 2층 S석 (8줄 × 24석 = 192석) */}
+                      <div className="bg-blue-50 dark:bg-blue-900/10 border-2 border-blue-300 dark:border-blue-800 rounded-lg p-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-xs font-bold text-blue-700 dark:text-blue-500">2층 S석</div>
+                          <div className="text-[10px] text-blue-600 dark:text-blue-600">8줄 × 24석 = 192석</div>
+                        </div>
+                        <div className="space-y-0.5">
+                          {Array.from({ length: 8 }, (_, i) =>
+                            renderSeatRow(
+                              "2층",
+                              "전체",
+                              i + 1,
+                              bookingInfo.selected_seats,
+                              "bg-blue-200 dark:bg-blue-900/30",
+                            ),
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     {/* 범례 */}
-                    <div className="flex justify-center gap-3 mt-3 text-xs">
+                    <div className="flex justify-center gap-4 mt-3 text-xs">
                       <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 bg-purple-600 dark:bg-purple-500 rounded-sm"></div>
+                        <div className="w-2 h-2 bg-purple-600 dark:bg-purple-500 rounded-sm"></div>
                         <span className="text-gray-600 dark:text-gray-400">내 좌석</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
-                        <span className="text-gray-600 dark:text-gray-400">기타 좌석</span>
+                        <div className="w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-sm"></div>
+                        <span className="text-gray-600 dark:text-gray-400">다른 좌석</span>
                       </div>
                     </div>
                   </div>
@@ -351,8 +426,7 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
                 </CardContent>
               </Card>
             )
-          : // 예매 정보가 없을 때 표시
-            isLoading
+          : isLoading
             ? null
             : studentId &&
               name &&
@@ -377,7 +451,7 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
         {!bookingInfo && !isLoading && (
           <Card className="border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20">
             <CardContent className="p-4">
-              <p className="text-sm dark:text-purple-300 font-semibold mb-2 text-purple-600">📌 안내사항</p>
+              <p className="text-sm text-purple-600 dark:text-purple-300 font-semibold mb-2">📌 안내사항</p>
               <ul className="text-sm text-purple-600 dark:text-purple-400 space-y-1">
                 <li>• 공연을 선택하고 이름과 학번을 입력해주세요</li>
                 <li>• 예매 시 입력한 정보와 동일하게 입력해주세요</li>
