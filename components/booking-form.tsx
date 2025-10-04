@@ -254,7 +254,7 @@ export default function BookingForm({
           </Button>
           <Button variant="ghost" className="flex flex-col items-center space-y-1 text-purple-600 h-auto p-2">
             <Music className="h-5 w-5" />
-            <span className="text-xs font-bold">뮤지컬</span>
+            <span className="text-xs font-bold">공연</span>
           </Button>
           <Button
             variant="ghost"
@@ -268,7 +268,7 @@ export default function BookingForm({
             className="flex flex-col items-center space-y-1 text-gray-600 hover:text-purple-600 transition-colors h-auto p-2"
           >
             <User className="h-5 w-5" />
-            <span className="text-xs">프로필</span>
+            <span className="text-xs font-serif font-semibold">ARTE</span>
           </Button>
         </div>
       </footer>

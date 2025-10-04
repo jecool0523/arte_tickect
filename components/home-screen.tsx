@@ -146,7 +146,7 @@ export default function HomeScreen({ onNavigateToMusical, isMobile, onNavigateTo
             onClick={onNavigateToMusical}
           >
             <Music className="h-6 w-6" />
-            <span className="text-xs font-medium">뮤지컬</span>
+            <span className="text-xs font-medium">공연</span>
           </Button>
           <Button
             variant="ghost"
@@ -161,7 +161,7 @@ export default function HomeScreen({ onNavigateToMusical, isMobile, onNavigateTo
             className="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           >
             <User className="h-6 w-6" />
-            <span className="text-xs font-medium">프로필</span>
+            <span className="text-xs font-semibold font-serif">{"ARTE"}</span>
           </Button>
         </nav>
       </footer>

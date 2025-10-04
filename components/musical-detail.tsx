@@ -210,7 +210,7 @@ export default function MusicalDetail({
             className="flex flex-col items-center space-y-1 text-purple-600 dark:text-purple-400 h-auto p-2"
           >
             <Music className="h-5 w-5" />
-            <span className="text-xs font-bold">뮤지컬</span>
+            <span className="text-xs font-bold">공연</span>
           </Button>
           <Button
             variant="ghost"
@@ -224,7 +224,7 @@ export default function MusicalDetail({
             className="flex flex-col items-center space-y-1 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors h-auto p-2"
           >
             <User className="h-5 w-5" />
-            <span className="text-xs">프로필</span>
+            <span className="text-xs font-semibold font-serif">{"ARTE"}</span>
           </Button>
         </div>
       </footer>
