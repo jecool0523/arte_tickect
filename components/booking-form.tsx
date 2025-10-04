@@ -66,7 +66,7 @@ export default function BookingForm({
                   </p>
                   <p className="text-gray-500 text-sm">{musicalInfo.venue}</p>
                 </div>
-                <Badge className="bg-purple-100 text-purple-700 text-xs border-purple-200">
+                <Badge className="bg-purple-100 text-purple-700 text-xs border-purple-200 font-mono">
                   {musicalInfo.genre.replace(/[{}]/g, "")}
                 </Badge>
               </div>
@@ -149,7 +149,7 @@ export default function BookingForm({
                     id="name"
                     value={bookingData.name}
                     onChange={(e) => onInputChange("name", e.target.value)}
-                    placeholder="홍길동"
+                    placeholder="ex) 제시원"
                     required
                     disabled={isSubmitting}
                     className="border-gray-300 focus:border-purple-500 bg-white text-gray-900"
@@ -230,10 +230,11 @@ export default function BookingForm({
             <CardContent className="p-4">
               <p className="text-sm text-blue-700 font-semibold mb-2">📌 안내사항</p>
               <ul className="text-sm text-blue-600 space-y-1">
-                <li>• 좌석 선택 후 신청자 정보를 입력해주세요</li>
-                <li>• 공연 30분 전까지 입장해주세요</li>
-                <li>• 학생증을 반드시 지참해주세요</li>
-                <li>• 문의: 010-9928-6375</li>
+                <li>• 좌석선택 후 신청자 정보를 입력해주세요!</li>
+                <li>• 다수 예약일 경우 관람자 모두 작성 !    </li>
+                <li>• 공연 시간과 좌석에 맞춰 입장해주세요!    </li>
+                <li>• 🙏문의: 아르떼 인스타!  </li>
+                <li>• 재밌게 관람하기 🥰 </li>
               </ul>
             </CardContent>
           </Card>
