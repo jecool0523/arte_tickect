@@ -129,53 +129,6 @@ export const musicals: Record<string, MusicalInfo> = {
       { grade: "S석", description: "2층 전체 일반 좌석", color: "bg-blue-100 border-blue-300" },
     ],
   },
-
-  "your-lie-in-april": {
-    id: "your-lie-in-april",
-    title: "< 아르떼 : re >",
-    subtitle: "ARTE in dimi",
-    genre: "{ 뮤지컬 드라마 }",
-    special: "{ 클래식과 함께하는 감동! }",
-    runtime: "약 2시간 30분",
-    ageRating: "{ 전체 관람가 }",
-    venue: "어디든",
-    date: "2026년 7월 (예정)",
-    time: "미정",
-    posterImage: "/placeholder.svg?height=594&width=420",
-    cast: [
-      {
-        name: "아리마 코세이",
-        actor: "정우진",
-        intro: "피아노 신동이었지만 어머니의 죽음 후 피아노 소리를 들을 수 없게 된 소년.",
-        image: "/placeholder.svg?height=96&width=96",
-      },
-      {
-        name: "미야조노 카오리",
-        actor: "한예슬",
-        intro: "자유분방한 바이올리니스트로, 코세이의 삶에 새로운 색깔을 가져다준다.",
-        image: "/placeholder.svg?height=96&width=96",
-      },
-      {
-        name: "사와베 츠바키",
-        actor: "김소영",
-        intro: "코세이의 소꿉친구로, 그를 향한 마음을 품고 있다.",
-        image: "/placeholder.svg?height=96&width=96",
-      },
-      {
-        name: "와타리 료타",
-        actor: "이동현",
-        intro: "축구부 에이스이자 코세이의 친구로, 밝고 긍정적인 성격을 가지고 있다.",
-        image: "/placeholder.svg?height=96&width=96",
-      },
-    ],
-    synopsis: `피아노를 칠 수 없게 된 소년 코세이와 자유로운 바이올리니스트 카오리의 만남을 통해 음악과 사랑, 그리고 성장에 대한 아름다운 이야기를 그린 감동적인 뮤지컬입니다.`,
-    highlights: ["아름다운 클래식 음악", "감동적인 스토리", "청춘 로맨스", "성장 드라마"],
-    seatGrades: [
-      { grade: "VIP", description: "1층 앞블럭 최고급 좌석", color: "bg-yellow-100 border-yellow-300" },
-      { grade: "R석", description: "1층 뒷블럭 우수 좌석", color: "bg-red-100 border-red-300" },
-      { grade: "S석", description: "2층 전체 일반 좌석", color: "bg-blue-100 border-blue-300" },
-    ],
-  },
 }
 
 // 뮤지컬 ID로 정보를 가져오는 헬퍼 함수
