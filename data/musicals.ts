@@ -1,6 +1,53 @@
 import type { MusicalInfo } from "@/types/musical"
 
-export const musicals: Record<string, MusicalInfo> = {
+export const musicals: Record<string, MusicalInfo> = {  
+  rent: {
+    id: "rent",
+    title: "< RENT >",
+    subtitle: "Rent Musical",
+    genre: "{ 뮤지컬 드라마 }",
+    special: "{ 감동적인 스토리! }",
+    runtime: "약 2시간",
+    ageRating: "{ 청소년 관람가 }",
+    venue: "신관 4층 강당",
+    date: "2025년 12월 14일 (금) (예정)",
+    time: "방과후 1~2타임",
+    posterImage: "/rent_poster_re.png",
+    cast: [
+      {
+        name: "로저",
+        actor: "곽승현",
+        intro: "HIV에 감염된 뮤지션으로, 사랑과 예술에 대한 열정을 가지고 있다.",
+        image: "/placeholder.svg?height=96&width=96",
+      },
+      {
+        name: "미미",
+        actor: "전소현",
+        intro: "댄서이자 마약 중독자로, 로저와 사랑에 빠지게 된다.",
+        image: "/placeholder.svg?height=96&width=96",
+      },
+      {
+        name: "마크",
+        actor: "김승현",
+        intro: "영화감독 지망생으로, 친구들의 삶을 기록하려 한다.",
+        image: "/placeholder.svg?height=96&width=96",
+      },
+      {
+        name: "모린",
+        actor: "김보경",
+        intro: "퍼포먼스 아티스트로, 마크의 전 여자친구이다.",
+        image: "/placeholder.svg?height=96&width=96",
+      },
+    ],
+    synopsis: `1990년대 뉴욕 이스트 빌리지를 배경으로, HIV/AIDS의 그림자 아래 살아가는 젊은 예술가들의 사랑과 우정, 그리고 삶에 대한 이야기를 그린 감동적인 뮤지컬입니다.`,
+    highlights: ["브로드웨이 명작", "감동적인 음악", "현실적인 스토리", "청춘의 아름다움"],
+    seatGrades: [
+      { grade: "VIP", description: "1층 앞블럭 최고급 좌석", color: "bg-yellow-100 border-yellow-300" },
+      { grade: "R석", description: "1층 뒷블럭 우수 좌석", color: "bg-red-100 border-red-300" },
+      { grade: "S석", description: "2층 전체 일반 좌석", color: "bg-blue-100 border-blue-300" },
+    ],
+  },
+
   "dead-poets-society": {
     id: "dead-poets-society",
     title: "< 죽은 시인의 사회 >",
@@ -73,53 +120,6 @@ export const musicals: Record<string, MusicalInfo> = {
     ],
     synopsis: `엄격한 학교 '미디어 디지털 고등학교' 그 학교에 키팅 선생님이 오게되고, 그의 교육으로 학생들은 변해가는데...`,
     highlights: ["아르떼의 역작", "디미고 단독 공연", "교내 최고 캐스팅", "교훈있는 내용"],
-    seatGrades: [
-      { grade: "VIP", description: "1층 앞블럭 최고급 좌석", color: "bg-yellow-100 border-yellow-300" },
-      { grade: "R석", description: "1층 뒷블럭 우수 좌석", color: "bg-red-100 border-red-300" },
-      { grade: "S석", description: "2층 전체 일반 좌석", color: "bg-blue-100 border-blue-300" },
-    ],
-  },
-
-  rent: {
-    id: "rent",
-    title: "< RENT >",
-    subtitle: "Rent Musical",
-    genre: "{ 뮤지컬 드라마 }",
-    special: "{ 감동적인 스토리! }",
-    runtime: "약 2시간",
-    ageRating: "{ 청소년 관람가 }",
-    venue: "신관 4층 강당",
-    date: "2025년 12월 14일 (금) (예정)",
-    time: "방과후 1~2타임",
-    posterImage: "/rent_poster_re.png",
-    cast: [
-      {
-        name: "로저",
-        actor: "곽승현",
-        intro: "HIV에 감염된 뮤지션으로, 사랑과 예술에 대한 열정을 가지고 있다.",
-        image: "/placeholder.svg?height=96&width=96",
-      },
-      {
-        name: "미미",
-        actor: "전소현",
-        intro: "댄서이자 마약 중독자로, 로저와 사랑에 빠지게 된다.",
-        image: "/placeholder.svg?height=96&width=96",
-      },
-      {
-        name: "마크",
-        actor: "김승현",
-        intro: "영화감독 지망생으로, 친구들의 삶을 기록하려 한다.",
-        image: "/placeholder.svg?height=96&width=96",
-      },
-      {
-        name: "모린",
-        actor: "김보경",
-        intro: "퍼포먼스 아티스트로, 마크의 전 여자친구이다.",
-        image: "/placeholder.svg?height=96&width=96",
-      },
-    ],
-    synopsis: `1990년대 뉴욕 이스트 빌리지를 배경으로, HIV/AIDS의 그림자 아래 살아가는 젊은 예술가들의 사랑과 우정, 그리고 삶에 대한 이야기를 그린 감동적인 뮤지컬입니다.`,
-    highlights: ["브로드웨이 명작", "감동적인 음악", "현실적인 스토리", "청춘의 아름다움"],
     seatGrades: [
       { grade: "VIP", description: "1층 앞블럭 최고급 좌석", color: "bg-yellow-100 border-yellow-300" },
       { grade: "R석", description: "1층 뒷블럭 우수 좌석", color: "bg-red-100 border-red-300" },

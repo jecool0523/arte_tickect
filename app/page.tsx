@@ -11,7 +11,7 @@ import { getMusicalById } from "@/data/musicals"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { CheckCircle, Ticket, Loader2 } from "lucide-react"
+import { CheckCircle, Ticket, Loader2, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 type PageType = "info" | "form" | "seats" | "success"
@@ -49,7 +49,7 @@ export default function MusicalBookingSite() {
   const [statistics, setStatistics] = useState({ total_bookings: 0, total_seats_booked: 0, unique_students: 0 })
   const { toast } = useToast()
   const [isMobile, setIsMobile] = useState(false)
-  const [selectedMusicalId, setSelectedMusicalId] = useState<string | null>(null)
+  const [selectedMusicalId, setSelectedMusicalId] = useState<string>("dead-poets-society")
 
   // 모바일 감지
   useEffect(() => {
@@ -62,13 +62,8 @@ export default function MusicalBookingSite() {
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
-  const currentMusical = selectedMusicalId ? getMusicalById(selectedMusicalId) : getMusicalById("dead-poets-society")
-  const musicalInfo = currentMusical!
-
   // 좌석 상태 로드 (작품별) - 캐시 방지
   useEffect(() => {
-    if (!selectedMusicalId && currentPage === "booking") return
-
     const loadSeatStatus = async () => {
       setIsLoadingSeats(true)
       const musicalId = selectedMusicalId || "dead-poets-society"
@@ -106,7 +101,7 @@ export default function MusicalBookingSite() {
             setConnectionStatus("error")
             toast({
               title: "데이터베이스 설정 필요",
-              description: `${musicalInfo.title} SQL 스크립트를 실행하여 데이터베이스 테이블을 생성해주세요.`,
+              description: `${data.musicalTitle} SQL 스크립트를 실행하여 데이터베이스 테이블을 생성해주세요.`,
               variant: "destructive",
             })
           } else if (data.message && data.message.includes("오류")) {
@@ -153,6 +148,46 @@ export default function MusicalBookingSite() {
       if (intervalId) clearInterval(intervalId)
     }
   }, [toast, selectedMusicalId, currentPage])
+
+  const getMusicalInfo = () => {
+    const musicalId = selectedMusicalId || "dead-poets-society"
+    const musical = getMusicalById(musicalId)
+
+    if (!musical) {
+      console.error(`Musical not found for ID: ${musicalId}`)
+      // 기본값으로 대체
+      return getMusicalById("dead-poets-society")
+    }
+
+    return musical
+  }
+
+  const musicalInfo = getMusicalInfo()
+
+  // musicalInfo가 여전히 null인 경우 오류 화면 표시
+  if (!musicalInfo) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border border-red-200 bg-white shadow-lg">
+          <CardContent className="pt-6 text-center">
+            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">오류 발생</h2>
+            <p className="text-gray-600 mb-4">공연 정보를 불러올 수 없습니다.</p>
+            <Button
+              onClick={() => {
+                setSelectedMusicalId("dead-poets-society")
+                setCurrentScreen("home")
+                window.location.reload()
+              }}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              홈으로 돌아가기
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   const handleSeatClick = (seatId: string, seatGrade: string) => {
     if (bookingData.seatGrade && bookingData.seatGrade !== seatGrade) {
@@ -292,7 +327,19 @@ export default function MusicalBookingSite() {
   }
 
   const handleNavigateToMusical = (musicalId?: string) => {
-    setSelectedMusicalId(musicalId || "dead-poets-society")
+    const targetMusicalId = musicalId || "dead-poets-society"
+    const targetMusical = getMusicalById(targetMusicalId)
+
+    if (!targetMusical) {
+      toast({
+        title: "오류",
+        description: "선택한 공연 정보를 찾을 수 없습니다.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setSelectedMusicalId(targetMusicalId)
     setCurrentScreen("musical")
     setCurrentPage("info")
   }
@@ -332,7 +379,7 @@ export default function MusicalBookingSite() {
                   <strong>일시:</strong> {musicalInfo.date} {musicalInfo.time}
                 </p>
                 <p>
-                  <strong>좌석:</strong> {bookingData.seatGrade}석 {selectedSeats.length}매
+                  <strong>좌석:</strong> {bookingData.seatGrade} {selectedSeats.length}매
                 </p>
                 <p>
                   <strong>신청자:</strong> {bookingData.name} ({bookingData.studentId})
@@ -358,6 +405,7 @@ export default function MusicalBookingSite() {
               <Button
                 onClick={() => {
                   setCurrentPage("info")
+                  setCurrentScreen("home")
                   setBookingData({
                     seatGrade: "",
                     name: "",
@@ -374,7 +422,17 @@ export default function MusicalBookingSite() {
                 처음으로
               </Button>
               <Button
-                onClick={() => setCurrentPage("form")}
+                onClick={() => {
+                  setCurrentPage("form")
+                  setBookingData({
+                    seatGrade: "",
+                    name: bookingData.name,
+                    studentId: bookingData.studentId,
+                    specialRequest: "",
+                    agreeTerms: false,
+                  })
+                  setSelectedSeats([])
+                }}
                 className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
               >
                 추가 신청
