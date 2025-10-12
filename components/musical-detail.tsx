@@ -105,6 +105,65 @@ export default function MusicalDetail({
                   </div>
                 ))}
               </div>
+              <div>-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------</div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">캐스팅 정보</h3>
+              <div className="flex items-center space-x-4 overflow-x-auto pb-2 -mx-5 px-5">
+                {musicalInfo.cast.map((castMember, index) => (
+                  <div key={index} className="flex-shrink-0 text-center w-20">
+                    <div className="w-16 h-16 rounded-full mx-auto overflow-hidden bg-gray-200 dark:bg-gray-700">
+                      {castMember.image ? (
+                        <Image
+                          src={castMember.image || "/placeholder.svg"}
+                          alt={castMember.name}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <User className="h-8 w-8 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm font-medium text-gray-900 dark:text-white">{castMember.actor}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">{castMember.name} 역</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Cast Details */}
+              <div className="mt-6 space-y-4">
+                {musicalInfo.cast.map((castMember, index) => (
+                  <Card key={index} className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+                          {castMember.image ? (
+                            <Image
+                              src={castMember.image || "/placeholder.svg"}
+                              alt={castMember.name}
+                              width={40}
+                              height={40}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <User className="h-5 w-5 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-gray-900 dark:text-white">{castMember.name}</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{castMember.actor}</p>
+                        </div>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded border-l-4 border-purple-500">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{castMember.intro}"</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           )}
 
