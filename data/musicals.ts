@@ -62,6 +62,24 @@ export const musicals: Record<string, MusicalInfo> = {
         intro: "마크와 로저의 친구였지만 부자 아내와 결혼하고 건물주가 되었다. 거리의 부랑자들을 내몰고 멀티미디어 스튜디오를 운영하고 싶어 하여 친구들에게 지탄받지만, 마음 한 켠은 아직도 친구들의 자유로운 생활을 동경한다.",
         image: "/placeholder.svg?height=96&width=96",
       },
+      {
+        name: "앙상블",
+        actor: "조민서",
+        intro: "무대를 빛내주는 앙상블!",
+        image: "/placeholder.svg?height=96&width=96",
+      },
+      {
+        name: "앙상블",
+        actor: "변제규",
+        intro: "무대를 빛내주는 앙상블!",
+        image: "/placeholder.svg?height=96&width=96",
+      },
+      {
+        name: "앙상블",
+        actor: "김아린",
+        intro: "무대를 빛내주는 앙상블!",
+        image: "/placeholder.svg?height=96&width=96",
+      },
     ],
     synopsis: `1989년 12월 24일, 뉴욕 이스트빌리지. 영화감독을 꿈꾸는 마크와 음악가 로저는 오래된 아파트 다락방에서 난방도 끊긴 채 새해를 맞는다. 그들의 친구였던 베니는 부잣집 딸과 결혼 후 건물주가 되어 로저와 마크에게 월세를 독촉한다.
     과거 연인 에이프릴의 죽음 이후 로저는 세상에 남길 단 한 곡의 노래를 찾으며 고독하게 살아간다. 그런 그의 앞에 댄서 미미가 나타나고, 얼어붙은 마음은 조금씩 흔들리기 시작한다.

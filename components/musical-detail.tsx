@@ -125,7 +125,7 @@ export default function MusicalDetail({
                         </div>
                       )}
                     </div>
-                    <p className="mt-2 text-sm font-medium text-gray-900 dark:text-white">{castMember.actor}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white mt-2">{castMember.actor}</p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">{castMember.name} 역</p>
                   </div>
                 ))}
