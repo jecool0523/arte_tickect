@@ -62,13 +62,19 @@ export default function MusicalDetail({
 
         {/* Performance Info */}
         <div className="p-5">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            <div className="font-semibold text-gray-600 dark:text-gray-400">장소</div>
-            <div className="text-gray-900 dark:text-white">{musicalInfo.venue}</div>
-            <div className="font-semibold text-gray-600 dark:text-gray-400">관람시간</div>
-            <div className="text-gray-900 dark:text-white">{musicalInfo.runtime}</div>
-            <div className="font-semibold text-gray-600 dark:text-gray-400">관람연령</div>
-            <div className="text-gray-900 dark:text-white">{musicalInfo.ageRating}</div>
+          <div className="space-y-3 bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="font-semibold text-gray-600 dark:text-gray-400">장소</div>
+              <div className="text-gray-900 dark:text-white text-right">{musicalInfo.venue}</div>
+            </div>
+            <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="font-semibold text-gray-600 dark:text-gray-400">관람시간</div>
+              <div className="text-gray-900 dark:text-white text-right">{musicalInfo.runtime}</div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="font-semibold text-gray-600 dark:text-gray-400">관람연령</div>
+              <div className="text-gray-900 dark:text-white text-right">{musicalInfo.ageRating}</div>
+            </div>
           </div>
 
           {/* Tab Menu */}
@@ -105,7 +111,6 @@ export default function MusicalDetail({
                   </div>
                 ))}
               </div>
-              <div>-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------</div>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">캐스팅 정보</h3>
               <div className="flex items-center space-x-4 overflow-x-auto pb-2 -mx-5 px-5">
                 {musicalInfo.cast.map((castMember, index) => (
@@ -125,7 +130,7 @@ export default function MusicalDetail({
                         </div>
                       )}
                     </div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white mt-2">{castMember.actor}</p>
+                    <p className="mt-2 text-sm font-medium text-gray-900 dark:text-white">{castMember.actor}</p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">{castMember.name} 역</p>
                   </div>
                 ))}

@@ -1,84 +1,92 @@
 import type { MusicalInfo } from "@/types/musical"
 
-export const musicals: Record<string, MusicalInfo> = {  
+export const musicals: Record<string, MusicalInfo> = {
   rent: {
     id: "rent",
     title: "< RENT >",
-    subtitle: "Rent Musical",
-    genre: "{ 뮤지컬 드라마 }",
+    subtitle: "Musical Rent",
+    genre: "{ 락 뮤지컬 }",
     special: "{ 감동적인 스토리! }",
-    runtime: "약 2시간",
-    ageRating: "{ 청소년 관람가 }",
+    runtime: "약 1시간 10분",
+    ageRating: "{ 전부! }",
     venue: "신관 4층 강당",
-    date: "2025년 12월 14일 (금) (예정)",
-    time: "방과후 1~2타임",
-    posterImage: "/rent_poster_re.png",
+    date: "2025년 12월 23일! (화)",
+    time: "방과후 시간",
+    posterImage: "/rent-poster.png",
     cast: [
       {
         name: "로저",
         actor: "곽승현",
-        intro: "에이즈로 애인을 잃은 슬픔에 방황하며 사랑을 믿지 않는 음악가. HIV 양성반응자이며, 자신이 죽기 전에 의미 있는 곡을 쓰고 싶어 한다. ",
-        image: "/placeholder.svg?height=96&width=96",
+        intro:
+          "에이즈로 애인을 잃은 슬픔에 방황하며 사랑을 믿지 않는 음악가. HIV 양성반응자이며, 자신이 죽기 전에 의미 있는 곡을 쓰고 싶어 한다. ",
+        image: "/3.png",
       },
       {
         name: "미미",
         actor: "전소현",
         intro: "AIDS에 약물 중독인 클럽 댄서. 생이 얼마 남지 않았기 때문에 뜨거운 사랑이 더욱 소중하다고 생각한다.",
-        image: "/placeholder.svg?height=96&width=96",
+        image: "/2.png",
       },
       {
         name: "마크",
         actor: "김승현",
         intro: "영화 제작자이자 비디오 아티스트이며 로저의 절친한 친구. 친구들의 사랑과 죽음을 모두 목격하는 인물이다.",
-        image: "/placeholder.svg?height=96&width=96",
+        image: "/1.png",
       },
       {
         name: "모린",
         actor: "김보경",
         intro: "행위예술가이자 마크의 전 애인. 아름다운 외모와 자유분방한 성격으로 항상 애인들을 긴장시킨다.",
-        image: "/placeholder.svg?height=96&width=96",
+        image: "/4.png",
       },
       {
         name: "엔젤",
         actor: "오건우",
         intro: "드랙퀸이자 거리의 드러머. HIV 양성반응자이며, 모두에게 사랑을 깨우쳐주는 인물.",
-        image: "/placeholder.svg?height=96&width=96",
+        image: "/5.png",
       },
       {
         name: "콜린",
         actor: "조경윤",
         intro: "HIV 양성반응자. 컴퓨터 천재 엔젤과의 연애를 통해 진정한 사랑이 무엇인지 보여주는 인물.",
-        image: "/placeholder.svg?height=96&width=96",
+        image: "/6.png",
       },
       {
         name: "조앤",
         actor: "박소은",
         intro: "공익변호사이자 모린의 연인. 신중하고 꼼꼼한 성격으로, 정반대의 성격을 가진 모린과 항상 티격태격한다.",
-        image: "/placeholder.svg?height=96&width=96",
+        image: "/7.png",
       },
       {
         name: "베니",
         actor: "구민찬",
-        intro: "마크와 로저의 친구였지만 부자 아내와 결혼하고 건물주가 되었다. 거리의 부랑자들을 내몰고 멀티미디어 스튜디오를 운영하고 싶어 하여 친구들에게 지탄받지만, 마음 한 켠은 아직도 친구들의 자유로운 생활을 동경한다.",
-        image: "/placeholder.svg?height=96&width=96",
+        intro:
+          "마크와 로저의 친구였지만 부자 아내와 결혼하고 건물주가 되었다. 거리의 부랑자들을 내몰고 멀티미디어 스튜디오를 운영하고 싶어 하여 친구들에게 지탄받지만, 마음 한 켠은 아직도 친구들의 자유로운 생활을 동경한다.",
+        image: "/8.png",
       },
       {
         name: "앙상블",
         actor: "조민서",
         intro: "무대를 빛내주는 앙상블!",
-        image: "/placeholder.svg?height=96&width=96",
+        image: "/9.png",
       },
       {
         name: "앙상블",
         actor: "변제규",
         intro: "무대를 빛내주는 앙상블!",
-        image: "/placeholder.svg?height=96&width=96",
+        image: "/10.png",
       },
       {
         name: "앙상블",
         actor: "김아린",
         intro: "무대를 빛내주는 앙상블!",
-        image: "/placeholder.svg?height=96&width=96",
+        image: "/11.png",
+      },
+      {
+        name: "앙상블",
+        actor: "김지오",
+        intro: "무대를 빛내주는 앙상블!",
+        image: "/12.png",
       },
     ],
     synopsis: `1989년 12월 24일, 뉴욕 이스트빌리지. 영화감독을 꿈꾸는 마크와 음악가 로저는 오래된 아파트 다락방에서 난방도 끊긴 채 새해를 맞는다. 그들의 친구였던 베니는 부잣집 딸과 결혼 후 건물주가 되어 로저와 마크에게 월세를 독촉한다.
