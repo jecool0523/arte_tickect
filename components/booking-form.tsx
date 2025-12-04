@@ -196,7 +196,7 @@ export default function BookingForm({
                       className="border-gray-400 data-[state=checked]:bg-purple-600 data-[state=checked]:text-white"
                     />
                     <Label htmlFor="agreeTerms" className="text-sm text-gray-700 cursor-pointer">
-                      관람 예절을 지키겠습니다. <span className="text-red-500">*</span>
+                      아직 예매기간이 아닙니다! 12월 14일을 기대해주세요<span className="text-red-500">*</span>
                     </Label>
                   </div>
                 </div>
