@@ -59,3 +59,21 @@ INSERT INTO seat_status (seat_id, seat_grade, floor, status) VALUES
 ('O-23', 'A', '2층', 'unavailable'),
 ('P-10', 'A', '2층', 'unavailable'),
 ('P-17', 'A', '2층', 'unavailable');
+
+-- [추가] 보안 설정 (RLS) 적용
+-- bookings 테이블 보안 설정
+ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
+
+-- 정책: 누구나 읽기 가능
+CREATE POLICY "Anyone can read bookings" ON public.bookings
+    FOR SELECT USING (true);
+
+-- 정책: 누구나 쓰기(예약) 가능
+CREATE POLICY "Anyone can insert bookings" ON public.bookings
+    FOR INSERT WITH CHECK (true);
+
+-- seat_status 테이블 보안 설정 (테이블이 있다면)
+ALTER TABLE public.seat_status ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read seat_status" ON public.seat_status
+    FOR SELECT USING (true);
