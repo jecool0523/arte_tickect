@@ -364,7 +364,7 @@ export default function MusicalBookingSite() {
                 <Ticket className="h-6 w-6 text-gray-900 absolute -top-1 -right-1" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">신청 완료!</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">신청 기간이 아닙니다. 14일을 기다려주세요</h2>
 
             <div className="bg-gray-50 p-4 rounded-lg mb-6 text-left">
               <h3 className="font-semibold text-purple-600 mb-3">신청 정보</h3>
@@ -394,9 +394,10 @@ export default function MusicalBookingSite() {
             <div className="bg-blue-50 p-4 rounded-lg mb-6 text-sm text-gray-700">
               <p className="font-semibold text-blue-600 mb-2">안내사항</p>
               <ul className="text-left space-y-1 text-blue-700">
-                <li>• 공연 30분 전까지 입장해주세요</li>
-                <li>• 학생증을 지참해주세요</li>
-                <li>• 예매번호를 기억해두세요</li>
+                <li>• 아직 신청 기간이 아닙니다.</li>
+                <li>• 현재 예매된 좌석은 모두 초기화 예정입니다.</li>
+                <li>• 본 예매 시간을 기대해주세요!</li>
+                <li>• -12월 14일 오후 9시</li>
                 <li>• 문의: 아르떼 인스타로</li>
               </ul>
             </div>
