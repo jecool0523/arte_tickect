@@ -35,6 +35,47 @@ export async function POST(request: NextRequest, { params }: { params: { musical
 
     const supabase = createServerClient()
 
+    const { error: periodTableCheckError } = await supabase.from("arte_musical_application_period").select("count", { count: "exact", head: true })
+
+    if (periodTableCheckError) {
+      console.error("기간 테이블 확인 오류:", periodTableCheckError)
+      return NextResponse.json(
+        {
+          error: `${musicalId} 예매 기간 데이터가 존재하지 않습니다. 관리자에게 문의하세요.`,
+        },
+        { status: 500, headers },
+      )
+    }
+
+    const currentDate = new Date()
+    const { data: periodData, error: periodDataError } = await supabase
+      .from("arte_musical_application_period")
+      .select("start_time, end_time")
+      .eq("musical_name", musicalId)
+      .single()
+
+    if (periodDataError) {
+      console.error("기간 데이터 조회 오류:", periodDataError)
+      return NextResponse.json(
+        {
+          error: `${musicalId} 예매 기간 데이터를 불러오는 중 오류가 발생했습니다. 관리자에게 문의하세요.`,
+        },
+        { status: 500, headers },
+      )
+    }
+
+    const startDate = new Date(periodData.start_time)
+    const endDate = new Date(periodData.end_time)
+
+    if (currentDate < startDate || currentDate > endDate) {
+      return NextResponse.json(
+        {
+          error: `현재는 ${musicalId} 뮤지컬 예매 기간이 아닙니다. 예매 기간: ${startDate.toLocaleDateString()} ~ ${endDate.toLocaleDateString()}`,
+        },
+        { status: 403, headers },
+      )
+    }
+
     // 먼저 테이블 존재 여부 확인
     const { error: tableCheckError } = await supabase.from(tableName).select("count", { count: "exact", head: true })
 

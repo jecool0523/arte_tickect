@@ -11,10 +11,10 @@ import { getMusicalById } from "@/data/musicals"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { CheckCircle, Ticket, Loader2, AlertCircle } from "lucide-react"
+import { CheckCircle, Ticket, Loader2, AlertCircle, CircleAlert } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
-type PageType = "info" | "form" | "seats" | "success"
+type PageType = "info" | "form" | "seats" | "success" | "not_in_period"
 type ScreenType = "home" | "musical" | "verification"
 
 interface BookingData {
@@ -22,7 +22,6 @@ interface BookingData {
   name: string
   studentId: string
   specialRequest: string
-  agreeTerms: boolean
 }
 
 interface SuccessData {
@@ -39,7 +38,6 @@ export default function MusicalBookingSite() {
     name: "",
     studentId: "",
     specialRequest: "",
-    agreeTerms: false,
   })
   const [successData, setSuccessData] = useState<SuccessData | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -247,7 +245,7 @@ export default function MusicalBookingSite() {
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (selectedSeats.length === 0 || !bookingData.name || !bookingData.studentId || !bookingData.agreeTerms) {
+    if (selectedSeats.length === 0 || !bookingData.name || !bookingData.studentId) {
       toast({
         title: "입력 오류",
         description: "필수 항목을 모두 입력해주세요.",
@@ -290,6 +288,15 @@ export default function MusicalBookingSite() {
           setTimeout(() => {
             window.location.reload()
           }, 2000)
+          return
+        } else if (response.status === 403) {
+          setCurrentPage("not_in_period")
+          toast({
+            title: "신청 실패",
+            description: "예매 기간이 아닙니다.",
+            variant: "destructive",
+          })
+          console.error("예매 기간 아님 오류:", errorData.error)
           return
         }
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
@@ -364,7 +371,7 @@ export default function MusicalBookingSite() {
                 <Ticket className="h-6 w-6 text-gray-900 absolute -top-1 -right-1" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">신청 기간이 아닙니다. 14일을 기다려주세요</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">신청이 완료되었습니다!</h2>
 
             <div className="bg-gray-50 p-4 rounded-lg mb-6 text-left">
               <h3 className="font-semibold text-purple-600 mb-3">신청 정보</h3>
@@ -394,9 +401,6 @@ export default function MusicalBookingSite() {
             <div className="bg-blue-50 p-4 rounded-lg mb-6 text-sm text-gray-700">
               <p className="font-semibold text-blue-600 mb-2">안내사항</p>
               <ul className="text-left space-y-1 text-blue-700">
-                <li>• 아직 신청 기간이 아닙니다.</li>
-                <li>• 현재 예매된 좌석은 모두 초기화 예정입니다.</li>
-                <li>• 본 예매 시간을 기대해주세요!</li>
                 <li>• -12월 14일 오후 9시</li>
                 <li>• 문의: 아르떼 인스타로</li>
               </ul>
@@ -412,7 +416,6 @@ export default function MusicalBookingSite() {
                     name: "",
                     studentId: "",
                     specialRequest: "",
-                    agreeTerms: false,
                   })
                   setSelectedSeats([])
                   setSuccessData(null)
@@ -430,13 +433,51 @@ export default function MusicalBookingSite() {
                     name: bookingData.name,
                     studentId: bookingData.studentId,
                     specialRequest: "",
-                    agreeTerms: false,
                   })
                   setSelectedSeats([])
                 }}
                 className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
               >
                 추가 신청
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // 성공 페이지
+  if (currentPage === "not_in_period") {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        <Card className="w-full max-w-lg border border-gray-200 bg-white shadow-lg">
+          <CardContent className="pt-6 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                <CircleAlert className="h-16 w-16 text-red-500" />
+                <Ticket className="h-6 w-6 text-gray-900 absolute -top-1 -right-1" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">현재는 예매 기간이 아닙니다.</h2>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  setCurrentPage("info")
+                  setCurrentScreen("home")
+                  setBookingData({
+                    seatGrade: "",
+                    name: "",
+                    studentId: "",
+                    specialRequest: "",
+                  })
+                  setSelectedSeats([])
+                  setSuccessData(null)
+                }}
+                variant="outline"
+                className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                처음으로
               </Button>
             </div>
           </CardContent>
