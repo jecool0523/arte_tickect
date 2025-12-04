@@ -18,7 +18,6 @@ interface BookingFormProps {
     name: string
     studentId: string
     specialRequest: string
-    agreeTerms: boolean
   }
   selectedSeats: string[]
   onInputChange: (field: string, value: string | number | boolean) => void
@@ -186,29 +185,13 @@ export default function BookingForm({
                   />
                 </div>
 
-                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="agreeTerms"
-                      checked={bookingData.agreeTerms}
-                      onCheckedChange={(checked) => onInputChange("agreeTerms", checked as boolean)}
-                      disabled={isSubmitting}
-                      className="border-gray-400 data-[state=checked]:bg-purple-600 data-[state=checked]:text-white"
-                    />
-                    <Label htmlFor="agreeTerms" className="text-sm text-gray-700 cursor-pointer">
-                      아직 예매기간이 아닙니다! 12월 14일을 기대해주세요<span className="text-red-500">*</span>
-                    </Label>
-                  </div>
-                </div>
-
                 <Button
                   type="submit"
                   disabled={
                     isSubmitting ||
                     selectedSeats.length === 0 ||
                     !bookingData.name ||
-                    !bookingData.studentId ||
-                    !bookingData.agreeTerms
+                    !bookingData.studentId
                   }
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 font-bold text-base"
                 >
