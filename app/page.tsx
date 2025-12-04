@@ -464,17 +464,6 @@ export default function MusicalBookingSite() {
 
   // 좌석 선택 페이지
   if (currentPage === "seats") {
-    if (isLoadingSeats) {
-      return (
-        <div className="min-h-screen bg-white flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-purple-600" />
-            <p className="text-gray-600">최신 좌석 정보를 불러오는 중...</p>
-          </div>
-        </div>
-      )
-    }
-
     return (
       <SeatSelectionWindow
         seatGrades={musicalInfo.seatGrades}
