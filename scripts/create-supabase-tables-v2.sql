@@ -33,14 +33,16 @@ CREATE POLICY "Anyone can insert tickets" ON public.arte_musical_tickets
     FOR INSERT WITH CHECK (true);
 
 -- 업데이트 트리거 함수 생성 (이미 존재하면 교체)
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = '' -- [추가된 부분] 보안을 위해 검색 경로를 제한
+AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
-
+$$;
 -- 기존 트리거 삭제 후 재생성
 DROP TRIGGER IF EXISTS update_arte_tickets_updated_at ON public.arte_musical_tickets;
 CREATE TRIGGER update_arte_tickets_updated_at 
