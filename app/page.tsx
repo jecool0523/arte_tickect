@@ -256,6 +256,8 @@ export default function MusicalBookingSite() {
 
     setIsSubmitting(true)
 
+    const musicalId = selectedMusicalId || "dead-poets-society" 
+
     try {
       // 캐시 방지
       const timestamp = new Date().getTime()
