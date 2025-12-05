@@ -64,7 +64,7 @@ export default function ArteInfo({
                 <p className="text-sm text-gray-600 mb-4">
                    ARTE의 새로운 소식과 연습 과정, 비하인드 스토리를 인스타그램에서 확인하세요!
                 </p>
-                <Link href="https://www.instagram.com/DIMI_arte" target="_blank">
+                <Link href="https://www.instagram.com/arte_dimigo" target="_blank">
                   <Button variant="outline" className="w-full border-pink-200 text-pink-700 hover:bg-pink-50 hover:text-pink-800">
                      @arte_dimigo
                   </Button>
