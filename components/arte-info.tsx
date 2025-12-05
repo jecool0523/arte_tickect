@@ -35,7 +35,7 @@ export default function ArteInfo({
             <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center mb-4 shadow-inner">
                <span className="font-serif text-3xl font-bold text-purple-700">ARTE</span>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">KSA Musical ARTE</h2>
+            <h2 className="text-2xl font-bold text-gray-900">DIMI Musical ARTE</h2>
             <p className="text-gray-500 mt-1">디미고 유일 뮤지컬 동아리</p>
           </div>
 
@@ -64,7 +64,7 @@ export default function ArteInfo({
                 <p className="text-sm text-gray-600 mb-4">
                    ARTE의 새로운 소식과 연습 과정, 비하인드 스토리를 인스타그램에서 확인하세요!
                 </p>
-                <Link href="https://www.instagram.com/ksa_arte" target="_blank">
+                <Link href="https://www.instagram.com/DIMI_arte" target="_blank">
                   <Button variant="outline" className="w-full border-pink-200 text-pink-700 hover:bg-pink-50 hover:text-pink-800">
                      @arte_dimigo
                   </Button>
