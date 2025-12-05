@@ -238,10 +238,9 @@ export default function MusicalDetail({
 
           {activeTab === "관람후기" && (
             <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">관람후기</h3>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">관람후기 및 기대평</h3>
               {activeTab === "관람후기" && (
                 <div>
-                  {/* 기존의 '아직 등록된 후기가 없습니다' 부분 삭제하고 아래 한 줄 추가 */}
                   <ReviewSection musicalId={musicalInfo.id} />
                 </div>
               )}
