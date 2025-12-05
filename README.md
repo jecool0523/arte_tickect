@@ -17,17 +17,17 @@
 
 ## - 12.5일자 기준 추가된 기능
 1. PR 머지
-  1. 뮤지컬 티켓팅 시간 제한 적용
-  2. 시간 외 예매시 시간이 아님 오류창 출력
-  3. 로딩 스피너 삭제
-  4. 예매 기간 관리 DB 생성
-  5. 예매 기간 설정
+> 뮤지컬 티켓팅 시간 제한 적용
+> 시간 외 예매시 시간이 아님 오류창 출력
+> 로딩 스피너 삭제
+> 예매 기간 관리 DB 생성
+> 예매 기간 설정
 2. 보안문제 해결
-  1. app/api/bookings/route.ts 내부 GET 메서드에서 데이터 전송하는거 수정
-  2. Service Role Key 사용 제한 - 권한 수정
-  3. DB RLS 작동
-  4. function_search_path_mutable 경고 해결
-  5. vulnerable_postgres_version 경고 해결
+> app/api/bookings/route.ts 내부 GET 메서드에서 데이터 전송하는거 수정
+> Service Role Key 사용 제한 - 권한 수정
+> DB RLS 작동
+> function_search_path_mutable 경고 해결
+> vulnerable_postgres_version 경고 해결
 6. 예매 오류 발생시 오류 콘솔 UI 표현
 7. 구글, 네이버 검색엔진 최적화 설정
 8. 메타데이터 수정
