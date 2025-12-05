@@ -39,10 +39,7 @@ export async function GET(request: Request, { params }: { params: { musicalId: s
     const tableName = getTableName(musicalId)
     const supabase = createServerClient()
 
-    // 먼저 테이블 존재 여부 확인
-    const { data: tableCheck, error: tableError } = await supabase
-      .from(tableName)
-      .select("count", { count: "exact", head: true })
+    const { data: tableCheck, error: tableError } = await supabase.from(tableName).select("id").limit(1)
 
     if (tableError) {
       console.error("테이블 확인 오류:", tableError)
@@ -55,6 +52,19 @@ export async function GET(request: Request, { params }: { params: { musicalId: s
             statistics: defaultStatistics,
             message: `${musicalId} 데이터베이스 테이블이 생성되지 않았습니다. SQL 스크립트를 실행해주세요.`,
             needsSetup: true,
+          },
+          { headers },
+        )
+      }
+
+      if (tableError.code === "42501" || tableError.message.includes("permission denied")) {
+        console.error("RLS 권한 오류 - 기본값 반환:", tableError)
+        return NextResponse.json(
+          {
+            success: true,
+            unavailableSeats: defaultUnavailableSeats,
+            statistics: defaultStatistics,
+            message: "데이터베이스 권한 설정 필요 - 모든 좌석이 선택 가능합니다.",
           },
           { headers },
         )
@@ -76,7 +86,7 @@ export async function GET(request: Request, { params }: { params: { musicalId: s
       .from(tableName)
       .select("selected_seats, seat_grade")
       .eq("status", "confirmed")
-      .order("booking_date", { ascending: false }) // 최신 예매 우선
+      .order("booking_date", { ascending: false })
 
     if (error) {
       console.error("좌석 상태 조회 오류:", error)
@@ -148,7 +158,7 @@ export async function GET(request: Request, { params }: { params: { musicalId: s
         message: bookings?.length
           ? `${bookings.length}개의 예매 정보를 불러왔습니다.`
           : "예매 정보가 없습니다. 모든 좌석이 선택 가능합니다.",
-        timestamp: new Date().toISOString(), // 응답 시간 추가
+        timestamp: new Date().toISOString(),
       },
       { headers },
     )
