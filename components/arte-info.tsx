@@ -36,7 +36,7 @@ export default function ArteInfo({
                <span className="font-serif text-3xl font-bold text-purple-700">ARTE</span>
             </div>
             <h2 className="text-2xl font-bold text-gray-900">KSA Musical ARTE</h2>
-            <p className="text-gray-500 mt-1">한국과학영재학교 유일 뮤지컬 동아리</p>
+            <p className="text-gray-500 mt-1">디미고 유일 뮤지컬 동아리</p>
           </div>
 
           {/* 소개 카드 */}
@@ -66,7 +66,7 @@ export default function ArteInfo({
                 </p>
                 <Link href="https://www.instagram.com/ksa_arte" target="_blank">
                   <Button variant="outline" className="w-full border-pink-200 text-pink-700 hover:bg-pink-50 hover:text-pink-800">
-                     @ksa_arte 팔로우하기
+                     @arte_dimigo
                   </Button>
                 </Link>
              </CardContent>
