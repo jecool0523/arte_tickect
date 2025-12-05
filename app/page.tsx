@@ -7,7 +7,6 @@ import BookingForm from "@/components/booking-form"
 import SeatSelectionWindow from "@/components/seat-selection-window"
 import ArteInfo from "@/components/arte-info"
 import BookingVerification from "@/components/booking-verification"
-import { getMusicalById } from "@/data/musicals"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
