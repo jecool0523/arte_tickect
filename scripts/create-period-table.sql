@@ -14,11 +14,13 @@ ALTER TABLE public.arte_musical_application_period ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read access" ON public.arte_musical_application_period;
 CREATE POLICY "Public read access" ON public.arte_musical_application_period FOR SELECT USING (true);
 
--- 3. 뮤지컬별 예매 기간 데이터 삽입 (현재 시간 기준 오픈)
--- 'rent', 'dead-poets-society', 'your-lie-in-april' 3개 작품 모두 등록
+-- 3. 뮤지컬별 예매 기간 데이터 삽입
 INSERT INTO public.arte_musical_application_period (musical_name, start_time, end_time)
 VALUES 
-    ('rent', NOW() - INTERVAL '1 day', NOW() + INTERVAL '7 days'),
+    -- RENT: 2025년 12월 14일 밤 9시 오픈 ~ 25일 자정 종료
+    ('rent', '2025-12-14 21:00:00+09', '2025-12-25 23:59:59+09'),
+
+    -- 다른 공연들 (필요하다면 여기도 날짜를 지정해주세요. 현재는 '상시 예매 가능' 상태입니다)
     ('dead-poets-society', NOW() - INTERVAL '1 day', NOW() + INTERVAL '7 days'),
     ('your-lie-in-april', NOW() - INTERVAL '1 day', NOW() + INTERVAL '7 days')
 ON CONFLICT (musical_name) 
