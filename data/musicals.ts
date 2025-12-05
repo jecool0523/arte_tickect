@@ -8,7 +8,7 @@ export const musicals: Record<string, MusicalInfo> = {
     genre: "{ 락 뮤지컬 }",
     special: "{ 감동적인 스토리! }",
     runtime: "약 1시간 10분",
-    ageRating: "{ 전부! }",
+    ageRating: " 전부! ",
     venue: "신관 4층 강당",
     date: "2025년 12월 23일! (화)",
     time: "방과후 시간",
