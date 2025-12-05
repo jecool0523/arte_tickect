@@ -12,7 +12,7 @@ import { getMusicalById } from "@/data/musicals"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { CheckCircle, Ticket, Loader2, AlertCircle, CircleAlert } from "lucide-react"
+import { CheckCircle, Ticket, AlertCircle, CircleAlert } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 type PageType = "info" | "form" | "seats" | "success" | "not_in_period"
@@ -264,7 +264,7 @@ export default function MusicalBookingSite() {
 
     setIsSubmitting(true)
 
-    const musicalId = selectedMusicalId || "dead-poets-society" 
+    const musicalId = selectedMusicalId || "dead-poets-society"
 
     try {
       // 캐시 방지
@@ -342,7 +342,7 @@ export default function MusicalBookingSite() {
       console.error("예매 요청 실패:", error)
 
       const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다."
-      
+
       toast({
         title: "시스템 오류",
         description: errorMessage,
@@ -369,10 +369,6 @@ export default function MusicalBookingSite() {
     setSelectedMusicalId(targetMusicalId)
     setCurrentScreen("musical")
     setCurrentPage("info")
-  }
-
-  const handleNavigateToHome = () => {
-    setCurrentScreen("home")
   }
 
   const handleNavigateToVerification = () => {
@@ -545,11 +541,11 @@ export default function MusicalBookingSite() {
   if (currentScreen === "verification") {
     return <BookingVerification onBack={handleNavigateToHome} />
   }
-  
-  // 3. [추가] ARTE 화면 렌더링 로직 (return문들 사이에 추가)
+
+  // ARTE 화면 렌더링 로직
   if (currentScreen === "arte") {
     return (
-      <ArteInfo 
+      <ArteInfo
         onNavigateToHome={handleNavigateToHome}
         onNavigateToMusical={() => handleNavigateToMusical()}
         onNavigateToVerification={handleNavigateToVerification}
