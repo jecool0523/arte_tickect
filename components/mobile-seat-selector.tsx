@@ -237,8 +237,8 @@ export default function MobileSeatSelector({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setSeatCount(Math.min(8, seatCount + 1))}
-                  disabled={seatCount >= 8 || seatCount >= getAvailableSeatsCount(selectedGrade)}
+                  onClick={() => setSeatCount(Math.min(100, seatCount + 1))}
+                  disabled={seatCount >= 100 || seatCount >= getAvailableSeatsCount(selectedGrade)}
                   className="w-8 h-8 p-0"
                 >
                   <Plus className="h-4 w-4" />

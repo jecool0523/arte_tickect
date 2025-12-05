@@ -197,10 +197,10 @@ export default function MusicalBookingSite() {
       return
     }
 
-    if (selectedSeats.length >= 8 && !selectedSeats.includes(seatId)) {
+    if (selectedSeats.length >= 100 && !selectedSeats.includes(seatId)) {
       toast({
         title: "선택 제한",
-        description: "최대 8개의 좌석까지 선택할 수 있습니다.",
+        description: "최대 100개의 좌석까지 선택할 수 있습니다.",
         variant: "destructive",
       })
       return
@@ -255,7 +255,6 @@ export default function MusicalBookingSite() {
     }
 
     setIsSubmitting(true)
-    const musicalId = selectedMusicalId || "dead-poets-society"
 
     try {
       // 캐시 방지
@@ -277,7 +276,14 @@ export default function MusicalBookingSite() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
+        const errorData = await response.json().catch(() => ({}))
+        toast({
+          title: "요청 실패",
+          // 서버에서 보낸 error 메시지가 있으면 보여주고, 없으면 상태 텍스트 표시
+          description: errorData.error || `오류 발생 (${response.status}): ${response.statusText}`,
+          variant: "destructive",
+        })
+
         if (response.status === 409 && errorData.conflictSeats) {
           toast({
             title: "좌석 충돌",
@@ -300,6 +306,7 @@ export default function MusicalBookingSite() {
           return
         }
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+        return
       }
 
       const data = await response.json()
@@ -323,9 +330,12 @@ export default function MusicalBookingSite() {
       }
     } catch (error) {
       console.error("예매 요청 실패:", error)
+
+      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다."
+      
       toast({
-        title: "네트워크 오류",
-        description: "서버와의 연결에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+        title: "시스템 오류",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
