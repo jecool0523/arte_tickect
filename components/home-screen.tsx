@@ -112,27 +112,27 @@ export default function HomeScreen({ onNavigateToMusical, isMobile, onNavigateTo
         <div className="px-4 pb-8">
           <div 
             onClick={onNavigateToArte}
-            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-gray-900 p-5 shadow-lg cursor-pointer transition-all active:scale-95"
+            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-5 shadow-lg shadow-gray-200 cursor-pointer transition-all active:scale-95 border border-slate-700"
           >
-            {/* 배경 데코레이션 */}
-            <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white/10 blur-xl"></div>
-            <div className="absolute bottom-0 left-0 -mb-4 -ml-4 h-16 w-16 rounded-full bg-purple-500/20 blur-lg"></div>
+            {/* 배경 데코레이션 (조명 효과) */}
+            <div className="absolute top-0 right-0 -mt-6 -mr-6 h-32 w-32 rounded-full bg-purple-500/20 blur-2xl"></div>
+            <div className="absolute bottom-0 left-0 -mb-6 -ml-6 h-24 w-24 rounded-full bg-indigo-500/10 blur-xl"></div>
 
             <div className="relative z-10 flex items-center justify-between">
               <div>
-                <span className="inline-block rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white mb-2 backdrop-blur-sm">
-                  DIMI ARTE
+                <span className="inline-block rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-purple-400 mb-2 backdrop-blur-sm border border-white/5">
+                  DIMI-ARTE
                 </span>
-                <h3 className="text-lg font-bold text-white leading-tight">
-                  아르떼가 궁금하다면?
+                <h3 className="text-lg font-bold text-white leading-tight tracking-wide">
+                  What is ARTE?
                 </h3>
-                <p className="mt-1 text-xs text-gray-300">
-                  동아리 소개 및 인스타 
+                <p className="mt-1 text-xs text-gray-400 font-medium">
+                  디미고 유일 뮤지컬 동아리 소개
                 </p>
               </div>
               
-              {/* 아이콘 버튼 */}
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-900 shadow-sm group-hover:scale-110 transition-transform">
+              {/* 아이콘 버튼 (다크 모드에 맞게) */}
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white border border-white/10 shadow-sm group-hover:bg-white group-hover:text-black transition-all duration-300">
                 <Info className="h-5 w-5" />
               </div>
             </div>
