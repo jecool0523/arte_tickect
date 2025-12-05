@@ -148,7 +148,7 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
         <CardContent className="p-4 space-y-4">
           <h3 className="font-bold text-sm text-gray-700 flex items-center gap-2">
             <Star className="w-4 h-4 text-purple-500 fill-purple-500" />
-            후기 작성하기
+            작성하기
           </h3>
           
           <div className="flex gap-2">
@@ -178,7 +178,7 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
           </div>
 
           <Textarea 
-            placeholder="공연 어떠셨나요? 솔직한 후기를 남겨주세요!" 
+            placeholder="공연 기대되시나요? 공연 어떠셨나요? 솔직한 마음를 남겨주세요!" 
             value={form.content}
             onChange={(e) => setForm({...form, content: e.target.value})}
             className="bg-white resize-none h-24"

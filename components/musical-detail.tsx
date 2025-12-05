@@ -22,7 +22,7 @@ export default function MusicalDetail({
 }: MusicalDetailProps) {
   const [activeTab, setActiveTab] = useState("공연정보")
 
-  const tabs = ["공연정보", "캐스팅", "관람후기"]
+  const tabs = ["공연정보", "캐스팅", "기대평 및 관람후기"]
 
   return (
     <div className="relative flex flex-col min-h-screen w-full bg-white dark:bg-gray-900">
@@ -236,10 +236,10 @@ export default function MusicalDetail({
             </div>
           )}
 
-          {activeTab === "관람후기" && (
+          {activeTab === "기대평 및 관람후기" && (
             <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">관람후기 및 기대평</h3>
-              {activeTab === "관람후기" && (
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">기대평 및 관람후기</h3>
+              {activeTab === "기대평 및 관람후기" && (
                 <div>
                   <ReviewSection musicalId={musicalInfo.id} />
                 </div>
