@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Home, Music, Ticket, User, CheckCircle2 } from "lucide-react"
+import { Search, Home, Music, Ticket, User, CheckCircle2, Info } from "lucide-react"
 import Image from "next/image"
 import { getAllMusicals } from "@/data/musicals"
 
@@ -121,13 +121,13 @@ export default function HomeScreen({ onNavigateToMusical, isMobile, onNavigateTo
             <div className="relative z-10 flex items-center justify-between">
               <div>
                 <span className="inline-block rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white mb-2 backdrop-blur-sm">
-                  KSA ARTE
+                  DIMI ARTE
                 </span>
                 <h3 className="text-lg font-bold text-white leading-tight">
                   아르떼가 궁금하다면?
                 </h3>
                 <p className="mt-1 text-xs text-gray-300">
-                  동아리 소개 및 부원 모집 안내
+                  동아리 소개 및 인스타 
                 </p>
               </div>
               
