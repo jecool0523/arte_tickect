@@ -355,31 +355,31 @@ export default function MusicalBookingSite() {
   }
 
   const handleNavigateToMusical = (musicalId?: string | object) => {
-      // 1. 모든 공연 목록을 가져옵니다.
-      const allMusicals = getAllMusicals()
-      
-      // 2. 이동할 목표 ID를 결정합니다.
-      // - musicalId가 문자열로 들어왔다면? -> 그 공연으로 이동
-      // - 버튼을 그냥 눌러서(이벤트 객체) 왔다면? -> 목록의 첫 번째(0번) 공연으로 이동
-      const targetMusicalId = (typeof musicalId === 'string') 
-        ? musicalId 
-        : allMusicals[0]?.id || "dead-poets-society" // 만약 목록이 비었다면 기본값 사용
+    // 1. 모든 공연 목록을 가져옵니다.
+    const allMusicals = getAllMusicals()
+    
+    // 2. 이동할 목표 ID를 결정합니다.
+    // - musicalId가 문자열로 들어왔다면? -> 그 공연으로 이동
+    // - 버튼을 그냥 눌러서(이벤트 객체) 왔다면? -> 목록의 첫 번째(0번) 공연으로 이동
+    const targetMusicalId = (typeof musicalId === 'string') 
+      ? musicalId 
+      : allMusicals[0]?.id || "dead-poets-society" // 만약 목록이 비었다면 기본값 사용
 
-      const targetMusical = getMusicalById(targetMusicalId)
+    const targetMusical = getMusicalById(targetMusicalId)
 
-      if (!targetMusical) {
-        toast({
-          title: "오류",
-          description: "선택한 공연 정보를 찾을 수 없습니다.",
-          variant: "destructive",
-        })
-        return
-      }
-
-      setSelectedMusicalId(targetMusicalId)
-      setCurrentScreen("musical")
-      setCurrentPage("info")
+    if (!targetMusical) {
+      toast({
+        title: "오류",
+        description: "선택한 공연 정보를 찾을 수 없습니다.",
+        variant: "destructive",
+      })
+      return
     }
+
+    setSelectedMusicalId(targetMusicalId)
+    setCurrentScreen("musical")
+    setCurrentPage("info")
+  }
 
   const handleNavigateToVerification = () => {
     setCurrentScreen("verification")
