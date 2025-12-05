@@ -10,15 +10,17 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: {
     template: "%s | DIMI-ARTE",
-    default: "DIMI-ARTE - 디미고 뮤지컬 동아리 아르떼 공식 사이트",
+    default: "디미고 아르떼 공식",
   },
   description: "한국 디지털 미디어 고등학교(DIMIGO)의 연극/뮤지컬 동아리 ARTE 공식 사이트입니다.",
   keywords: [
     "뮤지컬",
     "예매",
     "티켓",
+    "tickecting",
     "ARTE",
     "아르떼",
+    "arte",
     "DIMI",
     "dimigo",
     "한국디지털미디어고등학교",
@@ -35,7 +37,7 @@ export const metadata: Metadata = {
     siteName: "DIMI-ARTE",
     images: [
       {
-        url: "/poster.jpg",
+        url: "/rent-poster.jpg",
         width: 1200,
         height: 630,
       },

@@ -5,6 +5,7 @@ import HomeScreen from "@/components/home-screen"
 import MusicalDetail from "@/components/musical-detail"
 import BookingForm from "@/components/booking-form"
 import SeatSelectionWindow from "@/components/seat-selection-window"
+import ArteInfo from "@/components/arte-info"
 import BookingVerification from "@/components/booking-verification"
 import { getMusicalById } from "@/data/musicals"
 
@@ -15,7 +16,7 @@ import { CheckCircle, Ticket, Loader2, AlertCircle, CircleAlert } from "lucide-r
 import { useToast } from "@/hooks/use-toast"
 
 type PageType = "info" | "form" | "seats" | "success" | "not_in_period"
-type ScreenType = "home" | "musical" | "verification"
+type ScreenType = "home" | "musical" | "verification" | "arte"
 
 interface BookingData {
   seatGrade: string
@@ -48,6 +49,13 @@ export default function MusicalBookingSite() {
   const { toast } = useToast()
   const [isMobile, setIsMobile] = useState(false)
   const [selectedMusicalId, setSelectedMusicalId] = useState<string>("dead-poets-society")
+  const handleNavigateToArte = () => {
+    setCurrentScreen("arte")
+  }
+  const handleNavigateToHome = () => {
+    setCurrentScreen("home")
+    setCurrentPage("info")
+  }
 
   // 모바일 감지
   useEffect(() => {
@@ -537,6 +545,17 @@ export default function MusicalBookingSite() {
   if (currentScreen === "verification") {
     return <BookingVerification onBack={handleNavigateToHome} />
   }
+  
+  // 3. [추가] ARTE 화면 렌더링 로직 (return문들 사이에 추가)
+  if (currentScreen === "arte") {
+    return (
+      <ArteInfo 
+        onNavigateToHome={handleNavigateToHome}
+        onNavigateToMusical={() => handleNavigateToMusical()}
+        onNavigateToVerification={handleNavigateToVerification}
+      />
+    )
+  }
 
   // 작품 소개 페이지
   if (currentScreen === "musical") {
@@ -556,6 +575,7 @@ export default function MusicalBookingSite() {
       onNavigateToMusical={handleNavigateToMusical}
       isMobile={isMobile}
       onNavigateToVerification={handleNavigateToVerification}
+      onNavigateToArte={handleNavigateToArte}
     />
   )
 }

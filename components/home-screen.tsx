@@ -10,9 +10,10 @@ interface HomeScreenProps {
   onNavigateToMusical: (musicalId: string) => void
   isMobile: boolean
   onNavigateToVerification: () => void
+  onNavigateToArte: () => void
 }
 
-export default function HomeScreen({ onNavigateToMusical, isMobile, onNavigateToVerification }: HomeScreenProps) {
+export default function HomeScreen({ onNavigateToMusical, isMobile, onNavigateToVerification,onNavigateToArte }: HomeScreenProps) {
   const allMusicals = getAllMusicals()
 
   const popularTickets = allMusicals.map((musical, index) => ({
@@ -159,6 +160,7 @@ export default function HomeScreen({ onNavigateToMusical, isMobile, onNavigateTo
           <Button
             variant="ghost"
             className="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            onClick={onNavigateToArte}
           >
             <User className="h-6 w-6" />
             <span className="text-xs font-semibold font-serif">{"ARTE"}</span>
