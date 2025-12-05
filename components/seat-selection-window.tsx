@@ -229,7 +229,7 @@ export default function SeatSelectionWindow({
   }, [selectedFloor, unavailableSeats, seatGrades])
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-[100dvh] bg-gray-50">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
         <div className="flex items-center justify-between p-3">

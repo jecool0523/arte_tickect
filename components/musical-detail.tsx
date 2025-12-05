@@ -248,7 +248,7 @@ export default function MusicalDetail({
       </main>
 
       {/* Fixed Bottom Section */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-30">
+      <footer className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-30 pb-[env(safe-area-inset-bottom)]">
         {/* Booking Button */}
         <div className="px-4 pt-3 pb-2">
           <Button

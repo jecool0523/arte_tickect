@@ -225,7 +225,7 @@ export default function BookingForm({
       </main>
 
       {/* Fixed Bottom Navigation */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
+      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 pb-[env(safe-area-inset-bottom)]">
         <div className="flex justify-around items-start pt-1 pb-2">
           <Button
             variant="ghost"
