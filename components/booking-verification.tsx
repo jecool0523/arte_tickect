@@ -34,6 +34,7 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
   const musicals = getAllMusicals()
 
   const handleVerify = async () => {
+    // 입력값 체크 (기존과 동일)
     if (!studentId || !name || !selectedMusicalId) {
       toast({
         title: "입력 오류",
@@ -44,39 +45,36 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
     }
 
     setIsLoading(true)
-    setBookingInfo(null)
+    setBookingInfo(null) // 초기화
 
     try {
-      const response = await fetch(`/api/bookings/${selectedMusicalId}`)
-
-      if (!response.ok) {
-        throw new Error("예매 정보를 불러올 수 없습니다.")
-      }
+      // [수정된 부분] GET 대신 POST로, 그리고 새로 만든 verify 엔드포인트 호출
+      const response = await fetch("/api/bookings/verify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          studentId: studentId.trim(),
+          musicalId: selectedMusicalId, // 필요하다면 전달 (DB 구조에 따라 다름)
+        }),
+      })
 
       const data = await response.json()
 
-      if (data.success && data.bookings) {
-        const matching = data.bookings.find(
-          (booking: BookingInfo) => booking.student_id === studentId && booking.name.trim() === name.trim(),
-        )
-
-        if (matching) {
-          setBookingInfo(matching)
-          toast({
-            title: "예매 확인 완료",
-            description: "예매 정보를 찾았습니다.",
-          })
-        } else {
-          toast({
-            title: "예매 정보 없음",
-            description: "해당 학번과 이름으로 예매된 정보가 없습니다.",
-            variant: "destructive",
-          })
-        }
-      } else {
+      if (response.ok && data.success && data.booking) {
+        // 성공 시 데이터 설정
+        setBookingInfo(data.booking)
         toast({
-          title: "조회 실패",
-          description: "예매 정보를 불러올 수 없습니다.",
+          title: "예매 확인 완료",
+          description: "예매 정보를 찾았습니다.",
+        })
+      } else {
+        // 실패 (404 Not Found 등)
+        toast({
+          title: "예매 정보 없음",
+          description: "해당 학번과 이름으로 예매된 정보가 없습니다.",
           variant: "destructive",
         })
       }
