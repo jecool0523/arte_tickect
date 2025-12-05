@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createAdminClient } from "@/lib/supabase"
+import { createServerClient } from "@/lib/supabase"
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,8 +11,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "필수 정보가 누락되었습니다." }, { status: 400 })
     }
 
-    const supabase = createAdminClient()
-    
+    const supabase = createServerClient()
+
     // 먼저 테이블 존재 여부 확인
     const { error: tableCheckError } = await supabase
       .from("arte_musical_tickets")
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const supabase = createAdminClient()
+    const supabase = createServerClient()
 
     // 테이블 존재 여부 확인
     const { error: tableCheckError } = await supabase
