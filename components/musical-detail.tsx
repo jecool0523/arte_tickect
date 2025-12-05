@@ -5,6 +5,7 @@ import { ArrowLeft, Home, Music, Ticket, User } from "lucide-react"
 import Image from "next/image"
 import type { MusicalInfo } from "@/types/musical"
 import { useState } from "react"
+import ReviewSection from "@/components/review-section"
 
 interface MusicalDetailProps {
   musicalInfo: MusicalInfo
@@ -238,10 +239,12 @@ export default function MusicalDetail({
           {activeTab === "관람후기" && (
             <div>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">관람후기</h3>
-              <div className="text-center py-12">
-                <p className="text-gray-500 dark:text-gray-400">아직 등록된 관람후기가 없습니다.</p>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">공연 관람 후 첫 번째 후기를 남겨보세요!</p>
-              </div>
+              {activeTab === "관람후기" && (
+                <div>
+                  {/* 기존의 '아직 등록된 후기가 없습니다' 부분 삭제하고 아래 한 줄 추가 */}
+                  <ReviewSection musicalId={musicalInfo.id} />
+                </div>
+              )}
             </div>
           )}
         </div>
