@@ -108,6 +108,37 @@ export default function HomeScreen({ onNavigateToMusical, isMobile, onNavigateTo
           </div>
         </section>
 
+        {/* ARTE 소개 배너 (인기 이벤트 바로 위) */}
+        <div className="px-4 pb-8">
+          <div 
+            onClick={onNavigateToArte}
+            className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-gray-900 p-5 shadow-lg cursor-pointer transition-all active:scale-95"
+          >
+            {/* 배경 데코레이션 */}
+            <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white/10 blur-xl"></div>
+            <div className="absolute bottom-0 left-0 -mb-4 -ml-4 h-16 w-16 rounded-full bg-purple-500/20 blur-lg"></div>
+
+            <div className="relative z-10 flex items-center justify-between">
+              <div>
+                <span className="inline-block rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white mb-2 backdrop-blur-sm">
+                  KSA ARTE
+                </span>
+                <h3 className="text-lg font-bold text-white leading-tight">
+                  아르떼가 궁금하다면?
+                </h3>
+                <p className="mt-1 text-xs text-gray-300">
+                  동아리 소개 및 부원 모집 안내
+                </p>
+              </div>
+              
+              {/* 아이콘 버튼 */}
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-900 shadow-sm group-hover:scale-110 transition-transform">
+                <Info className="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+        </div>
+        
         {/* Popular Events Section */}
         <section className="px-4 pb-20">
           <h2 className="pb-3 text-xl font-bold text-gray-900 dark:text-white">인기 이벤트</h2>
