@@ -5,9 +5,10 @@ import { createServerClient } from "@/lib/supabase"
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
+// 👇 [수정] 기본값의 키를 "R" -> "R석", "S" -> "S석"으로 변경
 const defaultUnavailableSeats = {
-  "1층": { VIP: [], R: [] },
-  "2층": { S: [] },
+  "1층": { "VIP": [], "R석": [] },
+  "2층": { "S석": [] },
 }
 
 const defaultStatistics = {
@@ -101,10 +102,10 @@ export async function GET(request: Request, { params }: { params: { musicalId: s
       )
     }
 
-    // 예매된 좌석들을 층별, 등급별로 분류
+    // 👇 [수정] 분류 객체의 키도 "R" -> "R석", "S" -> "S석"으로 변경
     const unavailableSeats: Record<string, Record<string, string[]>> = {
-      "1층": { VIP: [], R: [] },
-      "2층": { S: [] },
+      "1층": { "VIP": [], "R석": [] },
+      "2층": { "S석": [] },
     }
 
     bookings?.forEach((booking) => {
@@ -114,10 +115,12 @@ export async function GET(request: Request, { params }: { params: { musicalId: s
           if (seatGrade === "VIP") {
             unavailableSeats["1층"]["VIP"].push(seatId)
           } else if (seatGrade === "R석") {
-            unavailableSeats["1층"]["R"].push(seatId)
+            // 👇 [수정] "R" -> "R석"
+            unavailableSeats["1층"]["R석"].push(seatId)
           }
         } else if (seatId.startsWith("2층")) {
-          unavailableSeats["2층"]["S"].push(seatId)
+          // 👇 [수정] "S" -> "S석"
+          unavailableSeats["2층"]["S석"].push(seatId)
         }
       })
     })
