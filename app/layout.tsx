@@ -10,9 +10,9 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: {
     template: "%s | DIMI-ARTE",
-    default: "디미고 아르떼 공식",
+    default: "디미고 아르떼",
   },
-  description: "한국 디지털 미디어 고등학교(DIMIGO)의 연극/뮤지컬 동아리 ARTE 공식 사이트입니다.",
+  description: "한국 디지털 미디어 고등학교(DIMIGO)의 연극/뮤지컬 동아리 아르떼(ARTE) 티켓팅 사이트입니다.",
   keywords: [
     "뮤지컬",
     "예매",
@@ -25,8 +25,6 @@ export const metadata: Metadata = {
     "dimigo",
     "한국디지털미디어고등학교",
     "디미고",
-    "RENT",
-    "죽은 시인의 사회",
   ],
   authors: [{ name: "Jesiwon in Team ARTE" }],
   creator: "ARTE",
@@ -46,7 +44,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   icons: {
-    icon: "/logo.png",
+    icon: "/icon.png",
   },
   verification: {
     google:"8dWSZu37D_Ii3mHGfkZ3bBoyxWazDyLAroX2qVjJsuA",
