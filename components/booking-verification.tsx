@@ -133,8 +133,11 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
           color: "text-yellow-600 dark:text-yellow-400",
           bgColor: "bg-yellow-50 dark:bg-yellow-900/10",
           borderColor: "border-yellow-200 dark:border-yellow-800",
-          seatColor: "bg-yellow-500", // 내 좌석 색상
-          emptySeatColor: "bg-yellow-100 dark:bg-yellow-900/20", // 빈 좌석 색상
+          
+          // 👇 [수정] 내 좌석은 보라색, 빈 좌석은 구역 색상(진한 파스텔톤)으로 복구
+          seatColor: "bg-purple-600 dark:bg-purple-500", 
+          emptySeatColor: "bg-yellow-200 dark:bg-yellow-900/30",
+          
           floor: "1층",
           section: "앞블럭",
           rows: 9,
@@ -145,8 +148,11 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
           color: "text-red-600 dark:text-red-400",
           bgColor: "bg-red-50 dark:bg-red-900/10",
           borderColor: "border-red-200 dark:border-red-800",
-          seatColor: "bg-red-500",
-          emptySeatColor: "bg-red-100 dark:bg-red-900/20",
+          
+          // 👇 [수정] 내 좌석은 보라색
+          seatColor: "bg-purple-600 dark:bg-purple-500",
+          emptySeatColor: "bg-red-200 dark:bg-red-900/30",
+          
           floor: "1층",
           section: "뒷블럭",
           rows: 8,
@@ -157,14 +163,17 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
           color: "text-blue-600 dark:text-blue-400",
           bgColor: "bg-blue-50 dark:bg-blue-900/10",
           borderColor: "border-blue-200 dark:border-blue-800",
-          seatColor: "bg-blue-500",
-          emptySeatColor: "bg-blue-100 dark:bg-blue-900/20",
+          
+          // 👇 [수정] 내 좌석은 보라색
+          seatColor: "bg-purple-600 dark:bg-purple-500",
+          emptySeatColor: "bg-blue-200 dark:bg-blue-900/30",
+          
           floor: "2층",
           section: "전체",
           rows: 8,
           label: "2층 전체 (S석)"
         }
-      default: // 기본값 (오류 방지)
+      default:
         return {
           color: "text-gray-600",
           bgColor: "bg-gray-50",
