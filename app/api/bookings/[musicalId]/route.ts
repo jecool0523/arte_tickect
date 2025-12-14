@@ -5,7 +5,7 @@ import { createServerClient } from "@/lib/supabase"
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-// 뮤지컬 ID를 테이블명으로 변환
+// 뮤지컬 ID를 테이블명으로 변환 (GET 요청용)
 function getTableName(musicalId: string): string {
   const tableMap: Record<string, string> = {
     "dead-poets-society": "dead_poets_society_bookings",
@@ -24,7 +24,6 @@ export async function POST(request: NextRequest, { params }: { params: { musical
 
   try {
     const musicalId = params.musicalId
-    const tableName = getTableName(musicalId)
     const body = await request.json()
     const { name, studentId, seatGrade, selectedSeats, specialRequest } = body
 
@@ -35,18 +34,7 @@ export async function POST(request: NextRequest, { params }: { params: { musical
 
     const supabase = createServerClient()
 
-    const { error: periodTableCheckError } = await supabase.from("arte_musical_application_period").select("count", { count: "exact", head: true })
-
-    if (periodTableCheckError) {
-      console.error("기간 테이블 확인 오류:", periodTableCheckError)
-      return NextResponse.json(
-        {
-          error: `${musicalId} 예매 기간 데이터가 존재하지 않습니다. 관리자에게 문의하세요.`,
-        },
-        { status: 500, headers },
-      )
-    }
-
+    // 1. 기간 체크 (기존 로직 유지)
     const currentDate = new Date()
     const { data: periodData, error: periodDataError } = await supabase
       .from("arte_musical_application_period")
@@ -56,12 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: { musical
 
     if (periodDataError) {
       console.error("기간 데이터 조회 오류:", periodDataError)
-      return NextResponse.json(
-        {
-          error: `${musicalId} 예매 기간 데이터를 불러오는 중 오류가 발생했습니다. 관리자에게 문의하세요.`,
-        },
-        { status: 500, headers },
-      )
+      return NextResponse.json({ error: "예매 기간 정보를 불러올 수 없습니다." }, { status: 500, headers })
     }
 
     const startDate = new Date(periodData.start_time)
@@ -70,80 +53,51 @@ export async function POST(request: NextRequest, { params }: { params: { musical
     if (currentDate < startDate || currentDate > endDate) {
       return NextResponse.json(
         {
-          error: `현재는 ${musicalId} 뮤지컬 예매 기간이 아닙니다. 예매 기간: ${startDate.toLocaleDateString()} ~ ${endDate.toLocaleDateString()}`,
+          error: `현재는 예매 기간이 아닙니다. (${startDate.toLocaleString()} ~ ${endDate.toLocaleString()})`,
         },
         { status: 403, headers },
       )
     }
 
-    // 먼저 테이블 존재 여부 확인
-    const { error: tableCheckError } = await supabase.from(tableName).select("count", { count: "exact", head: true })
-
-    if (tableCheckError) {
-      console.error("테이블 확인 오류:", tableCheckError)
-
-      if (tableCheckError.code === "42P01" || tableCheckError.message.includes("does not exist")) {
-        return NextResponse.json(
-          {
-            error: `${musicalId} 데이터베이스 테이블이 생성되지 않았습니다. 관리자에게 문의하세요.`,
-            needsSetup: true,
-          },
-          { status: 500, headers },
-        )
-      }
-    }
-
-    // ⚠️ 중요: 최신 예매 상태를 다시 확인 (이중 예약 방지)
-    const { data: existingBookings, error: checkError } = await supabase
-      .from(tableName)
-      .select("selected_seats")
-      .eq("status", "confirmed")
-
-    if (checkError) {
-      console.error("좌석 확인 오류:", checkError)
-      return NextResponse.json({ error: "좌석 확인 중 오류가 발생했습니다." }, { status: 500, headers })
-    }
-
-    // 이미 예매된 좌석들을 추출
-    const bookedSeats = new Set<string>()
-    existingBookings?.forEach((booking) => {
-      booking.selected_seats?.forEach((seat: string) => bookedSeats.add(seat))
+    // 2. 안전한 예매 함수 호출 (RPC)
+    // 기존의 '조회 후 삽입' 방식 대신, DB 함수가 원자적(Atomic)으로 처리합니다.
+    const { data: result, error: rpcError } = await supabase.rpc("book_musical_seats", {
+      p_musical_id: musicalId,
+      p_name: name,
+      p_student_id: studentId,
+      p_seat_grade: seatGrade,
+      p_selected_seats: selectedSeats,
+      p_special_request: specialRequest || null,
     })
 
-    // 선택한 좌석 중 이미 예매된 좌석이 있는지 확인
-    const conflictSeats = selectedSeats.filter((seat: string) => bookedSeats.has(seat))
-    if (conflictSeats.length > 0) {
-      console.warn(`[${new Date().toISOString()}] 좌석 충돌 발생:`, conflictSeats)
-      return NextResponse.json(
-        {
-          error: "선택한 좌석 중 이미 예매된 좌석이 있습니다. 페이지를 새로고침 후 다시 시도해주세요.",
-          conflictSeats: conflictSeats,
-        },
-        { status: 409, headers },
-      )
+    if (rpcError) {
+      console.error("RPC 실행 오류:", rpcError)
+      // 테이블이 없는 경우 등에 대한 처리
+      if (rpcError.message.includes("does not exist") || rpcError.code === "42P01") {
+         return NextResponse.json({ error: "데이터베이스 테이블이 생성되지 않았습니다." }, { status: 500, headers })
+      }
+      return NextResponse.json({ error: "예매 처리 중 오류가 발생했습니다." }, { status: 500, headers })
     }
 
-    // 예매 정보 저장
-    const { data: bookingData, error: insertError } = await supabase
-      .from(tableName)
-      .insert({
-        name,
-        student_id: studentId,
-        seat_grade: seatGrade,
-        selected_seats: selectedSeats,
-        special_request: specialRequest || null,
-        status: "confirmed",
-      })
-      .select()
-      .single()
-
-    if (insertError) {
-      console.error("예매 저장 오류:", insertError)
-      return NextResponse.json({ error: "예매 저장 중 오류가 발생했습니다." }, { status: 500, headers })
+    // 함수 내부에서 로직 실패 (중복 좌석 등) 처리
+    if (!result.success) {
+      // 이미 예약된 좌석이 있는 경우
+      if (result.conflictSeats) {
+        return NextResponse.json(
+          {
+            error: "선택한 좌석 중 이미 예매된 좌석이 있습니다.",
+            conflictSeats: result.conflictSeats,
+          },
+          { status: 409, headers },
+        )
+      }
+      // 그 외 에러
+      return NextResponse.json({ error: result.error || "예매 실패" }, { status: 500, headers })
     }
 
+    // 성공
     console.log(`[${new Date().toISOString()}] 예매 완료:`, {
-      bookingId: bookingData.id,
+      bookingId: result.bookingId,
       musicalId,
       studentId,
       seatCount: selectedSeats.length,
@@ -152,21 +106,23 @@ export async function POST(request: NextRequest, { params }: { params: { musical
     return NextResponse.json(
       {
         success: true,
-        bookingId: bookingData.id,
-        bookingDate: bookingData.booking_date,
+        bookingId: result.bookingId,
+        bookingDate: result.bookingDate,
         message: "뮤지컬 관람 신청이 완료되었습니다.",
       },
       { headers },
     )
   } catch (error) {
-    console.error("예매 처리 중 오류:", error)
+    console.error("예매 처리 중 서버 오류:", error)
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요." },
-      { status: 500, headers: { "Cache-Control": "no-store" } },
+      { status: 500, headers },
     )
   }
 }
 
+// GET 요청은 단순히 조회만 하므로 기존 코드를 유지해도 무방합니다.
+// (다만 getTableName 함수가 필요하므로 위 코드에 포함시켜 두었습니다.)
 export async function GET(request: NextRequest, { params }: { params: { musicalId: string } }) {
   const headers = {
     "Cache-Control": "no-store, no-cache, must-revalidate",
@@ -183,33 +139,27 @@ export async function GET(request: NextRequest, { params }: { params: { musicalI
     const { error: tableCheckError } = await supabase.from(tableName).select("count", { count: "exact", head: true })
 
     if (tableCheckError) {
-      console.error("테이블 확인 오류:", tableCheckError)
-
-      if (tableCheckError.code === "42P01" || tableCheckError.message.includes("does not exist")) {
         return NextResponse.json(
           {
             success: false,
-            error: `${musicalId} 데이터베이스 테이블이 생성되지 않았습니다.`,
+            error: `${musicalId} 테이블이 없습니다.`,
             bookings: [],
             needsSetup: true,
           },
           { headers },
         )
-      }
     }
 
-    // 모든 예매 정보 조회 - 최신순
+    // 조회
     const { data: bookings, error } = await supabase
       .from(tableName)
       .select("*")
       .order("booking_date", { ascending: false })
 
     if (error) {
-      console.error("예매 조회 오류:", error)
-      return NextResponse.json({ error: "예매 정보 조회 중 오류가 발생했습니다." }, { status: 500, headers })
+      throw error
     }
 
-    // 좌석 수 계산
     const bookingsWithSeatCount =
       bookings?.map((booking) => ({
         ...booking,
