@@ -8,6 +8,8 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://arte-tickecting.vercel.app"),
+
   title: {
     template: "%s | DIMI-ARTE",
     default: "디미고 아르떼",
@@ -35,7 +37,7 @@ export const metadata: Metadata = {
     siteName: "DIMI-ARTE",
     images: [
       {
-        url: "/rent-poster.jpg",
+        url: "/rent-poster.png",
         width: 1200,
         height: 630,
       },
