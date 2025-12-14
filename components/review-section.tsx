@@ -6,16 +6,10 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Star, Image as ImageIcon, Trash2, Loader2, Send } from "lucide-react"
-import { createClient } from "@supabase/supabase-js"
+import { supabase } from "@/lib/supabase"
 import Image from "next/image"
 import { useToast } from "@/hooks/use-toast"
 
-// Supabase 클라이언트 직접 생성 (클라이언트 사이드 업로드용)
-// .env.local 파일에 있는 키를 사용합니다.
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 interface Review {
   id: number
