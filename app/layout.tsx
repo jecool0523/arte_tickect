@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   icons: {
-    icon: "/icon.svg",
+    icon: "/logo.png",
   },
   verification: {
     google:"8dWSZu37D_Ii3mHGfkZ3bBoyxWazDyLAroX2qVjJsuA",
