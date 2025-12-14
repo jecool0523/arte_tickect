@@ -8,6 +8,7 @@ import { ArrowLeft, Calendar, Loader2, CheckCircle2, Ticket, Theater } from "luc
 import { useState } from "react"
 import { getAllMusicals } from "@/data/musicals"
 import { useToast } from "@/hooks/use-toast"
+import { Badge } from "@/components/ui/badge" // Badge 컴포넌트 필요 (없으면 div로 대체 가능)
 
 interface BookingVerificationProps {
   onBack: () => void
@@ -28,10 +29,8 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
   const [name, setName] = useState("")
   const [selectedMusicalId, setSelectedMusicalId] = useState<string>("")
   const [isLoading, setIsLoading] = useState(false)
-  
-  // 👇 [수정] 단일 객체가 아니라 '배열'로 상태 관리
   const [bookingList, setBookingList] = useState<BookingInfo[]>([])
-  const [hasSearched, setHasSearched] = useState(false) // 검색 시도 여부
+  const [hasSearched, setHasSearched] = useState(false)
   const { toast } = useToast()
 
   const musicals = getAllMusicals()
@@ -48,7 +47,7 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
     }
 
     setIsLoading(true)
-    setBookingList([]) 
+    setBookingList([])
     setHasSearched(false)
 
     try {
@@ -65,7 +64,6 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
       const data = await response.json()
 
       if (response.ok && data.success && data.bookings) {
-        // 👇 [수정] 배열 데이터 저장
         setBookingList(data.bookings)
         toast({ title: "조회 성공", description: `${data.bookings.length}건의 예매 내역을 찾았습니다.` })
       } else {
@@ -84,34 +82,39 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
     }
   }
 
-  // 좌석 렌더링 헬퍼 함수 (그대로 유지하되, selectedSeats를 인자로 받음)
+  // 좌석 렌더링 함수
   const renderSeatRow = (
     floor: string,
     section: string,
     rowNum: number,
-    currentBookingSeats: string[], // 이 예매 건의 좌석들
+    currentBookingSeats: string[],
     gradeColor: string,
+    seatColorClass: string // 선택된 좌석의 색상 (등급별)
   ) => {
     const seats = []
-    // ... (기존 로직과 동일하되 selectedSeats 대신 currentBookingSeats 사용) ...
-    // 편의를 위해 내부 로직 요약:
+    
     const createSeat = (pos: string, idx: number) => {
         const seatId = floor === "1층" 
             ? `1층-${section === "앞블럭" ? "앞" : "뒤"}-${rowNum}줄-${pos}-${idx}번` 
             : `2층-${rowNum}줄-${pos}-${idx}번`
         const isSelected = currentBookingSeats.includes(seatId)
+        
         return (
-            <div key={`${pos}-${idx}`} className={`h-2 w-2 rounded-sm ${isSelected ? "bg-purple-600" : gradeColor}`}></div>
+            <div 
+              key={`${pos}-${idx}`} 
+              className={`h-2 w-2 rounded-sm transition-all ${
+                isSelected 
+                  ? `${seatColorClass} scale-125 ring-1 ring-white shadow-sm` // 내 좌석 강조
+                  : gradeColor // 빈 좌석 색상
+              }`}
+            ></div>
         )
     }
     
-    // 왼쪽
     for (let i = 1; i <= 6; i++) seats.push(createSeat("왼쪽", i))
     seats.push(<div key="aisle-1" className="w-1"></div>)
-    // 중앙
     for (let i = 1; i <= 12; i++) seats.push(createSeat("중앙", i))
     seats.push(<div key="aisle-2" className="w-1"></div>)
-    // 오른쪽
     for (let i = 1; i <= 6; i++) seats.push(createSeat("오른쪽", i))
 
     return (
@@ -122,26 +125,82 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
     )
   }
 
+  // 등급별 스타일 설정을 가져오는 헬퍼 함수
+  const getGradeConfig = (grade: string) => {
+    switch (grade) {
+      case "VIP":
+        return {
+          color: "text-yellow-600 dark:text-yellow-400",
+          bgColor: "bg-yellow-50 dark:bg-yellow-900/10",
+          borderColor: "border-yellow-200 dark:border-yellow-800",
+          seatColor: "bg-yellow-500", // 내 좌석 색상
+          emptySeatColor: "bg-yellow-100 dark:bg-yellow-900/20", // 빈 좌석 색상
+          floor: "1층",
+          section: "앞블럭",
+          rows: 9,
+          label: "1층 앞블럭 (VIP석)"
+        }
+      case "R석":
+        return {
+          color: "text-red-600 dark:text-red-400",
+          bgColor: "bg-red-50 dark:bg-red-900/10",
+          borderColor: "border-red-200 dark:border-red-800",
+          seatColor: "bg-red-500",
+          emptySeatColor: "bg-red-100 dark:bg-red-900/20",
+          floor: "1층",
+          section: "뒷블럭",
+          rows: 8,
+          label: "1층 뒷블럭 (R석)"
+        }
+      case "S석":
+        return {
+          color: "text-blue-600 dark:text-blue-400",
+          bgColor: "bg-blue-50 dark:bg-blue-900/10",
+          borderColor: "border-blue-200 dark:border-blue-800",
+          seatColor: "bg-blue-500",
+          emptySeatColor: "bg-blue-100 dark:bg-blue-900/20",
+          floor: "2층",
+          section: "전체",
+          rows: 8,
+          label: "2층 전체 (S석)"
+        }
+      default: // 기본값 (오류 방지)
+        return {
+          color: "text-gray-600",
+          bgColor: "bg-gray-50",
+          borderColor: "border-gray-200",
+          seatColor: "bg-purple-600",
+          emptySeatColor: "bg-gray-200",
+          floor: "1층",
+          section: "앞블럭",
+          rows: 9,
+          label: "좌석 정보"
+        }
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <header className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="flex items-center p-4">
           <Button onClick={onBack} variant="ghost" size="icon" className="p-2">
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-5 w-5 text-gray-900 dark:text-white" />
           </Button>
-          <h1 className="flex-1 text-center text-lg font-bold pr-10">예매 내역 조회</h1>
+          <h1 className="flex-1 text-center text-lg font-bold text-gray-900 dark:text-white pr-10">예매 내역 조회</h1>
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-4 space-y-6">
+      <main className="flex-1 overflow-y-auto p-4 space-y-6 pb-20">
         {/* 입력 폼 */}
-        <Card className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <Card className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
           <CardContent className="p-6 space-y-4">
             <div className="space-y-2">
-              <Label>공연 선택</Label>
+              <Label className="text-gray-900 dark:text-white">공연 선택</Label>
               <Select value={selectedMusicalId} onValueChange={setSelectedMusicalId}>
-                <SelectTrigger><SelectValue placeholder="공연을 선택하세요" /></SelectTrigger>
+                <SelectTrigger className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                    <SelectValue placeholder="공연을 선택하세요" />
+                </SelectTrigger>
                 <SelectContent>
                   {musicals.map((m) => <SelectItem key={m.id} value={m.id}>{m.title}</SelectItem>)}
                 </SelectContent>
@@ -149,73 +208,109 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label>이름</Label>
-                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="홍길동" />
+                    <Label className="text-gray-900 dark:text-white">이름</Label>
+                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="홍길동" className="bg-white dark:bg-gray-800" />
                 </div>
                 <div className="space-y-2">
-                    <Label>학번</Label>
-                    <Input value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="1234" />
+                    <Label className="text-gray-900 dark:text-white">학번</Label>
+                    <Input value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="1234" className="bg-white dark:bg-gray-800" />
                 </div>
             </div>
-            <Button onClick={handleVerify} disabled={isLoading} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+            <Button onClick={handleVerify} disabled={isLoading} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-6">
               {isLoading ? <><Loader2 className="animate-spin mr-2"/> 조회 중...</> : "조회하기"}
             </Button>
           </CardContent>
         </Card>
 
-        {/* 👇 [수정] 결과 리스트 반복 렌더링 */}
+        {/* 결과 리스트 */}
         <div className="space-y-6">
-            {bookingList.map((booking, index) => (
-                <Card key={booking.id} className="border-l-4 border-l-purple-600 shadow-md animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${index * 100}ms` }}>
-                    <CardContent className="p-5 space-y-4">
-                        {/* 헤더: 몇 번째 예매인지 표시 */}
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
-                            <span className="text-sm font-bold text-purple-600">Ticket #{index + 1}</span>
-                            <span className="text-xs text-gray-500">{new Date(booking.booking_date).toLocaleString()}</span>
-                        </div>
+            {bookingList.map((booking, index) => {
+                const config = getGradeConfig(booking.seat_grade) // 등급별 설정 가져오기
 
-                        {/* 공연 정보 */}
-                        {selectedMusical && (
-                            <div>
-                                <h2 className="text-xl font-bold">{selectedMusical.title}</h2>
-                                <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                                    <Calendar className="h-3 w-3" />
-                                    {selectedMusical.date} {selectedMusical.time}
+                return (
+                    <Card key={booking.id} className={`shadow-md animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden border-l-4 ${config.borderColor.replace('border', 'border-l')}`} style={{ animationDelay: `${index * 100}ms` }}>
+                        <CardContent className="p-5 space-y-4">
+                            {/* 헤더 */}
+                            <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className={`${config.color} ${config.borderColor} bg-white dark:bg-gray-800`}>
+                                        Ticket #{bookingList.length - index}
+                                    </Badge>
+                                    <span className={`text-sm font-bold ${config.color}`}>{booking.seat_grade}</span>
+                                </div>
+                                <span className="text-xs text-gray-500">{new Date(booking.booking_date).toLocaleString()}</span>
+                            </div>
+
+                            {/* 공연 정보 & 좌석 요약 */}
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                                        {selectedMusical?.title || "공연 정보"}
+                                    </h2>
+                                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                                        <Calendar className="h-3 w-3" />
+                                        {selectedMusical?.date}
+                                    </div>
+                                </div>
+                                <div className={`px-3 py-2 rounded-lg text-center ${config.bgColor}`}>
+                                    <div className={`text-xl font-bold ${config.color}`}>
+                                        {booking.selected_seats.length}매
+                                    </div>
+                                    <div className="text-[10px] text-gray-500">예매 수량</div>
                                 </div>
                             </div>
-                        )}
 
-                        {/* 좌석 정보 */}
-                        <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg text-center">
-                            <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
-                                {booking.seat_grade}석 {booking.selected_seats.length}매
-                            </div>
-                            <div className="flex flex-wrap justify-center gap-1 mt-2">
+                            {/* 좌석 번호 태그 */}
+                            <div className="flex flex-wrap gap-1">
                                 {booking.selected_seats.map(seat => (
-                                    <span key={seat} className="text-xs bg-white dark:bg-gray-800 px-2 py-1 rounded shadow-sm border">
+                                    <span key={seat} className={`text-xs px-2 py-1 rounded shadow-sm border font-medium ${config.bgColor} ${config.color} ${config.borderColor}`}>
                                         {seat.split("-").slice(-2).join(" ")}
                                     </span>
                                 ))}
                             </div>
-                        </div>
 
-                        {/* 이 티켓만의 좌석 배치도 (축소판) */}
-                        <div className="bg-gray-50 dark:bg-gray-900 p-2 rounded border border-gray-100">
-                            <div className="text-center text-xs text-gray-400 mb-2">My Seats Preview</div>
-                            {/* 1층만 예시로 렌더링 (공간 절약을 위해) */}
-                            <div className="space-y-0.5 scale-90 origin-top">
-                                {Array.from({ length: 9 }, (_, i) => renderSeatRow("1층", "앞블럭", i + 1, booking.selected_seats, "bg-gray-200"))}
+                            {/* [수정됨] 나만의 좌석 미리보기 (등급별 동적 렌더링) */}
+                            <div className={`p-3 rounded-xl border ${config.borderColor} ${config.bgColor} bg-opacity-30 dark:bg-opacity-10`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className={`text-xs font-bold ${config.color} flex items-center gap-1`}>
+                                        <Theater className="h-3 w-3" />
+                                        {config.label} 구역
+                                    </div>
+                                    <div className="flex gap-2 text-[10px]">
+                                        <span className="flex items-center gap-1"><div className={`w-2 h-2 rounded-full ${config.seatColor}`}></div>내 자리</span>
+                                    </div>
+                                </div>
+                                
+                                {/* 실제 좌석 렌더링 */}
+                                <div className="space-y-0.5 scale-95 origin-center">
+                                    {Array.from({ length: config.rows }, (_, i) => 
+                                        renderSeatRow(
+                                            config.floor, 
+                                            config.section, 
+                                            i + 1, 
+                                            booking.selected_seats, 
+                                            config.emptySeatColor, // 빈 좌석 색상
+                                            config.seatColor // 내 좌석 강조 색상
+                                        )
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
+                            
+                            {booking.special_request && (
+                                <div className="text-xs text-gray-500 bg-gray-50 dark:bg-gray-800 p-2 rounded">
+                                    Note: {booking.special_request}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                )
+            })}
         </div>
 
-        {/* 결과 없음 메시지 */}
+        {/* 결과 없음 */}
         {hasSearched && bookingList.length === 0 && !isLoading && (
             <div className="text-center py-10 text-gray-500">
-                <Ticket className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                <Ticket className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                 <p>예매 내역이 없습니다.</p>
             </div>
         )}
