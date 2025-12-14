@@ -1,14 +1,14 @@
 "use client"
 import { Button } from "@/components/ui/button"
 import type React from "react"
+import { useState, useEffect, useRef } from "react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { User, ArrowLeft, ArrowRight, MapPin, Home, Music, Ticket, CheckCircle2 } from "lucide-react"
+import { User, ArrowLeft, ArrowRight, MapPin, Home, Music, Ticket, CheckCircle2, Users } from "lucide-react"
 import type { MusicalInfo } from "@/types/musical"
 
 interface BookingFormProps {
@@ -39,6 +39,84 @@ export default function BookingForm({
   onNavigateToHome,
   isSubmitting,
 }: BookingFormProps) {
+  // 관람자 명단 로컬 상태 관리
+  const [attendees, setAttendees] = useState<{ name: string; studentId: string }[]>([])
+  // 사용자 직접 입력 메모 로컬 상태
+  const [userMemo, setUserMemo] = useState("")
+  const previousSpecialRequestRef = useRef<string>("")
+
+  // 초기화 및 좌석 수 변경 시 입력 필드 동기화
+  useEffect(() => {
+    setAttendees((prev) => {
+      const newAttendees = [...prev]
+      // 좌석 수보다 입력칸이 적으면 추가
+      if (newAttendees.length < selectedSeats.length) {
+        const diff = selectedSeats.length - newAttendees.length
+        for (let i = 0; i < diff; i++) {
+          newAttendees.push({ name: "", studentId: "" })
+        }
+      }
+      // 좌석 수보다 입력칸이 많으면 뒤에서부터 제거
+      else if (newAttendees.length > selectedSeats.length) {
+        newAttendees.splice(selectedSeats.length)
+      }
+      return newAttendees
+    })
+  }, [selectedSeats.length])
+
+  // 정보가 변경될 때마다 부모(상위 컴포넌트) 데이터 업데이트
+  useEffect(() => {
+    if (attendees.length === 0) return
+
+    // 1. 첫 번째 사람을 대표자로 설정 (조회용)
+    const representative = attendees[0]
+    onInputChange("name", representative.name)
+    onInputChange("studentId", representative.studentId)
+
+    // 2. 전체 명단을 텍스트로 변환하여 specialRequest에 저장
+    const attendeesListStr = attendees
+      .map((a, i) => {
+        // 좌석 번호 예쁘게 파싱 (예: 1층-앞-1줄-중앙-1번 -> 중앙 1번)
+        const seatName = selectedSeats[i] ? selectedSeats[i].split("-").slice(-2).join(" ") : `좌석${i + 1}`
+        // 이름/학번이 비어있으면 (미입력) 표시
+        const nameStr = a.name || "(이름미입력)"
+        const idStr = a.studentId || "(학번미입력)"
+        return `[${seatName}] ${nameStr} (${idStr})`
+      })
+      .join("\n")
+
+    // 사용자가 쓴 메모와 자동 생성된 명단을 합침
+    const finalRequest = userMemo.trim()
+      ? `${userMemo}\n\n[관람자 명단]\n${attendeesListStr}`
+      : `[관람자 명단]\n${attendeesListStr}`
+
+    if (previousSpecialRequestRef.current !== finalRequest) {
+      previousSpecialRequestRef.current = finalRequest
+      onInputChange("specialRequest", finalRequest)
+    }
+  }, [attendees, userMemo, selectedSeats]) // Removed onInputChange and bookingData.specialRequest from dependencies
+
+  // 개별 입력 핸들러
+  const handleAttendeeChange = (index: number, field: "name" | "studentId", value: string) => {
+    setAttendees((prev) => {
+      const newArr = [...prev]
+      newArr[index] = { ...newArr[index], [field]: value }
+      return newArr
+    })
+  }
+
+  // 폼 제출 핸들러
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // 빈 값 체크
+    const hasEmpty = attendees.some((a) => !a.name.trim() || !a.studentId.trim())
+    if (hasEmpty) {
+      alert("모든 관람자의 이름과 학번을 입력해주세요.")
+      return
+    }
+    onSubmit(e)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
@@ -130,70 +208,88 @@ export default function BookingForm({
             </CardContent>
           </Card>
 
-          {/* 신청자 정보 */}
+          {/* 관람자 정보 (반복 렌더링) */}
           <Card className="border border-gray-200 bg-white shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-gray-900">
-                <User className="h-5 w-5" />
-                신청자 정보
+            <CardHeader className="pb-3 border-b border-gray-100">
+              <CardTitle className="flex items-center gap-2 text-gray-900 text-lg">
+                <Users className="h-5 w-5" />
+                관람자 정보 입력 ({selectedSeats.length}명)
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4">
-              <form onSubmit={onSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="font-medium text-sm text-gray-700">
-                    이름 <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="name"
-                    value={bookingData.name}
-                    onChange={(e) => onInputChange("name", e.target.value)}
-                    placeholder="ex) 제시원"
-                    required
-                    disabled={isSubmitting}
-                    className="border-gray-300 focus:border-purple-500 bg-white text-gray-900"
-                  />
-                </div>
+            <CardContent className="p-4 space-y-6">
+              <form onSubmit={handleSubmit}>
+                {/* 좌석 수만큼 반복 */}
+                {attendees.map((attendee, index) => (
+                  <div
+                    key={index}
+                    className="space-y-3 pb-4 border-b border-dashed border-gray-200 last:border-0 last:pb-0"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                        {selectedSeats[index]
+                          ? selectedSeats[index].split("-").slice(-2).join(" ")
+                          : `관람자 ${index + 1}`}
+                      </Badge>
+                      {index === 0 && (
+                        <span className="text-xs text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded-full">
+                          대표 예매자 (티켓 조회용)
+                        </span>
+                      )}
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="studentId" className="font-medium text-sm text-gray-700">
-                    학번 <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="studentId"
-                    value={bookingData.studentId}
-                    onChange={(e) => onInputChange("studentId", e.target.value)}
-                    placeholder="1323"
-                    required
-                    disabled={isSubmitting}
-                    className="border-gray-300 focus:border-purple-500 bg-white text-gray-900"
-                  />
-                </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`name-${index}`} className="text-xs font-medium text-gray-500">
+                          이름 <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id={`name-${index}`}
+                          value={attendee.name}
+                          onChange={(e) => handleAttendeeChange(index, "name", e.target.value)}
+                          placeholder="홍길동"
+                          required
+                          disabled={isSubmitting}
+                          className="h-10 border-gray-300 focus:border-purple-500 bg-white text-gray-900"
+                        />
+                      </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="specialRequest" className="font-medium text-sm text-gray-700">
-                    특별 요청사항
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`studentId-${index}`} className="text-xs font-medium text-gray-500">
+                          학번 <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id={`studentId-${index}`}
+                          value={attendee.studentId}
+                          onChange={(e) => handleAttendeeChange(index, "studentId", e.target.value)}
+                          placeholder="1323"
+                          required
+                          disabled={isSubmitting}
+                          className="h-10 border-gray-300 focus:border-purple-500 bg-white text-gray-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="mt-6 space-y-2">
+                  <Label htmlFor="userMemo" className="font-medium text-sm text-gray-700">
+                    추가 요청사항 (선택)
                   </Label>
                   <Textarea
-                    id="specialRequest"
-                    value={bookingData.specialRequest}
-                    onChange={(e) => onInputChange("specialRequest", e.target.value)}
-                    placeholder="여러 자리 예약이라면 관람자 다 학번 이름 적어주세요"
-                    rows={3}
+                    id="userMemo"
+                    value={userMemo}
+                    onChange={(e) => setUserMemo(e.target.value)}
+                    placeholder="문의사항이 있다면 적어주세요."
+                    rows={2}
                     disabled={isSubmitting}
-                    className="border-gray-300 focus:border-purple-500 bg-white text-gray-900"
+                    className="border-gray-300 focus:border-purple-500 bg-white text-gray-900 resize-none"
                   />
                 </div>
 
                 <Button
                   type="submit"
-                  disabled={
-                    isSubmitting ||
-                    selectedSeats.length === 0 ||
-                    !bookingData.name ||
-                    !bookingData.studentId
-                  }
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 font-bold text-base"
+                  disabled={isSubmitting || selectedSeats.length === 0}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 mt-6 font-bold text-base shadow-md"
                 >
                   {isSubmitting ? (
                     <>처리중...</>
@@ -213,11 +309,12 @@ export default function BookingForm({
             <CardContent className="p-4">
               <p className="text-sm text-blue-700 font-semibold mb-2">📌 안내사항</p>
               <ul className="text-sm text-blue-600 space-y-1">
-                <li>• 좌석선택 후 신청자 정보를 입력해주세요!</li>
-                <li>• 다수 예약일 경우 관람자 모두 작성 !    </li>
-                <li>• 공연 시간과 좌석에 맞춰 입장해주세요!    </li>
-                <li>• 🙏문의: 아르떼 인스타!  </li>
-                <li>• 재밌게 관람하기 🥰 </li>
+                <li>
+                  • <strong>대표 예매자</strong>의 학번으로 예매 내역을 조회할 수 있습니다.
+                </li>
+                <li>• 동반인의 정보도 정확하게 입력해주세요.</li>
+                <li>• 공연 시간과 좌석에 맞춰 입장해주세요!</li>
+                <li>• 문의: 아르떼 인스타 DM</li>
               </ul>
             </CardContent>
           </Card>
