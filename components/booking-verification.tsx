@@ -126,65 +126,65 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
   }
 
   // 등급별 스타일 설정을 가져오는 헬퍼 함수
+ // 등급별 스타일 설정을 가져오는 헬퍼 함수 (유연한 매칭 적용)
   const getGradeConfig = (grade: string) => {
-    switch (grade) {
-      case "VIP":
-        return {
-          color: "text-yellow-600 dark:text-yellow-400",
-          bgColor: "bg-yellow-50 dark:bg-yellow-900/10",
-          borderColor: "border-yellow-200 dark:border-yellow-800",
-          
-          // 👇 [수정] 내 좌석은 보라색, 빈 좌석은 구역 색상(진한 파스텔톤)으로 복구
-          seatColor: "bg-purple-600 dark:bg-purple-500", 
-          emptySeatColor: "bg-yellow-200 dark:bg-yellow-900/30",
-          
-          floor: "1층",
-          section: "앞블럭",
-          rows: 9,
-          label: "1층 앞블럭 (VIP석)"
-        }
-      case "R석":
-        return {
-          color: "text-red-600 dark:text-red-400",
-          bgColor: "bg-red-50 dark:bg-red-900/10",
-          borderColor: "border-red-200 dark:border-red-800",
-          
-          // 👇 [수정] 내 좌석은 보라색
-          seatColor: "bg-purple-600 dark:bg-purple-500",
-          emptySeatColor: "bg-red-200 dark:bg-red-900/30",
-          
-          floor: "1층",
-          section: "뒷블럭",
-          rows: 8,
-          label: "1층 뒷블럭 (R석)"
-        }
-      case "S석":
-        return {
-          color: "text-blue-600 dark:text-blue-400",
-          bgColor: "bg-blue-50 dark:bg-blue-900/10",
-          borderColor: "border-blue-200 dark:border-blue-800",
-          
-          // 👇 [수정] 내 좌석은 보라색
-          seatColor: "bg-purple-600 dark:bg-purple-500",
-          emptySeatColor: "bg-blue-200 dark:bg-blue-900/30",
-          
-          floor: "2층",
-          section: "전체",
-          rows: 8,
-          label: "2층 전체 (S석)"
-        }
-      default:
-        return {
-          color: "text-gray-600",
-          bgColor: "bg-gray-50",
-          borderColor: "border-gray-200",
-          seatColor: "bg-purple-600",
-          emptySeatColor: "bg-gray-200",
-          floor: "1층",
-          section: "앞블럭",
-          rows: 9,
-          label: "좌석 정보"
-        }
+    // 공백 제거 및 "석" 문자 처리를 위한 정규화
+    // 예: " VIP " -> "VIP", "R석" -> "R", "S" -> "S"
+    const normalizedGrade = grade?.trim().replace("석", "").toUpperCase() || "";
+
+    if (normalizedGrade === "VIP") {
+      return {
+        color: "text-yellow-600 dark:text-yellow-400",
+        bgColor: "bg-yellow-50 dark:bg-yellow-900/10",
+        borderColor: "border-yellow-200 dark:border-yellow-800",
+        seatColor: "bg-purple-600 dark:bg-purple-500", // 내 좌석: 보라색
+        emptySeatColor: "bg-yellow-200 dark:bg-yellow-900/30", // 구역: 노란색
+        floor: "1층",
+        section: "앞블럭",
+        rows: 9,
+        label: "1층 앞블럭 (VIP석)"
+      }
+    } 
+    else if (normalizedGrade === "R") {
+      return {
+        color: "text-red-600 dark:text-red-400",
+        bgColor: "bg-red-50 dark:bg-red-900/10",
+        borderColor: "border-red-200 dark:border-red-800",
+        seatColor: "bg-purple-600 dark:bg-purple-500", // 내 좌석: 보라색
+        emptySeatColor: "bg-red-200 dark:bg-red-900/30", // 구역: 빨간색
+        floor: "1층",
+        section: "뒷블럭",
+        rows: 8,
+        label: "1층 뒷블럭 (R석)"
+      }
+    } 
+    else if (normalizedGrade === "S") {
+      return {
+        color: "text-blue-600 dark:text-blue-400",
+        bgColor: "bg-blue-50 dark:bg-blue-900/10",
+        borderColor: "border-blue-200 dark:border-blue-800",
+        seatColor: "bg-purple-600 dark:bg-purple-500", // 내 좌석: 보라색
+        emptySeatColor: "bg-blue-200 dark:bg-blue-900/30", // 구역: 파란색
+        floor: "2층",
+        section: "전체",
+        rows: 8,
+        label: "2층 전체 (S석)"
+      }
+    } 
+    else {
+      // 매칭되는 등급이 없을 때 (디버깅용 로그 출력)
+      console.warn("알 수 없는 좌석 등급:", grade);
+      return {
+        color: "text-gray-600",
+        bgColor: "bg-gray-50",
+        borderColor: "border-gray-200",
+        seatColor: "bg-purple-600",
+        emptySeatColor: "bg-gray-200",
+        floor: "1층",
+        section: "앞블럭",
+        rows: 9,
+        label: `좌석 정보 (${grade || "미지정"})`
+      }
     }
   }
 
