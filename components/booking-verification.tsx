@@ -127,61 +127,44 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
 
   // 등급별 스타일 설정을 가져오는 헬퍼 함수
  // 등급별 스타일 설정을 가져오는 헬퍼 함수 (유연한 매칭 적용)
-  // 등급별 스타일 설정을 가져오는 헬퍼 함수
-  const getGradeConfig = (grade: string | undefined | null) => {
-    // 1. 데이터가 비어있는 경우
-    if (!grade) {
-      return {
-        color: "text-gray-600",
-        bgColor: "bg-gray-50",
-        borderColor: "border-gray-200",
-        seatColor: "bg-gray-400",
-        emptySeatColor: "bg-gray-200",
-        floor: "1층",
-        section: "미지정",
-        rows: 9,
-        label: "⚠️ 등급 정보 없음 (NULL)" 
-      }
-    }
+  const getGradeConfig = (grade: string) => {
+    // 공백 제거 및 "석" 문자 처리를 위한 정규화
+    // 예: " VIP " -> "VIP", "R석" -> "R", "S" -> "S"
+    const normalizedGrade = grade?.trim().replace("석", "").toUpperCase() || "";
 
-    // 2. 대문자로 변환하고 공백 제거 (확실한 비교를 위해)
-    // 예: "vip " -> "VIP"
-    const normalizedGrade = grade.toString().toUpperCase().trim();
-
-    // 3. 포함 여부로 검사 (가장 강력한 방법)
-    if (normalizedGrade.includes("VIP")) {
+    if (normalizedGrade === "VIP") {
       return {
         color: "text-yellow-600 dark:text-yellow-400",
         bgColor: "bg-yellow-50 dark:bg-yellow-900/10",
         borderColor: "border-yellow-200 dark:border-yellow-800",
-        seatColor: "bg-purple-600 dark:bg-purple-500",
-        emptySeatColor: "bg-yellow-200 dark:bg-yellow-900/30",
+        seatColor: "bg-purple-600 dark:bg-purple-500", // 내 좌석: 보라색
+        emptySeatColor: "bg-yellow-200 dark:bg-yellow-900/30", // 구역: 노란색
         floor: "1층",
         section: "앞블럭",
         rows: 9,
         label: "1층 앞블럭 (VIP석)"
       }
     } 
-    else if (normalizedGrade.includes("R")) {
+    else if (normalizedGrade === "R") {
       return {
         color: "text-red-600 dark:text-red-400",
         bgColor: "bg-red-50 dark:bg-red-900/10",
         borderColor: "border-red-200 dark:border-red-800",
-        seatColor: "bg-purple-600 dark:bg-purple-500",
-        emptySeatColor: "bg-red-200 dark:bg-red-900/30",
+        seatColor: "bg-purple-600 dark:bg-purple-500", // 내 좌석: 보라색
+        emptySeatColor: "bg-red-200 dark:bg-red-900/30", // 구역: 빨간색
         floor: "1층",
         section: "뒷블럭",
         rows: 8,
         label: "1층 뒷블럭 (R석)"
       }
     } 
-    else if (normalizedGrade.includes("S")) {
+    else if (normalizedGrade === "S") {
       return {
         color: "text-blue-600 dark:text-blue-400",
         bgColor: "bg-blue-50 dark:bg-blue-900/10",
         borderColor: "border-blue-200 dark:border-blue-800",
-        seatColor: "bg-purple-600 dark:bg-purple-500",
-        emptySeatColor: "bg-blue-200 dark:bg-blue-900/30",
+        seatColor: "bg-purple-600 dark:bg-purple-500", // 내 좌석: 보라색
+        emptySeatColor: "bg-blue-200 dark:bg-blue-900/30", // 구역: 파란색
         floor: "2층",
         section: "전체",
         rows: 8,
@@ -189,21 +172,21 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
       }
     } 
     else {
-      // 4. 매칭 실패 시: DB에 저장된 값을 화면에 출력 (디버깅)
+      // 매칭되는 등급이 없을 때 (디버깅용 로그 출력)
+      console.warn("알 수 없는 좌석 등급:", grade);
       return {
         color: "text-gray-600",
         bgColor: "bg-gray-50",
-        borderColor: "border-red-500", // 테두리를 빨간색으로 표시
-        seatColor: "bg-gray-400",
+        borderColor: "border-gray-200",
+        seatColor: "bg-purple-600",
         emptySeatColor: "bg-gray-200",
         floor: "1층",
-        section: "기타",
+        section: "앞블럭",
         rows: 9,
-        label: `[디버깅: ${grade}]` // 👈 여기에 실제 DB 값이 뜹니다!
+        label: `좌석 정보 (${grade || "미지정"})`
       }
     }
   }
-  
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">

@@ -5,11 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
-import { Star, Image as ImageIcon, Trash2, Loader2, Send, X, Maximize2, Quote } from "lucide-react"
+import { Star, Image as ImageIcon, Trash2, Loader2, Send, X, Maximize2, Quote, Plus } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import Image from "next/image"
 import { useToast } from "@/hooks/use-toast"
-import { Badge } from "@/components/ui/badge"
 
 interface Review {
   id: number
@@ -24,12 +23,12 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
   const [reviews, setReviews] = useState<Review[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedImage, setSelectedImage] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   
-  // 👇 [추가] 이미지 확대 보기를 위한 상태
+  // 👇 [수정] 여러 장의 이미지를 다루기 위해 배열로 변경
+  const [selectedImages, setSelectedImages] = useState<File[]>([])
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  
   const [zoomedImage, setZoomedImage] = useState<string | null>(null)
-  
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
@@ -55,11 +54,36 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
     fetchReviews()
   }, [musicalId])
 
+  // 👇 [수정] 이미지 파일 선택 핸들러 (다중 선택 지원)
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setSelectedImage(file)
-      setPreviewUrl(URL.createObjectURL(file))
+    const files = e.target.files
+    if (files && files.length > 0) {
+      const newFiles = Array.from(files)
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file))
+      
+      setSelectedImages(prev => [...prev, ...newFiles])
+      setPreviewUrls(prev => [...prev, ...newPreviews])
+    }
+    // 입력값 초기화 (같은 파일 다시 선택 가능하게)
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  // 👇 [추가] 선택한 이미지 개별 삭제
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index))
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // 👇 [추가] 저장된 이미지 URL을 배열로 변환하는 헬퍼 함수
+  const parseImageUrls = (urlJson: string | null): string[] => {
+    if (!urlJson) return []
+    try {
+      // JSON 배열 형태(["url1", "url2"])인 경우 파싱
+      const parsed = JSON.parse(urlJson)
+      return Array.isArray(parsed) ? parsed : [urlJson]
+    } catch {
+      // 옛날 데이터(단일 URL 문자열)인 경우 배열로 감싸서 반환
+      return [urlJson]
     }
   }
 
@@ -71,24 +95,37 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
     }
 
     setIsSubmitting(true)
-    let imageUrl = null
+    const uploadedUrls: string[] = []
 
     try {
-      if (selectedImage) {
-        const fileExt = selectedImage.name.split(".").pop()
-        const fileName = `${Date.now()}.${fileExt}`
-        const { error: uploadError } = await supabase.storage
-          .from("review-images")
-          .upload(fileName, selectedImage)
+      // 1. 이미지 업로드 (병렬 처리)
+      if (selectedImages.length > 0) {
+        const uploadPromises = selectedImages.map(async (file) => {
+          const fileExt = file.name.split(".").pop()
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`
+          
+          const { error: uploadError } = await supabase.storage
+            .from("review-images")
+            .upload(fileName, file)
 
-        if (uploadError) throw uploadError
+          if (uploadError) throw uploadError
 
-        const { data: publicUrlData } = supabase.storage
-          .from("review-images")
-          .getPublicUrl(fileName)
-        
-        imageUrl = publicUrlData.publicUrl
+          const { data: publicUrlData } = supabase.storage
+            .from("review-images")
+            .getPublicUrl(fileName)
+            
+          return publicUrlData.publicUrl
+        })
+
+        const urls = await Promise.all(uploadPromises)
+        uploadedUrls.push(...urls)
       }
+
+      // 2. DB 저장 (이미지 URL들을 JSON 문자열로 변환하여 저장)
+      // 예: '["https://...", "https://..."]'
+      const imageUrlValue = uploadedUrls.length > 0 
+        ? JSON.stringify(uploadedUrls) 
+        : null
 
       const { error: insertError } = await supabase.from("reviews").insert({
         musical_id: musicalId,
@@ -96,7 +133,7 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
         password: form.password,
         content: form.content,
         rating: form.rating,
-        image_url: imageUrl,
+        image_url: imageUrlValue, // 단일 컬럼에 JSON 문자열로 저장
       })
 
       if (insertError) throw insertError
@@ -104,8 +141,8 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
       toast({ title: "작성 완료", description: "소중한 후기가 등록되었습니다!" })
       
       setForm({ name: "", password: "", content: "", rating: 5 })
-      setSelectedImage(null)
-      setPreviewUrl(null)
+      setSelectedImages([])
+      setPreviewUrls([])
       fetchReviews()
 
     } catch (error) {
@@ -132,7 +169,7 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
 
   return (
     <div className="space-y-8">
-      {/* 1. 작성 폼 (디자인 다듬음) */}
+      {/* 1. 작성 폼 */}
       <Card className="border-none shadow-lg bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 overflow-hidden ring-1 ring-gray-100 dark:ring-gray-700">
         <div className="h-1.5 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500"></div>
         <CardContent className="p-6 space-y-5">
@@ -182,26 +219,32 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
             <Quote className="absolute right-4 bottom-4 text-gray-300 w-6 h-6 opacity-50" />
           </div>
 
-          {/* 이미지 미리보기 */}
-          {previewUrl && (
-            <div className="relative inline-block group">
-              <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-purple-100 dark:border-purple-900 shadow-sm">
-                <Image src={previewUrl} alt="Preview" fill className="object-cover" />
-              </div>
-              <button 
-                onClick={() => { setSelectedImage(null); setPreviewUrl(null); }}
-                className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition-colors"
-              >
-                <X className="w-3 h-3" />
-              </button>
+          {/* 이미지 미리보기 목록 */}
+          {previewUrls.length > 0 && (
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {previewUrls.map((url, index) => (
+                <div key={index} className="relative flex-shrink-0 group">
+                  <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-purple-100 dark:border-purple-900 shadow-sm">
+                    <Image src={url} alt={`Preview ${index}`} fill className="object-cover" />
+                  </div>
+                  <button 
+                    onClick={() => removeImage(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition-colors z-10"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
 
           <div className="flex justify-between items-center pt-2">
             <div className="relative">
+              {/* 👇 multiple 속성 추가됨 */}
               <input 
                 type="file" 
                 accept="image/*"
+                multiple
                 ref={fileInputRef}
                 className="hidden"
                 onChange={handleImageChange}
@@ -211,10 +254,10 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
                 variant="ghost" 
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
-                className={`gap-2 ${selectedImage ? "text-purple-600 bg-purple-50" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"}`}
+                className={`gap-2 ${selectedImages.length > 0 ? "text-purple-600 bg-purple-50" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"}`}
               >
-                <ImageIcon className="w-4 h-4" />
-                {selectedImage ? "사진 변경" : "사진 추가"}
+                {selectedImages.length > 0 ? <Plus className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
+                {selectedImages.length > 0 ? "사진 더 추가하기" : "사진 추가"}
               </Button>
             </div>
             
@@ -230,7 +273,7 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
         </CardContent>
       </Card>
 
-      {/* 2. 후기 목록 (세련된 카드 디자인) */}
+      {/* 2. 후기 목록 */}
       <div className="space-y-6">
         {isLoading ? (
           <div className="text-center py-12">
@@ -247,71 +290,85 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6">
-            {reviews.map((review) => (
-              <div 
-                key={review.id} 
-                className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow duration-300"
-              >
-                {/* 헤더 */}
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900 dark:to-indigo-900 flex items-center justify-center text-lg shadow-inner">
-                      {review.user_name.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900 dark:text-white">{review.user_name}</span>
-                        <div className="flex text-yellow-400 text-[10px]">
-                          {"⭐".repeat(review.rating)}
-                        </div>
+            {reviews.map((review) => {
+              // 이미지 URL 파싱 (단일 or 다중)
+              const images = parseImageUrls(review.image_url)
+
+              return (
+                <div 
+                  key={review.id} 
+                  className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow duration-300"
+                >
+                  {/* 헤더 */}
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900 dark:to-indigo-900 flex items-center justify-center text-lg shadow-inner">
+                        {review.user_name.charAt(0)}
                       </div>
-                      <span className="text-xs text-gray-400">
-                        {new Date(review.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => handleDelete(review.id, review.password || "")}
-                    className="text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-all"
-                    title="삭제"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-                
-                {/* 내용 */}
-                <div className="pl-[52px]">
-                  <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap leading-relaxed mb-4">
-                    {review.content}
-                  </p>
-                  
-                  {/* 👇 [개선] 이미지 영역 (클릭 시 확대) */}
-                  {review.image_url && (
-                    <div className="relative group cursor-zoom-in mt-2 mb-1" onClick={() => setZoomedImage(review.image_url)}>
-                      <div className="relative w-full h-64 sm:h-80 rounded-xl overflow-hidden shadow-sm bg-gray-100 dark:bg-gray-900 border border-gray-100 dark:border-gray-700">
-                        <Image 
-                          src={review.image_url} 
-                          alt="Review Image" 
-                          fill 
-                          className="object-cover transition-transform duration-500 group-hover:scale-105" 
-                        />
-                        {/* 확대 아이콘 오버레이 */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                          <div className="bg-white/90 p-2 rounded-full shadow-lg transform scale-90 group-hover:scale-100 transition-all">
-                            <Maximize2 className="w-5 h-5 text-gray-800" />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-gray-900 dark:text-white">{review.user_name}</span>
+                          <div className="flex text-yellow-400 text-[10px]">
+                            {"⭐".repeat(review.rating)}
                           </div>
                         </div>
+                        <span className="text-xs text-gray-400">
+                          {new Date(review.created_at).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
-                  )}
+                    <button 
+                      onClick={() => handleDelete(review.id, review.password || "")}
+                      className="text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-all"
+                      title="삭제"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  {/* 내용 */}
+                  <div className="pl-[52px]">
+                    <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap leading-relaxed mb-4">
+                      {review.content}
+                    </p>
+                    
+                    {/* 👇 [수정] 다중 이미지 렌더링 (그리드 형태) */}
+                    {images.length > 0 && (
+                      <div className={`grid gap-2 mt-2 ${
+                        images.length === 1 ? "grid-cols-1" : 
+                        images.length === 2 ? "grid-cols-2" : 
+                        "grid-cols-2 sm:grid-cols-3"
+                      }`}>
+                        {images.map((imgUrl, idx) => (
+                          <div 
+                            key={idx} 
+                            className="relative group cursor-zoom-in aspect-square" 
+                            onClick={() => setZoomedImage(imgUrl)}
+                          >
+                            <div className="relative w-full h-full rounded-xl overflow-hidden shadow-sm bg-gray-100 dark:bg-gray-900 border border-gray-100 dark:border-gray-700">
+                              <Image 
+                                src={imgUrl} 
+                                alt={`Review Image ${idx + 1}`} 
+                                fill 
+                                className="object-cover transition-transform duration-500 group-hover:scale-110" 
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                <Maximize2 className="w-5 h-5 text-white drop-shadow-md" />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
 
-      {/* 👇 [추가] 이미지 전체화면 모달 */}
+      {/* 이미지 전체화면 모달 */}
       {zoomedImage && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-200"
@@ -324,7 +381,7 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
             <X className="w-8 h-8" />
           </button>
           
-          <div className="relative w-full max-w-4xl h-[80vh] mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="relative w-full max-w-5xl h-[85vh] mx-4" onClick={(e) => e.stopPropagation()}>
             <Image 
               src={zoomedImage} 
               alt="Full Review Image" 
