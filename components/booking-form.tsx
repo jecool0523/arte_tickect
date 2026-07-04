@@ -94,7 +94,7 @@ export default function BookingForm({
       previousSpecialRequestRef.current = finalRequest
       onInputChange("specialRequest", finalRequest)
     }
-  }, [attendees, userMemo, selectedSeats]) // Removed onInputChange and bookingData.specialRequest from dependencies
+  }, [attendees, userMemo, selectedSeats, onInputChange])
 
   // 개별 입력 핸들러
   const handleAttendeeChange = (index: number, field: "name" | "studentId", value: string) => {

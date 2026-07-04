@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 
+type BookingRow = {
+  seat_grade?: string
+  selected_seats?: string[]
+  student_id?: string
+}
+
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 const defaultUnavailableSeats = {
   "1층": { VIP: [], R: [] },
   "2층": { S: [] },
@@ -66,7 +75,7 @@ export async function GET() {
       "2층": { S: [] },
     }
 
-    bookings?.forEach((booking) => {
+    bookings?.forEach((booking: BookingRow) => {
       const seatGrade = booking.seat_grade
       booking.selected_seats?.forEach((seatId: string) => {
         // 좌석 ID에서 층 정보 추출
@@ -91,8 +100,8 @@ export async function GET() {
     let statistics = defaultStatistics
 
     if (!statsError && stats) {
-      const uniqueStudents = new Set(stats.map((booking) => booking.student_id))
-      const totalSeats = stats.reduce((sum, booking) => sum + (booking.selected_seats?.length || 0), 0)
+      const uniqueStudents = new Set(stats.map((booking: BookingRow) => booking.student_id))
+      const totalSeats = stats.reduce((sum: number, booking: BookingRow) => sum + (booking.selected_seats?.length || 0), 0)
 
       statistics = {
         total_bookings: stats.length,

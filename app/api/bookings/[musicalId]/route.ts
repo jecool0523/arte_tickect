@@ -1,6 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 
+type BookingRow = {
+  selected_seats?: string[]
+  [key: string]: unknown
+}
+
 // 캐싱 비활성화
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -161,7 +166,7 @@ export async function GET(request: NextRequest, { params }: { params: { musicalI
     }
 
     const bookingsWithSeatCount =
-      bookings?.map((booking) => ({
+      bookings?.map((booking: BookingRow) => ({
         ...booking,
         seat_count: booking.selected_seats?.length || 0,
       })) || []

@@ -1,6 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 
+type BookingRow = {
+  selected_seats?: string[]
+  [key: string]: unknown
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -45,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     // 이미 예매된 좌석들을 추출
     const bookedSeats = new Set<string>()
-    existingBookings?.forEach((booking) => {
+    existingBookings?.forEach((booking: BookingRow) => {
       booking.selected_seats?.forEach((seat: string) => bookedSeats.add(seat))
     })
 
@@ -127,7 +132,7 @@ export async function GET() {
 
     // 좌석 수 계산
     const bookingsWithSeatCount =
-      bookings?.map((booking) => ({
+      bookings?.map((booking: BookingRow) => ({
         ...booking,
         seat_count: booking.selected_seats?.length || 0,
       })) || []

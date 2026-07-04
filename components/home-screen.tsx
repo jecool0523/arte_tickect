@@ -7,7 +7,7 @@ import Image from "next/image"
 import { getAllMusicals } from "@/data/musicals"
 
 interface HomeScreenProps {
-  onNavigateToMusical: (musicalId: string) => void
+  onNavigateToMusical: (musicalId?: string) => void
   isMobile: boolean
   onNavigateToVerification: () => void
   onNavigateToArte: () => void
@@ -175,7 +175,7 @@ export default function HomeScreen({ onNavigateToMusical, isMobile, onNavigateTo
           <Button
             variant="ghost"
             className="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-            onClick={onNavigateToMusical}
+            onClick={() => onNavigateToMusical()}
           >
             <Music className="h-6 w-6" />
             <span className="text-xs font-medium">공연</span>

@@ -8,7 +8,7 @@ import SeatSelectionWindow from "@/components/seat-selection-window"
 import ArteInfo from "@/components/arte-info"
 import BookingVerification from "@/components/booking-verification"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Ticket, AlertCircle, CircleAlert } from "lucide-react"
@@ -170,6 +170,13 @@ export default function MusicalBookingSite() {
 
   const musicalInfo = getMusicalInfo()
 
+  const handleInputChange = useCallback((field: string, value: string | number | boolean) => {
+    setBookingData((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
+  }, [])
+
   // musicalInfo가 여전히 null인 경우 오류 화면 표시
   if (!musicalInfo) {
     return (
@@ -225,13 +232,6 @@ export default function MusicalBookingSite() {
         setBookingData((prev) => ({ ...prev, seatGrade: seatGrade }))
       }
     }
-  }
-
-  const handleInputChange = (field: string, value: string | number | boolean) => {
-    setBookingData((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
   }
 
   const handleSeatSelectionConfirm = () => {

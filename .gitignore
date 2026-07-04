@@ -1,3 +1,7 @@
 .next
 node_modules
 .env
+.env.*
+!.env.example
+.pnpm-store
+tsconfig.tsbuildinfo

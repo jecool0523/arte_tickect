@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Star, Image as ImageIcon, Trash2, Loader2, Send, X, Maximize2, Quote, Plus, PlayCircle, Film } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import { getSupabaseBrowserClient } from "@/lib/supabase"
 import Image from "next/image"
 import { useToast } from "@/hooks/use-toast"
 
@@ -26,6 +26,7 @@ const isVideoUrl = (url: string) => {
 }
 
 export default function ReviewSection({ musicalId }: { musicalId: string }) {
+  const supabase = getSupabaseBrowserClient()
   const [reviews, setReviews] = useState<Review[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -45,20 +46,20 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
     rating: 5,
   })
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     const { data, error } = await supabase
       .from("reviews")
-      .select("*")
+      .select("id, user_name, content, image_url, rating, created_at")
       .eq("musical_id", musicalId)
       .order("created_at", { ascending: false })
 
     if (!error && data) setReviews(data)
     setIsLoading(false)
-  }
+  }, [musicalId, supabase])
 
   useEffect(() => {
     fetchReviews()
-  }, [musicalId])
+  }, [fetchReviews])
 
   // 파일 선택 핸들러 (이미지 + 동영상)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,17 +158,19 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
     }
   }
 
-  const handleDelete = async (id: number, correctPassword: string) => {
+  const handleDelete = async (id: number) => {
     const inputPassword = prompt("등록할 때 입력한 비밀번호 4자리를 입력하세요.")
-    if (inputPassword !== correctPassword) {
+    if (!inputPassword) {
       alert("비밀번호가 일치하지 않습니다.")
       return
     }
 
-    const { error } = await supabase.from("reviews").delete().eq("id", id)
-    if (!error) {
+    const { data, error } = await supabase.from("reviews").delete().eq("id", id).eq("password", inputPassword).select("id").maybeSingle()
+    if (!error && data) {
       toast({ title: "삭제 완료", description: "후기가 삭제되었습니다." })
       fetchReviews()
+    } else {
+      alert("비밀번호가 일치하지 않습니다.")
     }
   }
 
@@ -325,7 +328,7 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
                         <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
-                    <button onClick={() => handleDelete(review.id, review.password || "")} className="text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-all">
+                    <button onClick={() => handleDelete(review.id)} className="text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-all">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>

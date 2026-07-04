@@ -1,11 +1,38 @@
 import { createClient } from "@supabase/supabase-js"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+type UntypedSupabaseClient = any
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+let browserClient: UntypedSupabaseClient | null = null
+let serverClient: UntypedSupabaseClient | null = null
 
-// 서버 사이드용 클라이언트
+function requireEnv(name: string) {
+  const value = process.env[name]
+
+  if (!value) {
+    throw new Error(`${name} is required to create a Supabase client.`)
+  }
+
+  return value
+}
+
+export function getSupabaseBrowserClient() {
+  if (!browserClient) {
+    browserClient = createClient(
+      requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+      requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+    )
+  }
+
+  return browserClient
+}
+
 export const createServerClient = () => {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+  if (!serverClient) {
+    serverClient = createClient(
+      requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+      requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
+    )
+  }
+
+  return serverClient
 }

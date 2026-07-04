@@ -164,7 +164,7 @@ export default function MusicalDetail({
                         </div>
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded border-l-4 border-purple-500">
-                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{castMember.intro}"</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">&ldquo;{castMember.intro}&rdquo;</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -227,7 +227,7 @@ export default function MusicalDetail({
                         </div>
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded border-l-4 border-purple-500">
-                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{castMember.intro}"</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">&ldquo;{castMember.intro}&rdquo;</p>
                       </div>
                     </CardContent>
                   </Card>
