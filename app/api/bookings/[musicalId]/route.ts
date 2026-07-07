@@ -17,6 +17,20 @@ type BookingRequestBody = {
   seatGrade?: string
   selectedSeats?: string[]
   specialRequest?: string
+  presaleKey?: string
+}
+
+type ServerClient = ReturnType<typeof createServerClient>
+
+async function releasePresaleKeyUsage(supabase: ServerClient, musicalId: string, presaleKey: string) {
+  const { error } = await supabase.rpc("release_presale_access_key", {
+    p_musical_id: musicalId,
+    p_key: presaleKey,
+  })
+
+  if (error) {
+    console.error("Presale key release failed:", error)
+  }
 }
 
 export async function POST(request: NextRequest, { params }: { params: { musicalId: string } }) {
@@ -24,6 +38,7 @@ export async function POST(request: NextRequest, { params }: { params: { musical
     const musicalId = params.musicalId
     const body = (await request.json()) as BookingRequestBody
     const { name, studentId, seatGrade, selectedSeats, specialRequest } = body
+    const presaleKey = body.presaleKey?.trim() ?? ""
 
     if (!name || !studentId || !seatGrade || !selectedSeats?.length) {
       return NextResponse.json({ error: "필수 예약 정보가 누락되었습니다." }, { status: 400, headers })
@@ -45,14 +60,53 @@ export async function POST(request: NextRequest, { params }: { params: { musical
 
     const startDate = new Date(periodData.start_time)
     const endDate = new Date(periodData.end_time)
+    const isBeforeStart = currentDate < startDate
+    const isAfterEnd = currentDate > endDate
+    const isInBookingPeriod = !isBeforeStart && !isAfterEnd
+    let usedPresaleKey = false
 
-    if (currentDate < startDate || currentDate > endDate) {
-      return NextResponse.json(
-        {
-          error: `현재는 예매 기간이 아닙니다. (${startDate.toLocaleString()} ~ ${endDate.toLocaleString()})`,
-        },
-        { status: 403, headers },
-      )
+    if (!isInBookingPeriod) {
+      if (isAfterEnd) {
+        return NextResponse.json(
+          {
+            code: "BOOKING_PERIOD_CLOSED",
+            error: `예매 기간이 종료되었습니다. (${startDate.toLocaleString("ko-KR")} ~ ${endDate.toLocaleString("ko-KR")})`,
+          },
+          { status: 403, headers },
+        )
+      }
+
+      if (!presaleKey) {
+        return NextResponse.json(
+          {
+            code: "PRESALE_KEY_REQUIRED",
+            error: `아직 일반 예매 기간이 아닙니다. 사전예매 키가 있으면 예매할 수 있습니다. 일반 예매 기간: ${startDate.toLocaleString("ko-KR")} ~ ${endDate.toLocaleString("ko-KR")}`,
+          },
+          { status: 403, headers },
+        )
+      }
+
+      const { data: canUsePresaleKey, error: presaleError } = await supabase.rpc("consume_presale_access_key", {
+        p_musical_id: musicalId,
+        p_key: presaleKey,
+      })
+
+      if (presaleError) {
+        console.error("Presale key validation failed:", presaleError)
+        return NextResponse.json(
+          { code: "PRESALE_KEY_UNAVAILABLE", error: "사전예매 키 설정을 확인할 수 없습니다." },
+          { status: 500, headers },
+        )
+      }
+
+      if (!canUsePresaleKey) {
+        return NextResponse.json(
+          { code: "INVALID_PRESALE_KEY", error: "사전예매 키가 유효하지 않거나 사용 가능 기간/횟수를 초과했습니다." },
+          { status: 403, headers },
+        )
+      }
+
+      usedPresaleKey = true
     }
 
     const { data: result, error: rpcError } = await supabase.rpc("book_musical_seats", {
@@ -66,10 +120,13 @@ export async function POST(request: NextRequest, { params }: { params: { musical
 
     if (rpcError) {
       console.error("Booking RPC failed:", rpcError)
+      if (usedPresaleKey) await releasePresaleKeyUsage(supabase, musicalId, presaleKey)
       return NextResponse.json({ error: "예매 처리 중 오류가 발생했습니다." }, { status: 500, headers })
     }
 
     if (!result.success) {
+      if (usedPresaleKey) await releasePresaleKeyUsage(supabase, musicalId, presaleKey)
+
       if (result.conflictSeats) {
         return NextResponse.json(
           {
@@ -88,7 +145,8 @@ export async function POST(request: NextRequest, { params }: { params: { musical
         success: true,
         bookingId: result.bookingId,
         bookingDate: result.bookingDate,
-        message: "뮤지컬 관람 신청이 완료되었습니다.",
+        presale: usedPresaleKey,
+        message: usedPresaleKey ? "사전예매가 완료되었습니다." : "예매 신청이 완료되었습니다.",
       },
       { headers },
     )

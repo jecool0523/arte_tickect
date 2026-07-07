@@ -1,19 +1,20 @@
 "use client"
 
 import type React from "react"
+import { useCallback, useEffect, useState } from "react"
+import { AlertCircle, CheckCircle, CircleAlert, KeyRound, Ticket } from "lucide-react"
+import ArteInfo from "@/components/arte-info"
+import BookingForm from "@/components/booking-form"
+import BookingVerification from "@/components/booking-verification"
 import HomeScreen from "@/components/home-screen"
 import MusicalDetail from "@/components/musical-detail"
-import BookingForm from "@/components/booking-form"
 import SeatSelectionWindow from "@/components/seat-selection-window"
-import ArteInfo from "@/components/arte-info"
-import BookingVerification from "@/components/booking-verification"
-
-import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { CheckCircle, Ticket, AlertCircle, CircleAlert } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { getAllMusicals, getMusicalById } from "@/data/musicals"
 import { useToast } from "@/hooks/use-toast"
-import { getMusicalById, getAllMusicals } from "@/data/musicals"
 import { createEmptyUnavailableSeats } from "@/lib/musical-config"
 
 type PageType = "info" | "form" | "seats" | "success" | "not_in_period"
@@ -31,55 +32,54 @@ interface SuccessData {
   bookingDate: string
 }
 
+type BookingBlock = {
+  code: string
+  message: string
+}
+
+const emptyBookingData: BookingData = {
+  seatGrade: "",
+  name: "",
+  studentId: "",
+  specialRequest: "",
+}
+
+const emptyBookingBlock: BookingBlock = {
+  code: "",
+  message: "현재는 예매 기간이 아닙니다.",
+}
+
 export default function MusicalBookingSite() {
   const [currentPage, setCurrentPage] = useState<PageType>("info")
   const [currentScreen, setCurrentScreen] = useState<ScreenType>("home")
+  const [selectedMusicalId, setSelectedMusicalId] = useState("dead-poets-society")
   const [selectedSeats, setSelectedSeats] = useState<string[]>([])
-  const [bookingData, setBookingData] = useState<BookingData>({
-    seatGrade: "",
-    name: "",
-    studentId: "",
-    specialRequest: "",
-  })
+  const [bookingData, setBookingData] = useState<BookingData>(emptyBookingData)
   const [successData, setSuccessData] = useState<SuccessData | null>(null)
+  const [presaleKey, setPresaleKey] = useState("")
+  const [bookingBlock, setBookingBlock] = useState<BookingBlock>(emptyBookingBlock)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [unavailableSeats, setUnavailableSeats] = useState<Record<string, Record<string, string[]>>>(
     createEmptyUnavailableSeats(),
   )
-  const [isLoadingSeats, setIsLoadingSeats] = useState(true)
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "demo" | "error">("connected")
   const [statistics, setStatistics] = useState({ total_bookings: 0, total_seats_booked: 0, unique_students: 0 })
-  const { toast } = useToast()
   const [isMobile, setIsMobile] = useState(false)
-  const [selectedMusicalId, setSelectedMusicalId] = useState<string>("dead-poets-society")
-  const handleNavigateToArte = () => {
-    setCurrentScreen("arte")
-  }
-  const handleNavigateToHome = () => {
-    setCurrentScreen("home")
-    setCurrentPage("info")
-  }
+  const { toast } = useToast()
 
-  // 모바일 감지
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
     checkMobile()
     window.addEventListener("resize", checkMobile)
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
-  // 좌석 상태 로드 (작품별) - 캐시 방지
   useEffect(() => {
     const loadSeatStatus = async () => {
-      setIsLoadingSeats(true)
       const musicalId = selectedMusicalId || "dead-poets-society"
 
       try {
-        // 캐시 방지를 위한 타임스탬프 추가
-        const timestamp = new Date().getTime()
+        const timestamp = Date.now()
         const response = await fetch(`/api/seats/${musicalId}?t=${timestamp}`, {
           cache: "no-store",
           headers: {
@@ -89,11 +89,7 @@ export default function MusicalBookingSite() {
         })
 
         if (!response.ok) {
-          console.warn(`API 응답 오류: ${response.status} ${response.statusText}`)
-          setUnavailableSeats({
-            "1층": { VIP: [], R: [] },
-            "2층": { S: [] },
-          })
+          setUnavailableSeats(createEmptyUnavailableSeats())
           setConnectionStatus("error")
           return
         }
@@ -101,53 +97,37 @@ export default function MusicalBookingSite() {
         const data = await response.json()
 
         if (data.success) {
-          setUnavailableSeats(data.unavailableSeats || {})
+          setUnavailableSeats(data.unavailableSeats || createEmptyUnavailableSeats())
           setStatistics(data.statistics || { total_bookings: 0, total_seats_booked: 0, unique_students: 0 })
-
-          console.log(`[${data.timestamp}] 좌석 상태 업데이트:`, data.statistics)
 
           if (data.needsSetup) {
             setConnectionStatus("error")
             toast({
               title: "데이터베이스 설정 필요",
-              description: `${data.musicalTitle} SQL 스크립트를 실행하여 데이터베이스 테이블을 생성해주세요.`,
+              description: "예약 테이블이 준비되지 않았습니다. Supabase SQL 설정을 확인해주세요.",
               variant: "destructive",
             })
-          } else if (data.message && data.message.includes("오류")) {
-            setConnectionStatus("error")
           } else {
             setConnectionStatus("connected")
           }
         } else {
-          console.warn("API 응답 실패:", data.error)
-          setUnavailableSeats({
-            "1층": { VIP: [], R: [] },
-            "2층": { S: [] },
-          })
+          setUnavailableSeats(createEmptyUnavailableSeats())
           setConnectionStatus("error")
         }
       } catch (error) {
-        console.error("좌석 상태 로드 실패:", error)
+        console.error("Seat status load failed:", error)
         setConnectionStatus("error")
-
-        setUnavailableSeats({
-          "1층": { VIP: [], R: [] },
-          "2층": { S: [] },
-        })
-
+        setUnavailableSeats(createEmptyUnavailableSeats())
         toast({
           title: "연결 오류",
-          description: "서버 연결에 문제가 있습니다. 기본 모드로 실행됩니다.",
+          description: "좌석 현황을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
           variant: "destructive",
         })
-      } finally {
-        setIsLoadingSeats(false)
       }
     }
 
     loadSeatStatus()
 
-    // 좌석 선택 화면에서는 5초마다 자동 새로고침
     let intervalId: NodeJS.Timeout | null = null
     if (currentPage === "seats") {
       intervalId = setInterval(loadSeatStatus, 5000)
@@ -158,20 +138,7 @@ export default function MusicalBookingSite() {
     }
   }, [toast, selectedMusicalId, currentPage])
 
-  const getMusicalInfo = () => {
-    const musicalId = selectedMusicalId || "dead-poets-society"
-    const musical = getMusicalById(musicalId)
-
-    if (!musical) {
-      console.error(`Musical not found for ID: ${musicalId}`)
-      // 기본값으로 대체
-      return getMusicalById("dead-poets-society")
-    }
-
-    return musical
-  }
-
-  const musicalInfo = getMusicalInfo()
+  const musicalInfo = getMusicalById(selectedMusicalId) || getMusicalById("dead-poets-society")
 
   const handleInputChange = useCallback((field: string, value: string | number | boolean) => {
     setBookingData((prev) => ({
@@ -180,24 +147,25 @@ export default function MusicalBookingSite() {
     }))
   }, [])
 
-  // musicalInfo가 여전히 null인 경우 오류 화면 표시
+  const resetBooking = () => {
+    setCurrentPage("info")
+    setBookingData(emptyBookingData)
+    setSelectedSeats([])
+    setSuccessData(null)
+    setPresaleKey("")
+    setBookingBlock(emptyBookingBlock)
+  }
+
   if (!musicalInfo) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="flex min-h-screen items-center justify-center bg-white p-4">
         <Card className="w-full max-w-md border border-red-200 bg-white shadow-lg">
           <CardContent className="pt-6 text-center">
-            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">오류 발생</h2>
-            <p className="text-gray-600 mb-4">공연 정보를 불러올 수 없습니다.</p>
-            <Button
-              onClick={() => {
-                setSelectedMusicalId("dead-poets-society")
-                setCurrentScreen("home")
-                window.location.reload()
-              }}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
-            >
-              홈으로 돌아가기
+            <AlertCircle className="mx-auto mb-4 h-16 w-16 text-red-500" />
+            <h2 className="mb-2 text-2xl font-bold text-gray-900">오류 발생</h2>
+            <p className="mb-4 text-gray-600">공연 정보를 불러올 수 없습니다.</p>
+            <Button onClick={() => window.location.reload()} className="bg-purple-600 text-white hover:bg-purple-700">
+              새로고침
             </Button>
           </CardContent>
         </Card>
@@ -209,7 +177,7 @@ export default function MusicalBookingSite() {
     if (bookingData.seatGrade && bookingData.seatGrade !== seatGrade) {
       toast({
         title: "좌석 등급 오류",
-        description: "같은 등급의 좌석만 선택할 수 있습니다.",
+        description: "같은 등급의 좌석만 함께 선택할 수 있습니다.",
         variant: "destructive",
       })
       return
@@ -232,7 +200,7 @@ export default function MusicalBookingSite() {
     } else {
       setSelectedSeats((prev) => [...prev, seatId])
       if (!bookingData.seatGrade) {
-        setBookingData((prev) => ({ ...prev, seatGrade: seatGrade }))
+        setBookingData((prev) => ({ ...prev, seatGrade }))
       }
     }
   }
@@ -246,10 +214,11 @@ export default function MusicalBookingSite() {
       })
       return
     }
+
     setCurrentPage("form")
     toast({
       title: "좌석 선택 완료",
-      description: `${selectedSeats.length}개의 좌석이 선택되었습니다.`,
+      description: `${selectedSeats.length}개의 좌석을 선택했습니다.`,
     })
   }
 
@@ -267,12 +236,9 @@ export default function MusicalBookingSite() {
 
     setIsSubmitting(true)
 
-    const musicalId = selectedMusicalId || "dead-poets-society"
-
     try {
-      // 캐시 방지
-      const timestamp = new Date().getTime()
-      const response = await fetch(`/api/bookings/${musicalId}?t=${timestamp}`, {
+      const timestamp = Date.now()
+      const response = await fetch(`/api/bookings/${selectedMusicalId}?t=${timestamp}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -283,46 +249,41 @@ export default function MusicalBookingSite() {
           name: bookingData.name,
           studentId: bookingData.studentId,
           seatGrade: bookingData.seatGrade,
-          selectedSeats: selectedSeats,
+          selectedSeats,
           specialRequest: bookingData.specialRequest,
+          presaleKey: presaleKey.trim() || undefined,
         }),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        toast({
-          title: "요청 실패",
-          // 서버에서 보낸 error 메시지가 있으면 보여주고, 없으면 상태 텍스트 표시
-          description: errorData.error || `오류 발생 (${response.status}): ${response.statusText}`,
-          variant: "destructive",
-        })
+      const data = await response.json().catch(() => ({}))
 
-        if (response.status === 409 && errorData.conflictSeats) {
+      if (!response.ok) {
+        if (response.status === 409 && data.conflictSeats) {
           toast({
             title: "좌석 충돌",
-            description: `선택한 좌석 중 이미 예매된 좌석이 있습니다. 페이지를 새로고침합니다.`,
+            description: "선택한 좌석 중 이미 예매된 좌석이 있습니다. 좌석 현황을 새로고침합니다.",
             variant: "destructive",
           })
-          // 좌석 상태 새로고침
-          setTimeout(() => {
-            window.location.reload()
-          }, 2000)
-          return
-        } else if (response.status === 403) {
-          setCurrentPage("not_in_period")
-          toast({
-            title: "신청 실패",
-            description: "예매 기간이 아닙니다.",
-            variant: "destructive",
-          })
-          console.error("예매 기간 아님 오류:", errorData.error)
+          setTimeout(() => window.location.reload(), 2000)
           return
         }
-        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
-        return
-      }
 
-      const data = await response.json()
+        if (response.status === 403) {
+          setBookingBlock({
+            code: data.code || "BOOKING_NOT_ALLOWED",
+            message: data.error || "현재는 예매 기간이 아닙니다.",
+          })
+          setCurrentPage("not_in_period")
+          toast({
+            title: "예매 불가",
+            description: data.error || "현재는 예매 기간이 아닙니다.",
+            variant: "destructive",
+          })
+          return
+        }
+
+        throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`)
+      }
 
       if (data.success) {
         setSuccessData({
@@ -331,24 +292,21 @@ export default function MusicalBookingSite() {
         })
         setCurrentPage("success")
         toast({
-          title: "신청 완료",
-          description: data.message || "뮤지컬 관람 신청이 완료되었습니다.",
+          title: data.presale ? "사전예매 완료" : "예매 완료",
+          description: data.message || "예매 신청이 완료되었습니다.",
         })
       } else {
         toast({
-          title: "신청 실패",
+          title: "예매 실패",
           description: data.error || "예매 처리 중 오류가 발생했습니다.",
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error("예매 요청 실패:", error)
-
-      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다."
-
+      console.error("Booking request failed:", error)
       toast({
         title: "시스템 오류",
-        description: errorMessage,
+        description: error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.",
         variant: "destructive",
       })
     } finally {
@@ -356,17 +314,26 @@ export default function MusicalBookingSite() {
     }
   }
 
-  const handleNavigateToMusical = (musicalId?: string | object) => {
-    // 1. 모든 공연 목록을 가져옵니다.
-    const allMusicals = getAllMusicals()
-    
-    // 2. 이동할 목표 ID를 결정합니다.
-    // - musicalId가 문자열로 들어왔다면? -> 그 공연으로 이동
-    // - 버튼을 그냥 눌러서(이벤트 객체) 왔다면? -> 목록의 첫 번째(0번) 공연으로 이동
-    const targetMusicalId = (typeof musicalId === 'string') 
-      ? musicalId 
-      : allMusicals[0]?.id || "dead-poets-society" // 만약 목록이 비었다면 기본값 사용
+  const handleUsePresaleKey = () => {
+    if (!presaleKey.trim()) {
+      toast({
+        title: "사전예매 키 필요",
+        description: "전달받은 사전예매 키를 입력해주세요.",
+        variant: "destructive",
+      })
+      return
+    }
 
+    setCurrentPage("form")
+    toast({
+      title: "사전예매 키 입력 완료",
+      description: "마지막 예매 제출 단계에서 키가 다시 검증됩니다.",
+    })
+  }
+
+  const handleNavigateToMusical = (musicalId?: string) => {
+    const allMusicals = getAllMusicals()
+    const targetMusicalId = musicalId || allMusicals[0]?.id || "dead-poets-society"
     const targetMusical = getMusicalById(targetMusicalId)
 
     if (!targetMusical) {
@@ -383,26 +350,26 @@ export default function MusicalBookingSite() {
     setCurrentPage("info")
   }
 
-  const handleNavigateToVerification = () => {
-    setCurrentScreen("verification")
+  const handleNavigateToHome = () => {
+    setCurrentScreen("home")
+    setCurrentPage("info")
   }
 
-  // 성공 페이지
   if (currentPage === "success") {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="flex min-h-screen items-center justify-center bg-white p-4">
         <Card className="w-full max-w-lg border border-gray-200 bg-white shadow-lg">
           <CardContent className="pt-6 text-center">
-            <div className="flex justify-center mb-4">
+            <div className="mb-4 flex justify-center">
               <div className="relative">
                 <CheckCircle className="h-16 w-16 text-green-500" />
-                <Ticket className="h-6 w-6 text-gray-900 absolute -top-1 -right-1" />
+                <Ticket className="absolute -right-1 -top-1 h-6 w-6 text-gray-900" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">신청이 완료되었습니다!</h2>
+            <h2 className="mb-4 text-2xl font-bold text-gray-900">예매가 완료되었습니다.</h2>
 
-            <div className="bg-gray-50 p-4 rounded-lg mb-6 text-left">
-              <h3 className="font-semibold text-purple-600 mb-3">신청 정보</h3>
+            <div className="mb-6 rounded-lg bg-gray-50 p-4 text-left">
+              <h3 className="mb-3 font-semibold text-purple-600">예매 정보</h3>
               <div className="space-y-2 text-sm text-gray-700">
                 <p>
                   <strong>예매번호:</strong> #{successData?.bookingId}
@@ -426,27 +393,19 @@ export default function MusicalBookingSite() {
               </div>
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg mb-6 text-sm text-gray-700">
-              <p className="font-semibold text-blue-600 mb-2">안내사항</p>
-              <ul className="text-left space-y-1 text-blue-700">
-                <li>• -12월 14일 오후 9시</li>
-                <li>• 문의: 아르떼 인스타로</li>
+            <div className="mb-6 rounded-lg bg-blue-50 p-4 text-sm text-gray-700">
+              <p className="mb-2 font-semibold text-blue-600">안내사항</p>
+              <ul className="space-y-1 text-left text-blue-700">
+                <li>공연 시간에 맞춰 입장해주세요.</li>
+                <li>문의는 아르떼 인스타그램 DM으로 부탁드립니다.</li>
               </ul>
             </div>
 
             <div className="flex gap-2">
               <Button
                 onClick={() => {
-                  setCurrentPage("info")
+                  resetBooking()
                   setCurrentScreen("home")
-                  setBookingData({
-                    seatGrade: "",
-                    name: "",
-                    studentId: "",
-                    specialRequest: "",
-                  })
-                  setSelectedSeats([])
-                  setSuccessData(null)
                 }}
                 variant="outline"
                 className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -464,9 +423,9 @@ export default function MusicalBookingSite() {
                   })
                   setSelectedSeats([])
                 }}
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                className="flex-1 bg-purple-600 text-white hover:bg-purple-700"
               >
-                추가 신청
+                추가 예매
               </Button>
             </div>
           </CardContent>
@@ -475,46 +434,66 @@ export default function MusicalBookingSite() {
     )
   }
 
-  // 성공 페이지
   if (currentPage === "not_in_period") {
+    const isClosed = bookingBlock.code === "BOOKING_PERIOD_CLOSED"
+
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="flex min-h-screen items-center justify-center bg-white p-4">
         <Card className="w-full max-w-lg border border-gray-200 bg-white shadow-lg">
-          <CardContent className="pt-6 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="relative">
-                <CircleAlert className="h-16 w-16 text-red-500" />
-                <Ticket className="h-6 w-6 text-gray-900 absolute -top-1 -right-1" />
+          <CardContent className="space-y-5 pt-6 text-center">
+            <div className="flex justify-center">
+              <CircleAlert className="h-16 w-16 text-red-500" />
+            </div>
+            <div>
+              <h2 className="mb-2 text-2xl font-bold text-gray-900">
+                {isClosed ? "예매 기간이 종료되었습니다." : "아직 일반 예매 기간이 아닙니다."}
+              </h2>
+              <p className="text-sm leading-6 text-gray-600">{bookingBlock.message}</p>
+            </div>
+
+            {!isClosed && (
+              <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 text-left">
+                <div className="mb-3 flex items-center gap-2 text-purple-700">
+                  <KeyRound className="h-4 w-4" />
+                  <span className="text-sm font-bold">사전예매 키</span>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="presaleKey" className="text-xs font-medium text-gray-600">
+                    전달받은 키를 입력해주세요.
+                  </Label>
+                  <Input
+                    id="presaleKey"
+                    value={presaleKey}
+                    onChange={(event) => setPresaleKey(event.target.value)}
+                    placeholder="예: ARTE-PRESALE-2026"
+                    className="border-purple-200 bg-white font-mono text-sm"
+                  />
+                </div>
+                <Button onClick={handleUsePresaleKey} className="mt-3 w-full bg-purple-600 text-white hover:bg-purple-700">
+                  사전예매로 계속하기
+                </Button>
+                <p className="mt-2 text-xs leading-5 text-purple-700">
+                  키는 최종 예매 제출 시 서버에서 다시 검증됩니다.
+                </p>
               </div>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">현재는 예매 기간이 아닙니다.</h2>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  setCurrentPage("info")
-                  setCurrentScreen("home")
-                  setBookingData({
-                    seatGrade: "",
-                    name: "",
-                    studentId: "",
-                    specialRequest: "",
-                  })
-                  setSelectedSeats([])
-                  setSuccessData(null)
-                }}
-                variant="outline"
-                className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                처음으로
-              </Button>
-            </div>
+            )}
+
+            <Button
+              onClick={() => {
+                resetBooking()
+                setCurrentScreen("home")
+              }}
+              variant="outline"
+              className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              처음으로
+            </Button>
           </CardContent>
         </Card>
       </div>
     )
   }
 
-  // 신청서 페이지
   if (currentPage === "form") {
     return (
       <BookingForm
@@ -531,7 +510,6 @@ export default function MusicalBookingSite() {
     )
   }
 
-  // 좌석 선택 페이지
   if (currentPage === "seats") {
     return (
       <SeatSelectionWindow
@@ -549,23 +527,20 @@ export default function MusicalBookingSite() {
     )
   }
 
-  // Verification Screen
   if (currentScreen === "verification") {
     return <BookingVerification onBack={handleNavigateToHome} />
   }
 
-  // ARTE 화면 렌더링 로직
   if (currentScreen === "arte") {
     return (
       <ArteInfo
         onNavigateToHome={handleNavigateToHome}
         onNavigateToMusical={() => handleNavigateToMusical()}
-        onNavigateToVerification={handleNavigateToVerification}
+        onNavigateToVerification={() => setCurrentScreen("verification")}
       />
     )
   }
 
-  // 작품 소개 페이지
   if (currentScreen === "musical") {
     return (
       <MusicalDetail
@@ -577,13 +552,12 @@ export default function MusicalBookingSite() {
     )
   }
 
-  // Home Screen
   return (
     <HomeScreen
       onNavigateToMusical={handleNavigateToMusical}
       isMobile={isMobile}
-      onNavigateToVerification={handleNavigateToVerification}
-      onNavigateToArte={handleNavigateToArte}
+      onNavigateToVerification={() => setCurrentScreen("verification")}
+      onNavigateToArte={() => setCurrentScreen("arte")}
     />
   )
 }

@@ -49,6 +49,20 @@ export type ReviewRow = {
 
 export type PublicReviewRow = Pick<ReviewRow, "id" | "musical_id" | "user_name" | "content" | "image_url" | "rating" | "created_at">
 
+export type PresaleAccessKeyRow = {
+  id: number
+  musical_id: string
+  key_hash: string
+  label: string | null
+  starts_at: string | null
+  ends_at: string | null
+  max_uses: number | null
+  used_count: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -77,6 +91,35 @@ export type Database = {
       }
       arte_musical_tickets: BookingTable
       dead_poets_society_bookings: BookingTable
+      presale_access_keys: {
+        Row: PresaleAccessKeyRow
+        Insert: {
+          id?: never
+          musical_id: string
+          key_hash: string
+          label?: string | null
+          starts_at?: string | null
+          ends_at?: string | null
+          max_uses?: number | null
+          used_count?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          musical_id?: string
+          key_hash?: string
+          label?: string | null
+          starts_at?: string | null
+          ends_at?: string | null
+          max_uses?: number | null
+          used_count?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rent_bookings: BookingTable
       your_lie_in_april_bookings: BookingTable
       reviews: {
@@ -124,6 +167,24 @@ export type Database = {
           error?: string
         }
       }
+      consume_presale_access_key: {
+        Args: {
+          p_musical_id: string
+          p_key: string
+        }
+        Returns: boolean
+      }
+      create_presale_access_key: {
+        Args: {
+          p_musical_id: string
+          p_key: string
+          p_label?: string | null
+          p_starts_at?: string | null
+          p_ends_at?: string | null
+          p_max_uses?: number | null
+        }
+        Returns: number
+      }
       create_review: {
         Args: {
           p_musical_id: string
@@ -139,6 +200,13 @@ export type Database = {
         Args: {
           p_review_id: number
           p_password: string
+        }
+        Returns: boolean
+      }
+      release_presale_access_key: {
+        Args: {
+          p_musical_id: string
+          p_key: string
         }
         Returns: boolean
       }

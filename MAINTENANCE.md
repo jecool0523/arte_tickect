@@ -1,6 +1,6 @@
 # ARTE Ticketing Maintenance Notes
 
-Last checked: 2026-07-04
+Last checked: 2026-07-07
 
 ## Project Shape
 
@@ -16,12 +16,14 @@ Last checked: 2026-07-04
 - Data:
   - `data/musicals.ts`: static performance/cast/seat-grade metadata.
   - `types/musical.ts`: shared musical data types.
+  - `lib/seat-map.ts`: shared floor/section/row/seat ID generation for desktop and mobile seat maps.
 - Backend/API:
   - `app/api/bookings/[musicalId]/route.ts`: current musical-specific booking API using Supabase RPC.
   - `app/api/seats/[musicalId]/route.ts`: musical-specific unavailable seat API.
   - `app/api/bookings/verify/route.ts`: booking lookup.
   - Legacy/general APIs still exist at `app/api/bookings/route.ts` and `app/api/seats/route.ts`.
 - Database scripts live in `scripts/`; the current path appears to depend on musical-specific booking tables plus `arte_musical_application_period` and the `book_musical_seats` RPC.
+- Presale booking keys are stored in `presale_access_keys` through hashed values only. The app submits a key to `/api/bookings/[musicalId]`, and the server validates/consumes it through service-role-only RPCs.
 
 ## Local Setup
 
@@ -58,8 +60,9 @@ Notes:
 - Legacy `/api/seats` is marked dynamic and no longer tries to fetch Supabase during static prerender.
 - `package.json` pins previously `latest` dependencies to the versions already represented in the lockfile.
 - Supabase client creation is typed with `types/supabase.ts`.
-- Musical booking table names and seat availability aggregation are centralized in `lib/musical-config.ts`.
+- Musical booking table names, seat availability aggregation, and seat-map generation are centralized in `lib/musical-config.ts` and `lib/seat-map.ts`.
 - Review creation/deletion now goes through server API routes and the `create_review` / `delete_review_with_password` SQL functions.
+- Presale booking before the public booking window goes through the `consume_presale_access_key` / `release_presale_access_key` SQL functions.
 
 ## Fixed In This Batch
 
@@ -80,10 +83,47 @@ Notes:
 5. Added `/api/reviews` and `/api/reviews/[reviewId]` so review writes and deletes run server-side with the service-role client.
 6. Added `scripts/20260704-review-password-security.sql` to create/backfill `password_hash` and verify delete passwords with `pgcrypto`.
 
+## Fixed In Third Batch
+
+1. Applied the review password security SQL to the Supabase project `kwkhydnvbxvcfvhksxna`.
+2. Backfilled 8 existing reviews into `password_hash`; follow-up verification showed 0 plaintext review passwords remaining.
+3. Hardened review write/delete access by removing legacy public insert/delete policies and granting review RPC execution only to `service_role`.
+4. Centralized seat ID/label/row generation in `lib/seat-map.ts` and updated desktop/mobile seat maps plus booking/verification displays to use it.
+5. Restored Korean UI copy and performance metadata in the main user-facing screens and data files.
+
+## Fixed In Fourth Batch
+
+1. Added `scripts/20260707-presale-access-keys.sql` and applied it to Supabase project `kwkhydnvbxvcfvhksxna`.
+2. Added the private `presale_access_keys` table with RLS enabled, no public table access, and hashed key storage using `pgcrypto`.
+3. Added service-role-only RPCs: `create_presale_access_key`, `consume_presale_access_key`, and `release_presale_access_key`.
+4. Updated `/api/bookings/[musicalId]` so booking is allowed when either the normal booking period is open or a valid presale key is supplied before the period starts.
+5. Updated the not-in-period UI to accept a presale key and retry the existing booking flow without exposing validation logic to the browser.
+6. Verified the DB path by creating, consuming, releasing, and deleting a temporary smoke-test key; `leftover_smoke_keys` returned 0.
+
+## Presale Key Operations
+
+Create a presale key from the Supabase SQL Editor or another trusted server-side context:
+
+```sql
+SELECT public.create_presale_access_key(
+  'dead-poets-society',
+  'CHANGE-THIS-KEY',
+  'staff preview',
+  NOW() - INTERVAL '1 day',
+  NULL,
+  30
+);
+```
+
+Notes:
+
+- Do not commit real presale keys to the repository.
+- `max_uses` can be `NULL` for unlimited use, or a positive number for a capped key.
+- Presale keys only bypass the start date. They do not allow booking after the normal booking period has ended.
+
 ## Remaining Maintenance Work
 
-1. Run `scripts/20260704-review-password-security.sql` in Supabase before deploying the review API changes.
-2. Replace `types/supabase.ts` with CLI-generated types once a Supabase project ref or local Supabase database is available.
-3. Consolidate legacy `arte_musical_tickets` APIs with the musical-specific table/RPC flow or remove the legacy endpoints after confirming they are unused.
-4. Centralize the actual seat-map generation used by `components/seat-selection-window.tsx` and `components/mobile-seat-map.tsx`; the API aggregation is centralized, but UI seat ID generation still exists in components.
-5. Add a small smoke test for the booking flow: select performance, select seats, submit booking, verify booking, and load unavailable seats.
+1. Consolidate legacy `arte_musical_tickets` APIs with the musical-specific table/RPC flow or remove the legacy endpoints after confirming they are unused.
+2. Add a small smoke test for the booking flow: select performance, select seats, submit booking, verify booking, and load unavailable seats.
+3. Review remaining Supabase advisor warnings outside the review-password task, especially legacy public tables/storage exposure and RPC `search_path` hardening.
+4. Refresh Browserslist data when convenient; the build passes, but `caniuse-lite` reports as outdated.

@@ -72,6 +72,8 @@ export function normalizeSeatGrade(grade: string | null | undefined): SeatGradeC
 }
 
 export function getSeatFloor(seatId: string): SeatFloor | null {
+  if (seatId.startsWith("F1-")) return FLOOR_1
+  if (seatId.startsWith("F2-")) return FLOOR_2
   if (seatId.startsWith(FLOOR_1)) return FLOOR_1
   if (seatId.startsWith(FLOOR_2)) return FLOOR_2
   return null

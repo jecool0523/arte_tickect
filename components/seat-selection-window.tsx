@@ -1,8 +1,17 @@
 "use client"
-import { Button } from "@/components/ui/button"
+
+import { useState } from "react"
+import { ArrowLeft, Check, MapPin, Minimize2, RotateCcw, Theater, X, ZoomIn, ZoomOut } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Theater, Check, X, ZoomIn, ZoomOut, RotateCcw, MapPin, Maximize2, Minimize2 } from "lucide-react"
-import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import {
+  FLOOR_OPTIONS,
+  getSeatDisplayLabel,
+  getSeatRows,
+  getSeatSectionsByFloor,
+  type SeatCell,
+} from "@/lib/seat-map"
+import { FLOOR_1, type SeatFloor } from "@/lib/musical-config"
 import type { SeatGrade } from "@/types/musical"
 
 interface SeatSelectionWindowProps {
@@ -22,6 +31,10 @@ interface SeatSelectionWindowProps {
   musicalTitle: string
 }
 
+type SeatStatus = "available" | "selected" | "unavailable"
+
+const zoomPresets = [0.5, 0.6, 0.7, 0.8, 1, 1.2]
+
 export default function SeatSelectionWindow({
   seatGrades,
   selectedSeats,
@@ -34,225 +47,69 @@ export default function SeatSelectionWindow({
   onConfirm,
   musicalTitle,
 }: SeatSelectionWindowProps) {
-  const [selectedFloor, setSelectedFloor] = useState<"1층" | "2층">("1층")
-  const [zoomLevel, setZoomLevel] = useState(0.7) // 초기 70%
+  const [selectedFloor, setSelectedFloor] = useState<SeatFloor>(FLOOR_1)
+  const [zoomLevel, setZoomLevel] = useState(0.7)
   const [isZoomMenuOpen, setIsZoomMenuOpen] = useState(false)
 
-  // 줌 레벨 프리셋
-  const zoomPresets = [
-    { value: 0.4, label: "40%" },
-    { value: 0.5, label: "50%" },
-    { value: 0.6, label: "60%" },
-    { value: 0.7, label: "70%" },
-    { value: 0.8, label: "80%" },
-    { value: 1.0, label: "100%" },
-    { value: 1.2, label: "120%" },
-    { value: 1.5, label: "150%" },
-  ]
+  const getGradeInfo = (grade: string) => seatGrades.find((seatGrade) => seatGrade.grade === grade)
 
-  // 좌석 상태 확인 함수 개선
-  const getSeatStatus = (seatId: string, grade: string, floor: string) => {
-    const floorKey = floor as "1층" | "2층"
-    const floorUnavailable = unavailableSeats[floorKey]
-
-    if (floorUnavailable && floorUnavailable[grade]) {
-      if (floorUnavailable[grade].includes(seatId)) {
-        return "unavailable"
-      }
-    }
-
-    if (selectedSeats.includes(seatId)) {
-      return "selected"
-    }
-
+  const getSeatStatus = (seat: SeatCell): SeatStatus => {
+    if (unavailableSeats[seat.floor]?.[seat.grade]?.includes(seat.id)) return "unavailable"
+    if (selectedSeats.includes(seat.id)) return "selected"
     return "available"
   }
 
-  // 좌석 렌더링 함수 - 층별 처리 개선
-  const renderHorizontalSeatSection = (
-    sectionName: string,
-    rowStart: number,
-    rowCount: number,
-    grade: string,
-    floor: "1층" | "2층",
-  ) => {
-    const gradeInfo = seatGrades.find((g) => g.grade === grade)
-    if (!gradeInfo) {
-      console.warn(`Grade info not found for: ${grade}`)
-      return null
-    }
-
-    const rows = []
-
-    for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
-      const rowNumber = rowStart + rowIndex
-      const seatRow = []
-
-      // 왼쪽 영역 (6석)
-      for (let seatNum = 1; seatNum <= 6; seatNum++) {
-        const seatId =
-          floor === "1층"
-            ? `1층-${sectionName === "앞블럭" ? "앞" : "뒤"}-${rowNumber}줄-왼쪽-${seatNum}번`
-            : `2층-${rowNumber}줄-왼쪽-${seatNum}번`
-
-        const status = getSeatStatus(seatId, grade, floor)
-
-        seatRow.push(
-          <button
-            key={seatId}
-            onClick={() => status === "available" && onSeatClick(seatId, grade)}
-            disabled={status === "unavailable"}
-            className={`h-8 w-8 text-xs font-bold rounded-md transition-all border-2 flex-shrink-0 ${
-              status === "selected"
-                ? "bg-purple-500 border-purple-600 text-white shadow-lg scale-110 z-10"
-                : status === "unavailable"
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed border-gray-400 opacity-50"
-                  : `${gradeInfo.color} cursor-pointer shadow-sm hover:scale-110 text-gray-700 hover:shadow-md border-gray-300`
-            }`}
-            title={`${seatId} (${status === "unavailable" ? "예매완료" : status === "selected" ? "선택됨" : "선택가능"})`}
-          >
-            {seatNum}
-          </button>,
-        )
-      }
-
-      // 통로 (시각적 구분선)
-      seatRow.push(
-        <div key={`aisle1-${rowNumber}`} className="flex flex-col items-center justify-center flex-shrink-0 px-3">
-          <div className="w-1 h-8 bg-gradient-to-b from-transparent via-gray-400 to-transparent rounded-full"></div>
-        </div>,
-      )
-
-      // 중앙 영역 (12석)
-      for (let seatNum = 1; seatNum <= 12; seatNum++) {
-        const seatId =
-          floor === "1층"
-            ? `1층-${sectionName === "앞블럭" ? "앞" : "뒤"}-${rowNumber}줄-중앙-${seatNum}번`
-            : `2층-${rowNumber}줄-중앙-${seatNum}번`
-
-        const status = getSeatStatus(seatId, grade, floor)
-
-        seatRow.push(
-          <button
-            key={seatId}
-            onClick={() => status === "available" && onSeatClick(seatId, grade)}
-            disabled={status === "unavailable"}
-            className={`h-8 w-8 text-xs font-bold rounded-md transition-all border-2 flex-shrink-0 ${
-              status === "selected"
-                ? "bg-purple-500 border-purple-600 text-white shadow-lg scale-110 z-10"
-                : status === "unavailable"
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed border-gray-400 opacity-50"
-                  : `${gradeInfo.color} cursor-pointer shadow-sm hover:scale-110 text-gray-700 hover:shadow-md border-gray-300`
-            }`}
-            title={`${seatId} (${status === "unavailable" ? "예매완료" : status === "selected" ? "선택됨" : "선택가능"})`}
-          >
-            {seatNum}
-          </button>,
-        )
-      }
-
-      // 통로
-      seatRow.push(
-        <div key={`aisle2-${rowNumber}`} className="flex flex-col items-center justify-center flex-shrink-0 px-3">
-          <div className="w-1 h-8 bg-gradient-to-b from-transparent via-gray-400 to-transparent rounded-full"></div>
-        </div>,
-      )
-
-      // 오른쪽 영역 (6석)
-      for (let seatNum = 1; seatNum <= 6; seatNum++) {
-        const seatId =
-          floor === "1층"
-            ? `1층-${sectionName === "앞블럭" ? "앞" : "뒤"}-${rowNumber}줄-오른쪽-${seatNum}번`
-            : `2층-${rowNumber}줄-오른쪽-${seatNum}번`
-
-        const status = getSeatStatus(seatId, grade, floor)
-
-        seatRow.push(
-          <button
-            key={seatId}
-            onClick={() => status === "available" && onSeatClick(seatId, grade)}
-            disabled={status === "unavailable"}
-            className={`h-8 w-8 text-xs font-bold rounded-md transition-all border-2 flex-shrink-0 ${
-              status === "selected"
-                ? "bg-purple-500 border-purple-600 text-white shadow-lg scale-110 z-10"
-                : status === "unavailable"
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed border-gray-400 opacity-50"
-                  : `${gradeInfo.color} cursor-pointer shadow-sm hover:scale-110 text-gray-700 hover:shadow-md border-gray-300`
-            }`}
-            title={`${seatId} (${status === "unavailable" ? "예매완료" : status === "selected" ? "선택됨" : "선택가능"})`}
-          >
-            {seatNum}
-          </button>,
-        )
-      }
-
-      rows.push(
-        <div key={`row-${rowNumber}`} className="flex items-center gap-1 mb-2">
-          <div className="w-12 text-center font-bold text-gray-600 text-xs flex-shrink-0">{rowNumber}줄</div>
-          <div className="flex items-center gap-1">{seatRow}</div>
-        </div>,
-      )
-    }
-
-    return (
-      <div
-        className={`border-2 rounded-xl p-4 mb-4 ${gradeInfo.color.replace("bg-", "border-").replace("-100", "-300")} bg-white shadow-sm inline-block min-w-fit`}
-        data-floor={floor}
-        data-section={sectionName}
-        data-grade={grade}
-      >
-        <div className="flex items-center gap-3 mb-4 sticky left-0 bg-white z-10 pb-2 border-b border-gray-200">
-          <div className={`w-6 h-6 rounded ${gradeInfo.color} border-2`}></div>
-          <div>
-            <h4 className="font-bold text-gray-900 text-base">
-              {floor} - {sectionName} ({grade}석)
-            </h4>
-            <p className="text-xs text-gray-600">{gradeInfo.description}</p>
-          </div>
-        </div>
-        <div className="space-y-2">{rows}</div>
-      </div>
-    )
-  }
-
-  // 줌 레벨 변경 핸들러
   const handleZoomChange = (newZoom: number) => {
-    setZoomLevel(Math.max(0.4, Math.min(1.5, newZoom)))
+    setZoomLevel(Math.max(0.5, Math.min(1.2, newZoom)))
     setIsZoomMenuOpen(false)
   }
 
-  // 렌더링 디버깅
-  useEffect(() => {
-    console.log("Current Floor:", selectedFloor)
-    console.log("Unavailable Seats:", unavailableSeats)
-    console.log("Seat Grades:", seatGrades)
-  }, [selectedFloor, unavailableSeats, seatGrades])
+  const renderSeat = (seat: SeatCell) => {
+    const status = getSeatStatus(seat)
+    const gradeInfo = getGradeInfo(seat.grade)
+    const availableClass = gradeInfo?.color ?? "bg-gray-100 border-gray-300"
+
+    return (
+      <button
+        key={seat.id}
+        type="button"
+        title={`${seat.label} - ${status === "unavailable" ? "예매 완료" : status === "selected" ? "선택됨" : "선택 가능"}`}
+        onClick={() => status === "available" && onSeatClick(seat.id, seat.grade)}
+        disabled={status === "unavailable"}
+        className={`h-8 w-8 shrink-0 rounded-md border-2 text-xs font-bold transition-all ${
+          status === "selected"
+            ? "scale-110 border-purple-600 bg-purple-500 text-white shadow-lg"
+            : status === "unavailable"
+              ? "cursor-not-allowed border-gray-400 bg-gray-300 text-gray-500 opacity-60"
+              : `${availableClass} cursor-pointer text-gray-700 shadow-sm hover:scale-110 hover:shadow-md`
+        }`}
+      >
+        {seat.seatNumber}
+      </button>
+    )
+  }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
+    <div className="flex h-[100dvh] flex-col bg-gray-50">
+      <header className="sticky top-0 z-30 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between p-3">
-          <Button onClick={onBack} variant="ghost" size="icon" className="rounded-full hover:bg-gray-100 h-9 w-9">
+          <Button onClick={onBack} variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-gray-100">
             <ArrowLeft className="h-5 w-5 text-gray-900" />
           </Button>
-          <div className="text-center flex-1">
+          <div className="min-w-0 flex-1 text-center">
             <h1 className="text-base font-bold text-gray-900">좌석 선택</h1>
-            <p className="text-xs text-gray-600">{musicalTitle}</p>
+            <p className="truncate text-xs text-gray-600">{musicalTitle}</p>
           </div>
-          <div className="w-9"></div>
+          <div className="w-9" />
         </div>
 
-        {/* Statistics Bar */}
         <div className="px-3 pb-2">
-          <div className="flex items-center justify-between text-xs bg-gray-50 rounded-lg p-2.5">
+          <div className="flex items-center justify-between rounded-lg bg-gray-50 p-2.5 text-xs">
             <div className="flex items-center gap-1">
-              <div
-                className={`w-2 h-2 rounded-full ${connectionStatus === "connected" ? "bg-green-500" : "bg-red-500"}`}
-              ></div>
-              <span className="text-gray-600 text-xs">{connectionStatus === "connected" ? "실시간" : "오프라인"}</span>
+              <div className={`h-2 w-2 rounded-full ${connectionStatus === "connected" ? "bg-green-500" : "bg-red-500"}`} />
+              <span className="text-gray-600">{connectionStatus === "connected" ? "실시간" : "오프라인"}</span>
             </div>
-            <div className="flex gap-3 text-xs">
+            <div className="flex gap-3">
               <span className="text-gray-700">
                 <strong>{statistics.total_bookings}</strong> 예매
               </span>
@@ -260,126 +117,88 @@ export default function SeatSelectionWindow({
                 <strong>{statistics.total_seats_booked}</strong> 좌석
               </span>
               <span className="text-green-600">
-                <strong>{statistics.unique_students}</strong> 학생
+                <strong>{statistics.unique_students}</strong> 명
               </span>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-hidden">
-        <div className="h-full flex flex-col">
-          {/* Floor Selection & Controls */}
-          <div className="flex-shrink-0 px-3 py-2 bg-white border-b border-gray-200">
-            <div className="flex items-center justify-between mb-2">
-              {/* Floor Selection */}
-              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 border border-gray-200">
-                {(["1층", "2층"] as const).map((floor) => (
+        <div className="flex h-full flex-col">
+          <div className="shrink-0 border-b border-gray-200 bg-white px-3 py-2">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-100 p-0.5">
+                {FLOOR_OPTIONS.map((floor) => (
                   <button
-                    key={floor}
-                    onClick={() => setSelectedFloor(floor)}
-                    className={`px-3 py-1.5 rounded-md font-semibold transition-all text-xs ${
-                      selectedFloor === floor ? "bg-purple-600 text-white shadow-md" : "text-gray-700 hover:bg-gray-200"
+                    key={floor.id}
+                    type="button"
+                    onClick={() => setSelectedFloor(floor.id)}
+                    className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                      selectedFloor === floor.id ? "bg-purple-600 text-white shadow-md" : "text-gray-700 hover:bg-gray-200"
                     }`}
                   >
-                    {floor}
+                    {floor.label}
                   </button>
                 ))}
               </div>
 
-              {/* Zoom Controls */}
               <div className="flex items-center gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleZoomChange(zoomLevel - 0.1)}
-                  disabled={zoomLevel <= 0.4}
-                  className="h-7 w-7 p-0"
-                  title="축소"
-                >
+                <Button size="sm" variant="ghost" onClick={() => handleZoomChange(zoomLevel - 0.1)} className="h-7 w-7 p-0">
                   <ZoomOut className="h-3.5 w-3.5" />
                 </Button>
-
                 <div className="relative">
                   <button
-                    onClick={() => setIsZoomMenuOpen(!isZoomMenuOpen)}
-                    className="text-xs font-medium px-2 py-1 text-gray-700 min-w-[50px] text-center bg-gray-100 rounded border border-gray-200 hover:bg-gray-200 transition-colors"
+                    type="button"
+                    onClick={() => setIsZoomMenuOpen((value) => !value)}
+                    className="min-w-[50px] rounded border border-gray-200 bg-gray-100 px-2 py-1 text-center text-xs font-medium text-gray-700 hover:bg-gray-200"
                   >
                     {Math.round(zoomLevel * 100)}%
                   </button>
-
                   {isZoomMenuOpen && (
-                    <div className="absolute top-full mt-1 right-0 bg-white rounded-lg shadow-lg border border-gray-200 p-1 z-50 min-w-[80px]">
+                    <div className="absolute right-0 top-full z-50 mt-1 min-w-[80px] rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
                       {zoomPresets.map((preset) => (
                         <button
-                          key={preset.value}
-                          onClick={() => handleZoomChange(preset.value)}
-                          className={`w-full text-left px-3 py-1.5 rounded text-xs hover:bg-gray-100 transition-colors ${
-                            Math.abs(zoomLevel - preset.value) < 0.01
-                              ? "bg-purple-50 text-purple-600 font-semibold"
-                              : "text-gray-700"
-                          }`}
+                          key={preset}
+                          type="button"
+                          onClick={() => handleZoomChange(preset)}
+                          className="w-full rounded px-3 py-1.5 text-left text-xs text-gray-700 hover:bg-gray-100"
                         >
-                          {preset.label}
+                          {Math.round(preset * 100)}%
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
-
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleZoomChange(zoomLevel + 0.1)}
-                  disabled={zoomLevel >= 1.5}
-                  className="h-7 w-7 p-0"
-                  title="확대"
-                >
+                <Button size="sm" variant="ghost" onClick={() => handleZoomChange(zoomLevel + 0.1)} className="h-7 w-7 p-0">
                   <ZoomIn className="h-3.5 w-3.5" />
                 </Button>
-
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleZoomChange(0.7)}
-                  className="h-7 w-7 p-0"
-                  title="기본 크기 (70%)"
-                >
+                <Button size="sm" variant="ghost" onClick={() => handleZoomChange(0.7)} className="h-7 w-7 p-0">
                   <RotateCcw className="h-3.5 w-3.5" />
                 </Button>
-
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleZoomChange(zoomLevel === 1.0 ? 0.7 : 1.0)}
-                  className="h-7 w-7 p-0"
-                  title={zoomLevel === 1.0 ? "축소 보기" : "전체 보기"}
-                >
-                  {zoomLevel === 1.0 ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                <Button size="sm" variant="ghost" onClick={() => handleZoomChange(zoomLevel === 1 ? 0.7 : 1)} className="h-7 w-7 p-0">
+                  <Minimize2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
 
-            {/* Legend */}
             <div className="flex justify-center gap-3 text-xs text-gray-600">
-              <div className="flex items-center gap-1">
-                <div className="w-3.5 h-3.5 bg-gray-100 border-2 border-gray-300 rounded"></div>
-                <span>선택가능</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3.5 h-3.5 bg-purple-500 border-2 border-purple-600 rounded"></div>
-                <span>선택됨</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3.5 h-3.5 bg-gray-300 border-2 border-gray-400 rounded opacity-50"></div>
-                <span>예매완료</span>
-              </div>
+              <span className="flex items-center gap-1">
+                <span className="h-3.5 w-3.5 rounded border-2 border-gray-300 bg-gray-100" />
+                선택 가능
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="h-3.5 w-3.5 rounded border-2 border-purple-600 bg-purple-500" />
+                선택됨
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="h-3.5 w-3.5 rounded border-2 border-gray-400 bg-gray-300 opacity-60" />
+                예매 완료
+              </span>
             </div>
           </div>
 
-          {/* Horizontal Scrollable Seat Map */}
-          <div className="flex-1 overflow-x-auto overflow-y-auto px-3 py-3">
+          <div className="flex-1 overflow-auto px-3 py-3">
             <div
               style={{
                 transform: `scale(${zoomLevel})`,
@@ -388,171 +207,96 @@ export default function SeatSelectionWindow({
                 minHeight: `${100 / zoomLevel}%`,
               }}
             >
-              {/* Stage - 중앙 6, 7번 좌석 위에 배치 */}
-              <div className="mb-6 flex items-start">
-                <div className="w-12 flex-shrink-0"></div> {/* 줄 번호 공간 */}
-                {/* 왼쪽 6석 공간 */}
-                <div className="flex gap-1 flex-shrink-0">
-                  {Array(6)
-                    .fill(0)
-                    .map((_, i) => (
-                      <div key={i} className="w-8"></div>
-                    ))}
-                </div>
-                {/* 통로 공간 */}
-                <div className="px-3 flex-shrink-0">
-                  <div className="w-1"></div>
-                </div>
-                {/* 중앙 1-5번 공간 */}
-                <div className="flex gap-1 flex-shrink-0">
-                  {Array(5)
-                    .fill(0)
-                    .map((_, i) => (
-                      <div key={i} className="w-8"></div>
-                    ))}
-                </div>
-                {/* 무대 아이콘 - 중앙 6, 7번 위 */}
-                <div className="flex gap-1 flex-shrink-0">
-                  <div className="w-16 flex items-center justify-center">
-                    <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-4 rounded-xl shadow-lg whitespace-nowrap">
-                      <Theater className="h-3.5 w-3.5" />
-                      <span className="font-bold text-xs">무 대</span>
-                      <Theater className="h-3.5 w-3.5" />
-                    </div>
-                  </div>
+              <div className="mb-6 flex justify-center">
+                <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-2 text-white shadow-lg">
+                  <Theater className="h-4 w-4" />
+                  <span className="text-sm font-bold">무대</span>
+                  <Theater className="h-4 w-4" />
                 </div>
               </div>
 
-              {/* Seat Sections - 1층 */}
-              {selectedFloor === "1층" && (
-                <div className="space-y-4" key="floor-1">
-                  <div className="inline-block">
-                    {/* VIP 앞블럭 */}
-                    {renderHorizontalSeatSection("앞블럭", 1, 9, "VIP", "1층")}
-                  </div>
+              <div className="space-y-6">
+                {getSeatSectionsByFloor(selectedFloor).map((section) => {
+                  const gradeInfo = getGradeInfo(section.grade)
 
-                  {/* 통로 구분선 - 중앙 6, 7번 위에 통로 아이콘 배치 */}
-                  <div className="relative py-6 my-4 flex items-center">
-                    <div className="w-12 flex-shrink-0"></div>
-                    {/* 왼쪽 6석 공간 */}
-                    <div className="flex gap-1 flex-shrink-0">
-                      {Array(6)
-                        .fill(0)
-                        .map((_, i) => (
-                          <div key={i} className="w-8"></div>
-                        ))}
-                    </div>
-                    {/* 통로 공간 */}
-                    <div className="px-3 flex-shrink-0">
-                      <div className="w-1"></div>
-                    </div>
-                    {/* 중앙 1-5번 공간 */}
-                    <div className="flex gap-1 flex-shrink-0">
-                      {Array(5)
-                        .fill(0)
-                        .map((_, i) => (
-                          <div key={i} className="w-8"></div>
-                        ))}
-                    </div>
-                    {/* 통로 라벨 - 중앙 6, 7번 위 */}
-                    <div className="flex gap-1 flex-shrink-0 relative">
-                      <div className="w-16 flex items-center justify-center">
-                        <span className="bg-gray-50 px-6 py-1.5 text-gray-700 text-xs font-bold rounded-full border-2 border-gray-400 shadow-md whitespace-nowrap relative z-10">
-                          통 로
-                        </span>
+                  return (
+                    <section key={section.id} className="inline-block min-w-fit rounded-xl border-2 border-gray-200 bg-white p-4 shadow-sm">
+                      <div className="sticky left-0 z-10 mb-4 flex items-center gap-3 border-b border-gray-200 bg-white pb-2">
+                        <div className={`h-6 w-6 rounded border-2 ${gradeInfo?.color ?? "bg-gray-100 border-gray-300"}`} />
+                        <div>
+                          <h2 className="text-base font-bold text-gray-900">
+                            {section.floor} - {section.title}
+                          </h2>
+                          <p className="text-xs text-gray-600">{gradeInfo?.description}</p>
+                        </div>
                       </div>
-                    </div>
-                    {/* 구분선 - 전체 너비 */}
-                    <div className="absolute left-12 right-0 top-1/2 -translate-y-1/2 border-t-4 border-dashed border-gray-400 -z-0"></div>
-                  </div>
 
-                  <div className="inline-block">
-                    {/* R석 뒷블럭 */}
-                    {renderHorizontalSeatSection("뒷블럭", 1, 8, "R석", "1층")}
-                  </div>
-                </div>
-              )}
-
-              {/* Seat Sections - 2층 */}
-              {selectedFloor === "2층" && (
-                <div className="space-y-4" key="floor-2">
-                  <div className="inline-block">
-                    {/* S석 전체 */}
-                    {renderHorizontalSeatSection("전체", 1, 8, "S석", "2층")}
-                  </div>
-                </div>
-              )}
+                      <div className="space-y-2">
+                        {getSeatRows(section).map(({ row, areas }) => (
+                          <div key={row} className="flex items-center gap-1">
+                            <div className="w-12 shrink-0 text-center text-xs font-bold text-gray-600">{row}열</div>
+                            {areas.map(({ area, seats }, index) => (
+                              <div key={area.id} className="flex items-center gap-1">
+                                {index > 0 && <div className="mx-3 h-8 w-1 rounded-full bg-gray-300" />}
+                                {seats.map(renderSeat)}
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </div>
       </main>
 
-      {/* Footer - Selected Seats & Actions */}
-      <footer className="flex-shrink-0 bg-white border-t border-gray-200 shadow-lg">
-        {/* Selected Seats Display */}
+      <footer className="shrink-0 border-t border-gray-200 bg-white shadow-lg">
         {selectedSeats.length > 0 && (
-          <div className="px-3 py-2.5 bg-purple-50 border-b border-purple-200">
-            <div className="flex items-center justify-between mb-2">
+          <div className="border-b border-purple-200 bg-purple-50 px-3 py-2.5">
+            <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5 text-purple-600" />
-                <span className="font-semibold text-purple-800 text-xs">선택된 좌석 ({selectedSeats.length}매)</span>
+                <span className="text-xs font-semibold text-purple-800">선택된 좌석 ({selectedSeats.length}매)</span>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  selectedSeats.forEach((seat) => onSeatClick(seat, selectedSeatGrade))
-                }}
-                className="text-purple-600 hover:text-purple-700 text-xs h-auto p-1"
+                onClick={() => selectedSeats.forEach((seat) => onSeatClick(seat, selectedSeatGrade))}
+                className="h-auto p-1 text-xs text-purple-600 hover:text-purple-700"
               >
-                <X className="h-3 w-3 mr-1" />
+                <X className="mr-1 h-3 w-3" />
                 전체 해제
               </Button>
             </div>
-            <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto">
-              {selectedSeats.map((seatId, index) => (
-                <Badge key={index} className="bg-purple-600 text-white text-xs px-1.5 py-0.5">
-                  {seatId.split("-").slice(-2).join("-")}
-                  <button
-                    onClick={() => onSeatClick(seatId, selectedSeatGrade)}
-                    className="ml-1 hover:bg-purple-700 rounded-full w-3.5 h-3.5 flex items-center justify-center text-xs"
-                  >
-                    ×
-                  </button>
+            <div className="flex max-h-16 flex-wrap gap-1 overflow-y-auto">
+              {selectedSeats.map((seatId) => (
+                <Badge key={seatId} className="bg-purple-600 px-1.5 py-0.5 text-xs text-white">
+                  {getSeatDisplayLabel(seatId)}
                 </Badge>
               ))}
             </div>
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="p-3 leading-7 space-y-3">
+        <div className="space-y-3 p-3">
           <div className="flex gap-2">
-            <Button
-              onClick={onBack}
-              variant="outline"
-              className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 py-5 font-semibold text-sm bg-transparent"
-            >
+            <Button onClick={onBack} variant="outline" className="flex-1 border-gray-300 bg-transparent py-5 text-sm font-semibold text-gray-700">
               이전
             </Button>
-            <Button
-              onClick={onConfirm}
-              disabled={selectedSeats.length === 0}
-              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-5 font-semibold text-sm"
-            >
-              <Check className="h-4 w-4 mr-1.5" />
+            <Button onClick={onConfirm} disabled={selectedSeats.length === 0} className="flex-1 bg-purple-600 py-5 text-sm font-semibold text-white hover:bg-purple-700">
+              <Check className="mr-1.5 h-4 w-4" />
               좌석 선택 완료 ({selectedSeats.length}매)
             </Button>
           </div>
-
-          {/* 관람 안내 메시지 */}
-          <div className="text-center bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 py-3 my-px leading-8">
-            <p className="text-purple-700 font-serif font-bold leading-5 text-3xl">ARTE</p>
+          <div className="rounded-lg border border-purple-200 bg-purple-50 py-3 text-center">
+            <p className="font-serif text-3xl font-bold leading-5 text-purple-700">ARTE</p>
           </div>
         </div>
       </footer>
 
-      {/* Zoom Menu Overlay */}
       {isZoomMenuOpen && <div className="fixed inset-0 z-40" onClick={() => setIsZoomMenuOpen(false)} />}
     </div>
   )

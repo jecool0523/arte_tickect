@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.reviews (
 );
 
 ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE public.reviews ALTER COLUMN password DROP NOT NULL;
 
 UPDATE public.reviews
 SET password_hash = extensions.crypt(password, extensions.gen_salt('bf'))
@@ -32,6 +33,10 @@ ON public.reviews (musical_id, created_at DESC);
 
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
+GRANT SELECT ON TABLE public.reviews TO service_role;
+GRANT USAGE, SELECT ON SEQUENCE public.reviews_id_seq TO service_role;
+
+DROP POLICY IF EXISTS "Anyone can read reviews" ON public.reviews;
 DROP POLICY IF EXISTS "Public can read reviews" ON public.reviews;
 CREATE POLICY "Public can read reviews"
 ON public.reviews
@@ -39,6 +44,8 @@ FOR SELECT
 TO anon, authenticated
 USING (true);
 
+DROP POLICY IF EXISTS "Anyone can insert reviews" ON public.reviews;
+DROP POLICY IF EXISTS "Anyone can delete reviews" ON public.reviews;
 DROP POLICY IF EXISTS "Public can insert reviews" ON public.reviews;
 DROP POLICY IF EXISTS "Public can delete reviews" ON public.reviews;
 
@@ -105,6 +112,8 @@ $$;
 
 REVOKE ALL ON FUNCTION public.create_review(TEXT, TEXT, TEXT, TEXT, INTEGER, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.delete_review_with_password(BIGINT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.create_review(TEXT, TEXT, TEXT, TEXT, INTEGER, TEXT) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.delete_review_with_password(BIGINT, TEXT) FROM anon, authenticated;
 
 GRANT EXECUTE ON FUNCTION public.create_review(TEXT, TEXT, TEXT, TEXT, INTEGER, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.delete_review_with_password(BIGINT, TEXT) TO service_role;
