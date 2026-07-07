@@ -12,13 +12,19 @@ interface MusicalDetailProps {
   musicalInfo: MusicalInfo
   onNavigateBack: () => void
   onNavigateToBooking: () => void
+  isCheckingBookingPeriod?: boolean
   isMobile: boolean
 }
 
 const tabs = ["공연정보", "캐스트", "기대평/관람후기"] as const
 type DetailTab = (typeof tabs)[number]
 
-export default function MusicalDetail({ musicalInfo, onNavigateBack, onNavigateToBooking }: MusicalDetailProps) {
+export default function MusicalDetail({
+  musicalInfo,
+  onNavigateBack,
+  onNavigateToBooking,
+  isCheckingBookingPeriod = false,
+}: MusicalDetailProps) {
   const [activeTab, setActiveTab] = useState<DetailTab>("공연정보")
 
   const renderCastList = () => (
@@ -177,9 +183,10 @@ export default function MusicalDetail({ musicalInfo, onNavigateBack, onNavigateT
         <div className="px-4 pb-2 pt-3">
           <Button
             onClick={onNavigateToBooking}
+            disabled={isCheckingBookingPeriod}
             className="h-12 w-full rounded-lg bg-purple-600 px-5 text-base font-bold tracking-wide text-white shadow-lg transition-colors duration-200 hover:bg-purple-700"
           >
-            예매하기
+            {isCheckingBookingPeriod ? "예매 기간 확인 중..." : "예매하기"}
           </Button>
         </div>
 

@@ -37,6 +37,14 @@ type BookingBlock = {
   message: string
 }
 
+type BookingPeriodStatus = {
+  success?: boolean
+  isOpen?: boolean
+  code?: string
+  message?: string
+  error?: string
+}
+
 const emptyBookingData: BookingData = {
   seatGrade: "",
   name: "",
@@ -59,6 +67,7 @@ export default function MusicalBookingSite() {
   const [presaleKey, setPresaleKey] = useState("")
   const [bookingBlock, setBookingBlock] = useState<BookingBlock>(emptyBookingBlock)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isCheckingBookingPeriod, setIsCheckingBookingPeriod] = useState(false)
   const [unavailableSeats, setUnavailableSeats] = useState<Record<string, Record<string, string[]>>>(
     createEmptyUnavailableSeats(),
   )
@@ -317,8 +326,8 @@ export default function MusicalBookingSite() {
   const handleUsePresaleKey = () => {
     if (!presaleKey.trim()) {
       toast({
-        title: "사전예매 키 필요",
-        description: "전달받은 사전예매 키를 입력해주세요.",
+        title: "초대권 필요",
+        description: "전달받은 초대권을 입력해주세요.",
         variant: "destructive",
       })
       return
@@ -326,9 +335,48 @@ export default function MusicalBookingSite() {
 
     setCurrentPage("form")
     toast({
-      title: "사전예매 키 입력 완료",
-      description: "마지막 예매 제출 단계에서 키가 다시 검증됩니다.",
+      title: "초대권 입력 완료",
+      description: "마지막 예매 제출 단계에서 초대권이 다시 검증됩니다.",
     })
+  }
+
+  const handleNavigateToBooking = async () => {
+    setIsCheckingBookingPeriod(true)
+
+    try {
+      const response = await fetch(`/api/booking-period/${selectedMusicalId}?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+      })
+      const data = (await response.json().catch(() => ({}))) as BookingPeriodStatus
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || data.message || "예매 기간을 확인할 수 없습니다.")
+      }
+
+      if (data.isOpen) {
+        setCurrentPage("form")
+        return
+      }
+
+      setBookingBlock({
+        code: data.code || "PRESALE_KEY_REQUIRED",
+        message: data.message || "아직 예매기간이 아닙니다.",
+      })
+      setCurrentPage("not_in_period")
+    } catch (error) {
+      console.error("Booking period check failed:", error)
+      toast({
+        title: "예매 기간 확인 실패",
+        description: error instanceof Error ? error.message : "잠시 후 다시 시도해주세요.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsCheckingBookingPeriod(false)
+    }
   }
 
   const handleNavigateToMusical = (musicalId?: string) => {
@@ -446,7 +494,7 @@ export default function MusicalBookingSite() {
             </div>
             <div>
               <h2 className="mb-2 text-2xl font-bold text-gray-900">
-                {isClosed ? "예매 기간이 종료되었습니다." : "아직 일반 예매 기간이 아닙니다."}
+                {isClosed ? "예매 기간이 종료되었습니다." : "아직 예매기간이 아닙니다"}
               </h2>
               <p className="text-sm leading-6 text-gray-600">{bookingBlock.message}</p>
             </div>
@@ -455,25 +503,25 @@ export default function MusicalBookingSite() {
               <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 text-left">
                 <div className="mb-3 flex items-center gap-2 text-purple-700">
                   <KeyRound className="h-4 w-4" />
-                  <span className="text-sm font-bold">사전예매 키</span>
+                  <span className="text-sm font-bold">초대권이 있다면?</span>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="presaleKey" className="text-xs font-medium text-gray-600">
-                    전달받은 키를 입력해주세요.
+                    전달받은 초대권을 입력해주세요.
                   </Label>
                   <Input
                     id="presaleKey"
                     value={presaleKey}
                     onChange={(event) => setPresaleKey(event.target.value)}
-                    placeholder="예: ARTE-PRESALE-2026"
+                    placeholder="초대권 코드"
                     className="border-purple-200 bg-white font-mono text-sm"
                   />
                 </div>
                 <Button onClick={handleUsePresaleKey} className="mt-3 w-full bg-purple-600 text-white hover:bg-purple-700">
-                  사전예매로 계속하기
+                  초대권으로 예매하기
                 </Button>
                 <p className="mt-2 text-xs leading-5 text-purple-700">
-                  키는 최종 예매 제출 시 서버에서 다시 검증됩니다.
+                  초대권은 최종 예매 제출 시 서버에서 다시 검증됩니다.
                 </p>
               </div>
             )}
@@ -546,7 +594,8 @@ export default function MusicalBookingSite() {
       <MusicalDetail
         musicalInfo={musicalInfo}
         onNavigateBack={handleNavigateToHome}
-        onNavigateToBooking={() => setCurrentPage("form")}
+        onNavigateToBooking={handleNavigateToBooking}
+        isCheckingBookingPeriod={isCheckingBookingPeriod}
         isMobile={isMobile}
       />
     )
