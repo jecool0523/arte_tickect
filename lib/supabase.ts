@@ -1,9 +1,10 @@
-import { createClient } from "@supabase/supabase-js"
+import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import type { Database } from "@/types/supabase"
 
-type UntypedSupabaseClient = any
+type TypedSupabaseClient = SupabaseClient<Database>
 
-let browserClient: UntypedSupabaseClient | null = null
-let serverClient: UntypedSupabaseClient | null = null
+let browserClient: TypedSupabaseClient | null = null
+let serverClient: TypedSupabaseClient | null = null
 
 function requireEnv(name: string) {
   const value = process.env[name]
@@ -17,7 +18,7 @@ function requireEnv(name: string) {
 
 export function getSupabaseBrowserClient() {
   if (!browserClient) {
-    browserClient = createClient(
+    browserClient = createClient<Database>(
       requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
       requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     )
@@ -28,7 +29,7 @@ export function getSupabaseBrowserClient() {
 
 export const createServerClient = () => {
   if (!serverClient) {
-    serverClient = createClient(
+    serverClient = createClient<Database>(
       requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
       requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
     )

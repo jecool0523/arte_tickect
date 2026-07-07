@@ -47,15 +47,24 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
   })
 
   const fetchReviews = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("reviews")
-      .select("id, user_name, content, image_url, rating, created_at")
-      .eq("musical_id", musicalId)
-      .order("created_at", { ascending: false })
+    try {
+      const response = await fetch(`/api/reviews?musicalId=${encodeURIComponent(musicalId)}`, {
+        cache: "no-store",
+      })
+      const data = await response.json()
 
-    if (!error && data) setReviews(data)
-    setIsLoading(false)
-  }, [musicalId, supabase])
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load reviews.")
+      }
+
+      setReviews(data.reviews || [])
+    } catch (error) {
+      console.error(error)
+      toast({ title: "오류 발생", description: "리뷰를 불러오지 못했습니다.", variant: "destructive" })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [musicalId, toast])
 
   useEffect(() => {
     fetchReviews()
@@ -132,16 +141,23 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
         ? JSON.stringify(uploadedUrls) 
         : null
 
-      const { error: insertError } = await supabase.from("reviews").insert({
-        musical_id: musicalId,
-        user_name: form.name,
-        password: form.password,
-        content: form.content,
-        rating: form.rating,
-        image_url: mediaUrlValue,
+      const response = await fetch("/api/reviews", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          musicalId,
+          name: form.name,
+          password: form.password,
+          content: form.content,
+          rating: form.rating,
+          imageUrl: mediaUrlValue,
+        }),
       })
+      const responseData = await response.json()
 
-      if (insertError) throw insertError
+      if (!response.ok) throw new Error(responseData.error || "Review create failed.")
 
       toast({ title: "작성 완료", description: "소중한 후기가 등록되었습니다!" })
       
@@ -165,8 +181,15 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
       return
     }
 
-    const { data, error } = await supabase.from("reviews").delete().eq("id", id).eq("password", inputPassword).select("id").maybeSingle()
-    if (!error && data) {
+    const response = await fetch(`/api/reviews/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ password: inputPassword }),
+    })
+
+    if (response.ok) {
       toast({ title: "삭제 완료", description: "후기가 삭제되었습니다." })
       fetchReviews()
     } else {

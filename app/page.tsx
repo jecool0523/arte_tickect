@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Ticket, AlertCircle, CircleAlert } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { getMusicalById, getAllMusicals } from "@/data/musicals"
+import { createEmptyUnavailableSeats } from "@/lib/musical-config"
 
 type PageType = "info" | "form" | "seats" | "success" | "not_in_period"
 type ScreenType = "home" | "musical" | "verification" | "arte"
@@ -42,7 +43,9 @@ export default function MusicalBookingSite() {
   })
   const [successData, setSuccessData] = useState<SuccessData | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [unavailableSeats, setUnavailableSeats] = useState<Record<string, Record<string, string[]>>>({})
+  const [unavailableSeats, setUnavailableSeats] = useState<Record<string, Record<string, string[]>>>(
+    createEmptyUnavailableSeats(),
+  )
   const [isLoadingSeats, setIsLoadingSeats] = useState(true)
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "demo" | "error">("connected")
   const [statistics, setStatistics] = useState({ total_bookings: 0, total_seats_booked: 0, unique_students: 0 })

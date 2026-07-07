@@ -57,6 +57,9 @@ Notes:
 - `.eslintrc.json` uses `next/core-web-vitals`.
 - Legacy `/api/seats` is marked dynamic and no longer tries to fetch Supabase during static prerender.
 - `package.json` pins previously `latest` dependencies to the versions already represented in the lockfile.
+- Supabase client creation is typed with `types/supabase.ts`.
+- Musical booking table names and seat availability aggregation are centralized in `lib/musical-config.ts`.
+- Review creation/deletion now goes through server API routes and the `create_review` / `delete_review_with_password` SQL functions.
 
 ## Fixed In This Batch
 
@@ -68,10 +71,19 @@ Notes:
 6. Added `.env.example` and updated `.gitignore` for local environment safety.
 7. Reduced review-list exposure by no longer selecting stored review passwords when displaying reviews.
 
+## Fixed In Second Batch
+
+1. Added `types/supabase.ts` based on the current SQL scripts and API usage.
+2. Replaced the temporary untyped Supabase client wrapper with `SupabaseClient<Database>`.
+3. Added `lib/musical-config.ts` for performance-to-table mapping, seat grade normalization, unavailable-seat aggregation, and booking statistics.
+4. Updated booking verification and seat APIs to use the shared musical/seat configuration.
+5. Added `/api/reviews` and `/api/reviews/[reviewId]` so review writes and deletes run server-side with the service-role client.
+6. Added `scripts/20260704-review-password-security.sql` to create/backfill `password_hash` and verify delete passwords with `pgcrypto`.
+
 ## Remaining Maintenance Work
 
-1. Generate Supabase database types and replace the temporary untyped Supabase client wrapper.
-2. Consolidate legacy `arte_musical_tickets` APIs with the musical-specific table/RPC flow.
-3. Centralize seat IDs, floors, grades, and labels so UI, APIs, verification, and database logic share one source.
-4. Move review password verification into a safer database-side policy or RPC, and avoid plaintext review passwords if reviews remain editable/deletable.
+1. Run `scripts/20260704-review-password-security.sql` in Supabase before deploying the review API changes.
+2. Replace `types/supabase.ts` with CLI-generated types once a Supabase project ref or local Supabase database is available.
+3. Consolidate legacy `arte_musical_tickets` APIs with the musical-specific table/RPC flow or remove the legacy endpoints after confirming they are unused.
+4. Centralize the actual seat-map generation used by `components/seat-selection-window.tsx` and `components/mobile-seat-map.tsx`; the API aggregation is centralized, but UI seat ID generation still exists in components.
 5. Add a small smoke test for the booking flow: select performance, select seats, submit booking, verify booking, and load unavailable seats.
