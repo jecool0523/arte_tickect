@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react"
 import { AlertCircle, CheckCircle, CircleAlert, KeyRound, Ticket } from "lucide-react"
 import ArteInfo from "@/components/arte-info"
 import BookingForm from "@/components/booking-form"
+import BookingTicket from "@/components/booking-ticket"
 import BookingVerification from "@/components/booking-verification"
 import HomeScreen from "@/components/home-screen"
 import MusicalDetail from "@/components/musical-detail"
@@ -416,30 +417,25 @@ export default function MusicalBookingSite() {
             </div>
             <h2 className="mb-4 text-2xl font-bold text-gray-900">예매가 완료되었습니다.</h2>
 
-            <div className="mb-6 rounded-lg bg-gray-50 p-4 text-left">
-              <h3 className="mb-3 font-semibold text-purple-600">예매 정보</h3>
-              <div className="space-y-2 text-sm text-gray-700">
-                <p>
-                  <strong>예매번호:</strong> #{successData?.bookingId}
-                </p>
-                <p>
-                  <strong>공연:</strong> {musicalInfo.title}
-                </p>
-                <p>
-                  <strong>일시:</strong> {musicalInfo.date} {musicalInfo.time}
-                </p>
-                <p>
-                  <strong>좌석:</strong> {bookingData.seatGrade} {selectedSeats.length}매
-                </p>
-                <p>
-                  <strong>신청자:</strong> {bookingData.name} ({bookingData.studentId})
-                </p>
-                <p>
-                  <strong>신청일시:</strong>{" "}
-                  {successData?.bookingDate ? new Date(successData.bookingDate).toLocaleString("ko-KR") : ""}
-                </p>
+            {successData && (
+              <div className="mb-6">
+                <BookingTicket
+                  variant="success"
+                  ticket={{
+                    bookingId: successData.bookingId,
+                    bookingDate: successData.bookingDate,
+                    name: bookingData.name,
+                    studentId: bookingData.studentId,
+                    seatGrade: bookingData.seatGrade,
+                    selectedSeats,
+                    musicalTitle: musicalInfo.title,
+                    musicalDate: musicalInfo.date,
+                    musicalTime: musicalInfo.time,
+                    venue: musicalInfo.venue,
+                  }}
+                />
               </div>
-            </div>
+            )}
 
             <div className="mb-6 rounded-lg bg-blue-50 p-4 text-sm text-gray-700">
               <p className="mb-2 font-semibold text-blue-600">안내사항</p>

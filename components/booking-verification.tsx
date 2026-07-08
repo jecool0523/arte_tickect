@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowLeft, Calendar, CheckCircle2, Loader2, Ticket } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { ArrowLeft, CheckCircle2, Loader2, Ticket } from "lucide-react"
+import BookingTicket from "@/components/booking-ticket"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getAllMusicals } from "@/data/musicals"
 import { useToast } from "@/hooks/use-toast"
-import { getSeatDisplayLabel } from "@/lib/seat-map"
 
 interface BookingVerificationProps {
   onBack: () => void
@@ -142,46 +141,23 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
         </Card>
 
         <div className="space-y-4">
-          {bookingList.map((booking, index) => (
-            <Card key={booking.id} className="border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-              <CardContent className="space-y-4 p-5">
-                <div className="flex items-center justify-between border-b border-gray-100 pb-3 dark:border-gray-700">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="border-purple-200 bg-purple-50 text-purple-700">
-                      Ticket #{bookingList.length - index}
-                    </Badge>
-                    <span className="text-sm font-bold text-purple-700">{booking.seat_grade}</span>
-                  </div>
-                  <span className="text-xs text-gray-500">{new Date(booking.booking_date).toLocaleString("ko-KR")}</span>
-                </div>
-
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">{selectedMusical?.title || "공연 정보"}</h2>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
-                      <Calendar className="h-3 w-3" />
-                      {selectedMusical?.date}
-                    </div>
-                  </div>
-                  <div className="rounded-lg bg-purple-50 px-3 py-2 text-center">
-                    <div className="text-xl font-bold text-purple-700">{booking.selected_seats.length}매</div>
-                    <div className="text-[10px] text-gray-500">예매 수량</div>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-1">
-                  {booking.selected_seats.map((seat) => (
-                    <span key={seat} className="rounded border border-purple-200 bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 shadow-sm">
-                      {getSeatDisplayLabel(seat)}
-                    </span>
-                  ))}
-                </div>
-
-                {booking.special_request && (
-                  <div className="rounded bg-gray-50 p-2 text-xs text-gray-500 dark:bg-gray-900">메모: {booking.special_request}</div>
-                )}
-              </CardContent>
-            </Card>
+          {bookingList.map((booking) => (
+            <BookingTicket
+              key={booking.id}
+              variant="list"
+              ticket={{
+                bookingId: booking.id,
+                bookingDate: booking.booking_date,
+                name: booking.name,
+                studentId: booking.student_id,
+                seatGrade: booking.seat_grade,
+                selectedSeats: booking.selected_seats,
+                musicalTitle: selectedMusical?.title || "공연 정보",
+                musicalDate: selectedMusical?.date || "",
+                musicalTime: selectedMusical?.time || "",
+                venue: selectedMusical?.venue || "",
+              }}
+            />
           ))}
         </div>
 
