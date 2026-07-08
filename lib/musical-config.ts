@@ -12,6 +12,9 @@ export const MUSICAL_DATABASE_CONFIG = {
   "your-lie-in-april": {
     bookingTable: "your_lie_in_april_bookings",
   },
+  talktalk: {
+    bookingTable: "talktalk_bookings",
+  },
 } as const
 
 export const FLOOR_1 = "1\uce35"

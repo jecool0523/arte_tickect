@@ -1,6 +1,6 @@
 # ARTE Ticketing Maintenance Notes
 
-Last checked: 2026-07-07
+Last checked: 2026-07-08
 
 ## Project Shape
 
@@ -22,7 +22,9 @@ Last checked: 2026-07-07
   - `app/api/seats/[musicalId]/route.ts`: musical-specific unavailable seat API.
   - `app/api/bookings/verify/route.ts`: booking lookup.
   - Legacy/general APIs still exist at `app/api/bookings/route.ts` and `app/api/seats/route.ts`.
-- Database scripts live in `scripts/`; the current path appears to depend on musical-specific booking tables plus `arte_musical_application_period` and the `book_musical_seats` RPC.
+- Supabase project: `arte musical ticket` (`kwkhydnvbxvcfvhksxna`, ap-northeast-2).
+- Database scripts live in `scripts/`; the current path depends on musical-specific booking tables plus `arte_musical_application_period` and the `book_musical_seats` RPC.
+- Current musical-specific booking tables in app config: `dead_poets_society_bookings`, `rent_bookings`, `your_lie_in_april_bookings`, and `talktalk_bookings`.
 - Presale booking keys are stored in `presale_access_keys` through hashed values only. The app submits a key to `/api/bookings/[musicalId]`, and the server validates/consumes it through service-role-only RPCs.
 
 ## Local Setup
@@ -99,6 +101,13 @@ Notes:
 4. Updated `/api/bookings/[musicalId]` so booking is allowed when either the normal booking period is open or a valid presale key is supplied before the period starts.
 5. Updated the not-in-period UI to accept a presale key and retry the existing booking flow without exposing validation logic to the browser.
 6. Verified the DB path by creating, consuming, releasing, and deleting a temporary smoke-test key; `leftover_smoke_keys` returned 0.
+
+## Fixed In Fifth Batch
+
+1. Added the play `talktalk` (`< 톡톡 >`) to `data/musicals.ts`.
+2. Added `talktalk_bookings` to `lib/musical-config.ts` and `types/supabase.ts`.
+3. Added `scripts/20260708-add-talktalk.sql` for the `talktalk_bookings` table, service-role-only table access, booking period row, and `book_musical_seats` RPC mapping.
+4. Applied the same SQL to Supabase project `kwkhydnvbxvcfvhksxna`; the first public-policy version was rejected by security review, so the live DB and script use service-role-only access for the new bookings table.
 
 ## Presale Key Operations
 

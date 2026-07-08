@@ -121,6 +121,7 @@ export type Database = {
         Relationships: []
       }
       rent_bookings: BookingTable
+      talktalk_bookings: BookingTable
       your_lie_in_april_bookings: BookingTable
       reviews: {
         Row: ReviewRow

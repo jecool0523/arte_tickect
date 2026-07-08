@@ -144,6 +144,29 @@ export const musicals: Record<string, MusicalInfo> = {
       { grade: "S석", description: "2층 일반 좌석", color: "bg-blue-100 border-blue-300" },
     ],
   },
+
+  talktalk: {
+    id: "talktalk",
+    title: "< 톡톡 >",
+    subtitle: "TOC TOC",
+    genre: "{ 코미디 }",
+    special: "{ 방과 후 진행 }",
+    runtime: "추후 안내",
+    ageRating: "전체 관람가",
+    venue: "신관관 4층 강당",
+    date: "2026년 7월 20일",
+    time: "방과 후",
+    posterImage: "/placeholder.svg",
+    cast: [],
+    synopsis:
+      "자신만의 강박증을 가진 여러 사람들이 치료를 받기 위해 모였다. 그런데 오기로 했던 의사가 오지 않는다? 여러 결핍의 앙상블이 만드는 코믹극!",
+    highlights: ["강박증 코미디", "결핍의 앙상블", "예상 밖의 치료실", "방과 후 공연"],
+    seatGrades: [
+      { grade: "VIP", description: "1층 앞블록 중심 좌석", color: "bg-yellow-100 border-yellow-300" },
+      { grade: "R석", description: "1층 뒷블록 좌석", color: "bg-red-100 border-red-300" },
+      { grade: "S석", description: "2층 일반 좌석", color: "bg-blue-100 border-blue-300" },
+    ],
+  },
 }
 
 export function getMusicalById(id: string): MusicalInfo | null {
