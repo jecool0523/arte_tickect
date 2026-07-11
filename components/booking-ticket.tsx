@@ -5,7 +5,7 @@ import { CalendarDays, Check, Clock, Copy, MapPin, Share2, Ticket, UserRound } f
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
-import { getSeatDisplayLabel } from "@/lib/seat-map"
+import { getSeatDisplayLabel, getSeatRows, getSeatSectionsByFloor, parseSeatId } from "@/lib/seat-map"
 import { cn } from "@/lib/utils"
 
 export interface BookingTicketData {
@@ -57,6 +57,85 @@ function buildShareMessage(ticket: BookingTicketData) {
     `예매자: ${ticket.name} (학번 ${maskStudentId(ticket.studentId)})`,
     `예매번호: #${ticket.bookingId}`,
   ].join("\n")
+}
+
+function SeatLocationMap({ selectedSeats }: { selectedSeats: string[] }) {
+  const parsedSeats = selectedSeats.map(parseSeatId).filter((seat): seat is NonNullable<ReturnType<typeof parseSeatId>> => Boolean(seat))
+
+  if (!parsedSeats.length) return null
+
+  const selectedSeatIds = new Set(parsedSeats.map((seat) => seat.id))
+  const selectedSections = Array.from(new Set(parsedSeats.map((seat) => `${seat.floor}-${seat.grade}`))).map((sectionKey) => {
+    const [floor, grade] = sectionKey.split("-")
+    return getSeatSectionsByFloor(floor as (typeof parsedSeats)[number]["floor"]).find((section) => section.grade === grade)
+  })
+
+  return (
+    <div className="rounded-lg border border-purple-100 bg-purple-50/60 p-3">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold text-purple-800">좌석 위치</p>
+          <p className="mt-0.5 text-[11px] text-purple-600">보라색으로 표시된 점이 예매 좌석입니다.</p>
+        </div>
+        <div className="rounded-full bg-purple-600 px-2 py-1 text-[11px] font-bold text-white">{selectedSeats.length}매</div>
+      </div>
+
+      <div className="mb-3 rounded-md bg-gradient-to-r from-purple-600 to-fuchsia-600 py-1.5 text-center text-[11px] font-bold text-white shadow-sm">
+        무대
+      </div>
+
+      <div className="space-y-3">
+        {selectedSections.map((section) => {
+          if (!section) return null
+
+          return (
+            <div key={section.id} className="rounded-md bg-white p-2 shadow-sm">
+              <div className="mb-2 flex items-center justify-between text-[11px]">
+                <span className="font-bold text-gray-700">
+                  {section.floor} {section.grade}
+                </span>
+                <span className="text-gray-400">앞쪽이 무대 방향</span>
+              </div>
+
+              <div className="mb-1 grid grid-cols-[1fr_1.8fr_1fr] gap-2 px-5 text-center text-[10px] font-semibold text-gray-400">
+                <span>왼쪽</span>
+                <span>중앙</span>
+                <span>오른쪽</span>
+              </div>
+
+              <div className="space-y-1">
+                {getSeatRows(section).map(({ row, areas }) => (
+                  <div key={row} className="flex items-center gap-1">
+                    <div className="w-4 shrink-0 text-right text-[9px] font-bold text-gray-400">{row}</div>
+                    <div className="grid flex-1 grid-cols-[1fr_1.8fr_1fr] gap-2">
+                      {areas.map(({ area, seats }) => (
+                        <div key={area.id} className="flex justify-center gap-0.5">
+                          {seats.map((seat) => {
+                            const isSelected = selectedSeatIds.has(seat.id)
+
+                            return (
+                              <span
+                                key={seat.id}
+                                title={seat.label}
+                                className={cn(
+                                  "h-1.5 w-1.5 rounded-[2px] bg-gray-200",
+                                  isSelected && "h-2 w-2 bg-purple-600 shadow-[0_0_0_2px_rgba(147,51,234,0.25)]",
+                                )}
+                              />
+                            )
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 export default function BookingTicket({ ticket, variant = "list" }: BookingTicketProps) {
@@ -187,6 +266,8 @@ export default function BookingTicket({ ticket, variant = "list" }: BookingTicke
             ))}
           </div>
         </div>
+
+        <SeatLocationMap selectedSeats={ticket.selectedSeats} />
 
         <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">예매 일시: {bookingDateText}</div>
 
