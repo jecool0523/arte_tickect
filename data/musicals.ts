@@ -16,7 +16,7 @@ export const musicals: Record<string, MusicalInfo> = {
     cast: [
       {
         name: "로저",
-        actor: "곽승현",
+        actor: "김승현",
         intro: "상처를 품고 살아가지만 다시 노래와 사랑을 향해 나아가는 음악가.",
         image: "/3.png",
       },
@@ -130,7 +130,7 @@ export const musicals: Record<string, MusicalInfo> = {
       },
       {
         name: "닐의 아버지",
-        actor: "김지안",
+        actor: "김지오",
         intro: "아들의 미래를 엄격하게 통제하려 하는 보호자.",
         image: "/cast-member-7.png",
       },

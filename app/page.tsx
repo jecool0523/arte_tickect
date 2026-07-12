@@ -55,7 +55,7 @@ const emptyBookingData: BookingData = {
 
 const emptyBookingBlock: BookingBlock = {
   code: "",
-  message: "현재는 예매 기간이 아닙니다.",
+  message: "현재는 일반 예매 기간이 아닙니다.",
 }
 
 export default function MusicalBookingSite() {
@@ -327,8 +327,8 @@ export default function MusicalBookingSite() {
   const handleUsePresaleKey = () => {
     if (!presaleKey.trim()) {
       toast({
-        title: "초대권 필요",
-        description: "전달받은 초대권을 입력해주세요.",
+        title: "예매 코드 필요",
+        description: "전달받은 예매 코드를 입력해주세요.",
         variant: "destructive",
       })
       return
@@ -336,8 +336,8 @@ export default function MusicalBookingSite() {
 
     setCurrentPage("form")
     toast({
-      title: "초대권 입력 완료",
-      description: "마지막 예매 제출 단계에서 초대권이 다시 검증됩니다.",
+      title: "예매 코드 입력 완료",
+      description: "최종 예매 제출 단계에서 예매 코드가 다시 검증됩니다.",
     })
   }
 
@@ -365,7 +365,7 @@ export default function MusicalBookingSite() {
 
       setBookingBlock({
         code: data.code || "PRESALE_KEY_REQUIRED",
-        message: data.message || "아직 예매기간이 아닙니다.",
+        message: data.message || "현재는 일반 예매 기간이 아닙니다.",
       })
       setCurrentPage("not_in_period")
     } catch (error) {
@@ -479,7 +479,7 @@ export default function MusicalBookingSite() {
   }
 
   if (currentPage === "not_in_period") {
-    const isClosed = bookingBlock.code === "BOOKING_PERIOD_CLOSED"
+    const isAfterBookingPeriod = bookingBlock.message.includes("종료")
 
     return (
       <div className="flex min-h-screen items-center justify-center bg-white p-4">
@@ -490,37 +490,35 @@ export default function MusicalBookingSite() {
             </div>
             <div>
               <h2 className="mb-2 text-2xl font-bold text-gray-900">
-                {isClosed ? "예매 기간이 종료되었습니다." : "아직 예매기간이 아닙니다"}
+                {isAfterBookingPeriod ? "예매 기간이 종료되었습니다." : "아직 예매기간이 아닙니다."}
               </h2>
               <p className="text-sm leading-6 text-gray-600">{bookingBlock.message}</p>
             </div>
 
-            {!isClosed && (
-              <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 text-left">
-                <div className="mb-3 flex items-center gap-2 text-purple-700">
-                  <KeyRound className="h-4 w-4" />
-                  <span className="text-sm font-bold">초대권이 있다면?</span>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="presaleKey" className="text-xs font-medium text-gray-600">
-                    전달받은 초대권을 입력해주세요.
-                  </Label>
-                  <Input
-                    id="presaleKey"
-                    value={presaleKey}
-                    onChange={(event) => setPresaleKey(event.target.value)}
-                    placeholder="초대권 코드"
-                    className="border-purple-200 bg-white font-mono text-sm"
-                  />
-                </div>
-                <Button onClick={handleUsePresaleKey} className="mt-3 w-full bg-purple-600 text-white hover:bg-purple-700">
-                  초대권으로 예매하기
-                </Button>
-                <p className="mt-2 text-xs leading-5 text-purple-700">
-                  초대권은 최종 예매 제출 시 서버에서 다시 검증됩니다.
-                </p>
+            <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 text-left">
+              <div className="mb-3 flex items-center gap-2 text-purple-700">
+                <KeyRound className="h-4 w-4" />
+                <span className="text-sm font-bold">예매 코드가 있다면?</span>
               </div>
-            )}
+              <div className="space-y-2">
+                <Label htmlFor="presaleKey" className="text-xs font-medium text-gray-600">
+                  전달받은 예매 코드를 입력해주세요.
+                </Label>
+                <Input
+                  id="presaleKey"
+                  value={presaleKey}
+                  onChange={(event) => setPresaleKey(event.target.value)}
+                  placeholder="예매 코드"
+                  className="border-purple-200 bg-white font-mono text-sm"
+                />
+              </div>
+              <Button onClick={handleUsePresaleKey} className="mt-3 w-full bg-purple-600 text-white hover:bg-purple-700">
+                예매 코드로 예매하기
+              </Button>
+              <p className="mt-2 text-xs leading-5 text-purple-700">
+                예매 코드는 최종 예매 제출 시 서버에서 다시 검증됩니다.
+              </p>
+            </div>
 
             <Button
               onClick={() => {

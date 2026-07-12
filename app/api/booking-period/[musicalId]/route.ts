@@ -31,6 +31,7 @@ export async function GET(_request: NextRequest, { params }: { params: { musical
     const isBeforeStart = now < startDate
     const isAfterEnd = now > endDate
     const isOpen = !isBeforeStart && !isAfterEnd
+    const periodLabel = `${startDate.toLocaleString("ko-KR")} ~ ${endDate.toLocaleString("ko-KR")}`
 
     return NextResponse.json(
       {
@@ -40,12 +41,12 @@ export async function GET(_request: NextRequest, { params }: { params: { musical
         isAfterEnd,
         startTime: periodData.start_time,
         endTime: periodData.end_time,
-        code: isOpen ? "BOOKING_OPEN" : isAfterEnd ? "BOOKING_PERIOD_CLOSED" : "PRESALE_KEY_REQUIRED",
+        code: isOpen ? "BOOKING_OPEN" : "PRESALE_KEY_REQUIRED",
         message: isOpen
           ? "예매 기간입니다."
           : isAfterEnd
-            ? `예매 기간이 종료되었습니다. (${startDate.toLocaleString("ko-KR")} ~ ${endDate.toLocaleString("ko-KR")})`
-            : `아직 예매기간이 아닙니다. 초대권이 있다면 기간 전에 예매할 수 있습니다. 일반 예매 기간: ${startDate.toLocaleString("ko-KR")} ~ ${endDate.toLocaleString("ko-KR")}`,
+            ? `예매 기간이 종료되었습니다. 예매 코드가 있으면 예매할 수 있습니다. 일반 예매 기간: ${periodLabel}`
+            : `아직 예매기간이 아닙니다. 예매 코드가 있으면 예매할 수 있습니다. 일반 예매 기간: ${periodLabel}`,
       },
       { headers },
     )

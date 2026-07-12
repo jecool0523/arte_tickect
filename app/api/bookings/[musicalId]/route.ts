@@ -60,27 +60,16 @@ export async function POST(request: NextRequest, { params }: { params: { musical
 
     const startDate = new Date(periodData.start_time)
     const endDate = new Date(periodData.end_time)
-    const isBeforeStart = currentDate < startDate
-    const isAfterEnd = currentDate > endDate
-    const isInBookingPeriod = !isBeforeStart && !isAfterEnd
+    const periodLabel = `${startDate.toLocaleString("ko-KR")} ~ ${endDate.toLocaleString("ko-KR")}`
+    const isInBookingPeriod = currentDate >= startDate && currentDate <= endDate
     let usedPresaleKey = false
 
     if (!isInBookingPeriod) {
-      if (isAfterEnd) {
-        return NextResponse.json(
-          {
-            code: "BOOKING_PERIOD_CLOSED",
-            error: `예매 기간이 종료되었습니다. (${startDate.toLocaleString("ko-KR")} ~ ${endDate.toLocaleString("ko-KR")})`,
-          },
-          { status: 403, headers },
-        )
-      }
-
       if (!presaleKey) {
         return NextResponse.json(
           {
             code: "PRESALE_KEY_REQUIRED",
-            error: `아직 일반 예매 기간이 아닙니다. 사전예매 키가 있으면 예매할 수 있습니다. 일반 예매 기간: ${startDate.toLocaleString("ko-KR")} ~ ${endDate.toLocaleString("ko-KR")}`,
+            error: `현재는 일반 예매 기간이 아닙니다. 예매 코드가 있으면 예매할 수 있습니다. 일반 예매 기간: ${periodLabel}`,
           },
           { status: 403, headers },
         )
@@ -94,14 +83,14 @@ export async function POST(request: NextRequest, { params }: { params: { musical
       if (presaleError) {
         console.error("Presale key validation failed:", presaleError)
         return NextResponse.json(
-          { code: "PRESALE_KEY_UNAVAILABLE", error: "사전예매 키 설정을 확인할 수 없습니다." },
+          { code: "PRESALE_KEY_UNAVAILABLE", error: "예매 코드 설정을 확인할 수 없습니다." },
           { status: 500, headers },
         )
       }
 
       if (!canUsePresaleKey) {
         return NextResponse.json(
-          { code: "INVALID_PRESALE_KEY", error: "사전예매 키가 유효하지 않거나 사용 가능 기간/횟수를 초과했습니다." },
+          { code: "INVALID_PRESALE_KEY", error: "예매 코드가 유효하지 않거나 사용 가능 기간/횟수를 초과했습니다." },
           { status: 403, headers },
         )
       }
@@ -146,7 +135,7 @@ export async function POST(request: NextRequest, { params }: { params: { musical
         bookingId: result.bookingId,
         bookingDate: result.bookingDate,
         presale: usedPresaleKey,
-        message: usedPresaleKey ? "사전예매가 완료되었습니다." : "예매 신청이 완료되었습니다.",
+        message: usedPresaleKey ? "예매 코드로 예매가 완료되었습니다." : "예매 신청이 완료되었습니다.",
       },
       { headers },
     )
