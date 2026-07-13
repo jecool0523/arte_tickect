@@ -232,7 +232,7 @@ export default function SeatSelectionWindow({
                   </div>
                 </div>
 
-                <div className="flex flex-col items-start gap-10">
+                <div className="flex flex-col items-center gap-10">
                   {getSeatSectionsByFloor(selectedFloor).map((section) => {
                     const gradeInfo = getGradeInfo(section.grade)
 
