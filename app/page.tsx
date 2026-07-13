@@ -69,6 +69,7 @@ export default function MusicalBookingSite() {
   const [bookingBlock, setBookingBlock] = useState<BookingBlock>(emptyBookingBlock)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isCheckingBookingPeriod, setIsCheckingBookingPeriod] = useState(false)
+  const [isValidatingPresaleKey, setIsValidatingPresaleKey] = useState(false)
   const [unavailableSeats, setUnavailableSeats] = useState<Record<string, Record<string, string[]>>>(
     createEmptyUnavailableSeats(),
   )
@@ -324,7 +325,7 @@ export default function MusicalBookingSite() {
     }
   }
 
-  const handleUsePresaleKey = () => {
+  const handleUsePresaleKey = async () => {
     if (!presaleKey.trim()) {
       toast({
         title: "예매 코드 필요",
@@ -334,11 +335,47 @@ export default function MusicalBookingSite() {
       return
     }
 
-    setCurrentPage("form")
-    toast({
-      title: "예매 코드 입력 완료",
-      description: "최종 예매 제출 단계에서 예매 코드가 다시 검증됩니다.",
-    })
+    setIsValidatingPresaleKey(true)
+
+    try {
+      const response = await fetch("/api/presale-keys/validate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+        },
+        cache: "no-store",
+        body: JSON.stringify({
+          musicalId: selectedMusicalId,
+          presaleKey: presaleKey.trim(),
+        }),
+      })
+      const data = (await response.json().catch(() => ({}))) as { success?: boolean; error?: string }
+
+      if (!response.ok || !data.success) {
+        toast({
+          title: "예매 코드 확인 실패",
+          description: data.error || "예매 코드를 확인할 수 없습니다.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setCurrentPage("form")
+      toast({
+        title: "예매 코드 확인 완료",
+        description: "예매 코드가 확인되었습니다. 예매를 계속 진행해주세요.",
+      })
+    } catch (error) {
+      console.error("Presale key validation failed:", error)
+      toast({
+        title: "예매 코드 확인 실패",
+        description: "잠시 후 다시 시도해주세요.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsValidatingPresaleKey(false)
+    }
   }
 
   const handleNavigateToBooking = async () => {
@@ -512,8 +549,12 @@ export default function MusicalBookingSite() {
                   className="border-purple-200 bg-white font-mono text-sm"
                 />
               </div>
-              <Button onClick={handleUsePresaleKey} className="mt-3 w-full bg-purple-600 text-white hover:bg-purple-700">
-                예매 코드로 예매하기
+              <Button
+                onClick={handleUsePresaleKey}
+                disabled={isValidatingPresaleKey}
+                className="mt-3 w-full bg-purple-600 text-white hover:bg-purple-700"
+              >
+                {isValidatingPresaleKey ? "예매 코드 확인 중..." : "예매 코드로 예매하기"}
               </Button>
               <p className="mt-2 text-xs leading-5 text-purple-700">
                 예매 코드는 최종 예매 제출 시 서버에서 다시 검증됩니다.

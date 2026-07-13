@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
+import { isKnownMusicalId } from "@/lib/musical-config"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -11,6 +12,10 @@ const headers = {
 }
 
 export async function GET(_request: NextRequest, { params }: { params: { musicalId: string } }) {
+  if (!isKnownMusicalId(params.musicalId)) {
+    return NextResponse.json({ error: "존재하지 않는 공연 ID입니다." }, { status: 404, headers })
+  }
+
   try {
     const supabase = createServerClient()
     const now = new Date()

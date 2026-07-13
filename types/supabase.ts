@@ -121,8 +121,7 @@ export type Database = {
         Relationships: []
       }
       rent_bookings: BookingTable
-      talktalk_bookings: BookingTable
-      your_lie_in_april_bookings: BookingTable
+      toctoc_bookings: BookingTable
       reviews: {
         Row: ReviewRow
         Insert: {
@@ -205,6 +204,13 @@ export type Database = {
         Returns: boolean
       }
       release_presale_access_key: {
+        Args: {
+          p_musical_id: string
+          p_key: string
+        }
+        Returns: boolean
+      }
+      validate_presale_access_key: {
         Args: {
           p_musical_id: string
           p_key: string

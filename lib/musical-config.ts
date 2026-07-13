@@ -9,11 +9,8 @@ export const MUSICAL_DATABASE_CONFIG = {
   rent: {
     bookingTable: "rent_bookings",
   },
-  "your-lie-in-april": {
-    bookingTable: "your_lie_in_april_bookings",
-  },
-  talktalk: {
-    bookingTable: "talktalk_bookings",
+  toctoc: {
+    bookingTable: "toctoc_bookings",
   },
 } as const
 
@@ -39,8 +36,6 @@ export type SeatStatistics = {
   unique_students: number
 }
 
-const bookingTableFallback = MUSICAL_DATABASE_CONFIG[DEFAULT_MUSICAL_ID].bookingTable
-
 export const EMPTY_SEAT_STATISTICS: SeatStatistics = {
   total_bookings: 0,
   total_seats_booked: 0,
@@ -51,8 +46,8 @@ export function isKnownMusicalId(musicalId: string): musicalId is MusicalId {
   return musicalId in MUSICAL_DATABASE_CONFIG
 }
 
-export function getBookingTableName(musicalId: string): BookingTableName {
-  return isKnownMusicalId(musicalId) ? MUSICAL_DATABASE_CONFIG[musicalId].bookingTable : bookingTableFallback
+export function getBookingTableName(musicalId: string): BookingTableName | null {
+  return isKnownMusicalId(musicalId) ? MUSICAL_DATABASE_CONFIG[musicalId].bookingTable : null
 }
 
 export function createEmptyUnavailableSeats(): UnavailableSeats {

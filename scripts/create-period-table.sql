@@ -22,7 +22,7 @@ VALUES
 
     -- 다른 공연들 (필요하다면 여기도 날짜를 지정해주세요. 현재는 '상시 예매 가능' 상태입니다)
     ('dead-poets-society', NOW() - INTERVAL '1 day', NOW() + INTERVAL '7 days'),
-    ('your-lie-in-april', NOW() - INTERVAL '1 day', NOW() + INTERVAL '7 days')
+    ('toctoc', NOW() - INTERVAL '1 day', '2026-07-20 23:59:59+09')
 ON CONFLICT (musical_name) 
 DO UPDATE SET 
     start_time = EXCLUDED.start_time,

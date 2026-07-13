@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS public.talktalk_bookings (
+CREATE TABLE IF NOT EXISTS public.toctoc_bookings (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     student_id VARCHAR(20) NOT NULL,
@@ -11,19 +11,19 @@ CREATE TABLE IF NOT EXISTS public.talktalk_bookings (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_talktalk_student_id ON public.talktalk_bookings(student_id);
-CREATE INDEX IF NOT EXISTS idx_talktalk_booking_date ON public.talktalk_bookings(booking_date);
-CREATE INDEX IF NOT EXISTS idx_talktalk_status ON public.talktalk_bookings(status);
+CREATE INDEX IF NOT EXISTS idx_toctoc_student_id ON public.toctoc_bookings(student_id);
+CREATE INDEX IF NOT EXISTS idx_toctoc_booking_date ON public.toctoc_bookings(booking_date);
+CREATE INDEX IF NOT EXISTS idx_toctoc_status ON public.toctoc_bookings(status);
 
-ALTER TABLE public.talktalk_bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.toctoc_bookings ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Anyone can read talktalk_bookings" ON public.talktalk_bookings;
-DROP POLICY IF EXISTS "Anyone can insert talktalk_bookings" ON public.talktalk_bookings;
-REVOKE ALL ON TABLE public.talktalk_bookings FROM PUBLIC;
-REVOKE ALL ON TABLE public.talktalk_bookings FROM anon;
-REVOKE ALL ON TABLE public.talktalk_bookings FROM authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.talktalk_bookings TO service_role;
-GRANT USAGE, SELECT ON SEQUENCE public.talktalk_bookings_id_seq TO service_role;
+DROP POLICY IF EXISTS "Anyone can read toctoc_bookings" ON public.toctoc_bookings;
+DROP POLICY IF EXISTS "Anyone can insert toctoc_bookings" ON public.toctoc_bookings;
+REVOKE ALL ON TABLE public.toctoc_bookings FROM PUBLIC;
+REVOKE ALL ON TABLE public.toctoc_bookings FROM anon;
+REVOKE ALL ON TABLE public.toctoc_bookings FROM authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.toctoc_bookings TO service_role;
+GRANT USAGE, SELECT ON SEQUENCE public.toctoc_bookings_id_seq TO service_role;
 
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER
@@ -36,13 +36,13 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS update_talktalk_updated_at ON public.talktalk_bookings;
-CREATE TRIGGER update_talktalk_updated_at
-    BEFORE UPDATE ON public.talktalk_bookings
+DROP TRIGGER IF EXISTS update_toctoc_updated_at ON public.toctoc_bookings;
+CREATE TRIGGER update_toctoc_updated_at
+    BEFORE UPDATE ON public.toctoc_bookings
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 INSERT INTO public.arte_musical_application_period (musical_name, start_time, end_time)
-VALUES ('talktalk', NOW() - INTERVAL '1 day', '2026-07-20 23:59:59+09')
+VALUES ('toctoc', NOW() - INTERVAL '1 day', '2026-07-20 23:59:59+09')
 ON CONFLICT (musical_name)
 DO UPDATE SET
     start_time = EXCLUDED.start_time,
@@ -69,8 +69,7 @@ BEGIN
     CASE p_musical_id
         WHEN 'dead-poets-society' THEN v_table_name := 'dead_poets_society_bookings';
         WHEN 'rent' THEN v_table_name := 'rent_bookings';
-        WHEN 'your-lie-in-april' THEN v_table_name := 'your_lie_in_april_bookings';
-        WHEN 'talktalk' THEN v_table_name := 'talktalk_bookings';
+        WHEN 'toctoc' THEN v_table_name := 'toctoc_bookings';
         ELSE
             RETURN jsonb_build_object('success', false, 'error', '잘못된 뮤지컬 ID입니다.');
     END CASE;

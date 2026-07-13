@@ -1,6 +1,6 @@
 # ARTE Ticketing Maintenance Notes
 
-Last checked: 2026-07-08
+Last checked: 2026-07-13
 
 ## Project Shape
 
@@ -24,7 +24,7 @@ Last checked: 2026-07-08
   - Legacy/general APIs still exist at `app/api/bookings/route.ts` and `app/api/seats/route.ts`.
 - Supabase project: `arte musical ticket` (`kwkhydnvbxvcfvhksxna`, ap-northeast-2).
 - Database scripts live in `scripts/`; the current path depends on musical-specific booking tables plus `arte_musical_application_period` and the `book_musical_seats` RPC.
-- Current musical-specific booking tables in app config: `dead_poets_society_bookings`, `rent_bookings`, `your_lie_in_april_bookings`, and `talktalk_bookings`.
+- Current musical-specific booking tables in app config: `dead_poets_society_bookings`, `rent_bookings`, and `toctoc_bookings`.
 - Presale booking keys are stored in `presale_access_keys` through hashed values only. The app submits a key to `/api/bookings/[musicalId]`, and the server validates/consumes it through service-role-only RPCs.
 
 ## Local Setup
@@ -104,10 +104,17 @@ Notes:
 
 ## Fixed In Fifth Batch
 
-1. Added the play `talktalk` (`< 톡톡 >`) to `data/musicals.ts`.
-2. Added `talktalk_bookings` to `lib/musical-config.ts` and `types/supabase.ts`.
-3. Added `scripts/20260708-add-talktalk.sql` for the `talktalk_bookings` table, service-role-only table access, booking period row, and `book_musical_seats` RPC mapping.
+1. Added the play `toctoc` (`< 톡톡 >`) to `data/musicals.ts`.
+2. Added `toctoc_bookings` to `lib/musical-config.ts` and `types/supabase.ts`.
+3. Added `scripts/20260708-add-toctoc.sql` for the `toctoc_bookings` table, service-role-only table access, booking period row, and `book_musical_seats` RPC mapping.
 4. Applied the same SQL to Supabase project `kwkhydnvbxvcfvhksxna`; the first public-policy version was rejected by security review, so the live DB and script use service-role-only access for the new bookings table.
+
+## Fixed In Sixth Batch
+
+1. Renamed the existing `talktalk_bookings` database table and all related musical IDs to `toctoc` without deleting the existing bookings.
+2. Removed the stale `your-lie-in-april` backend mapping because the performance is not present in the frontend and its database table is not present in Supabase.
+3. Added musical ID validation to booking, seat, booking-period, verification, and review APIs so unknown IDs cannot fall back to another performance's table.
+4. Removed missing `/toc-toc/*.png` cast image references so the detail page uses its built-in placeholder instead of requesting 404 assets.
 
 ## Presale Key Operations
 

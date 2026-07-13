@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
-import { getBookingTableName } from "@/lib/musical-config"
+import { getBookingTableName, isKnownMusicalId } from "@/lib/musical-config"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -36,6 +36,11 @@ async function releasePresaleKeyUsage(supabase: ServerClient, musicalId: string,
 export async function POST(request: NextRequest, { params }: { params: { musicalId: string } }) {
   try {
     const musicalId = params.musicalId
+
+    if (!isKnownMusicalId(musicalId)) {
+      return NextResponse.json({ error: "존재하지 않는 공연 ID입니다." }, { status: 404, headers })
+    }
+
     const body = (await request.json()) as BookingRequestBody
     const { name, studentId, seatGrade, selectedSeats, specialRequest } = body
     const presaleKey = body.presaleKey?.trim() ?? ""
@@ -151,6 +156,11 @@ export async function POST(request: NextRequest, { params }: { params: { musical
 export async function GET(_request: NextRequest, { params }: { params: { musicalId: string } }) {
   try {
     const tableName = getBookingTableName(params.musicalId)
+
+    if (!tableName) {
+      return NextResponse.json({ error: "존재하지 않는 공연 ID입니다." }, { status: 404, headers })
+    }
+
     const supabase = createServerClient()
 
     const { error: tableCheckError } = await supabase.from(tableName).select("count", { count: "exact", head: true })

@@ -22,6 +22,10 @@ export async function GET(_request: Request, { params }: { params: { musicalId: 
   const tableName = getBookingTableName(musicalId)
   const defaultUnavailableSeats = createEmptyUnavailableSeats()
 
+  if (!tableName) {
+    return NextResponse.json({ error: "존재하지 않는 공연 ID입니다." }, { status: 404, headers })
+  }
+
   try {
     const supabase = createServerClient()
 

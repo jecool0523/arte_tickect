@@ -20,6 +20,10 @@ export async function POST(request: NextRequest) {
     const supabase = createServerClient()
     const tableName = getBookingTableName(musicalId)
 
+    if (!tableName) {
+      return NextResponse.json({ error: "존재하지 않는 공연 ID입니다." }, { status: 404 })
+    }
+
     const { data: bookings, error } = await supabase
       .from(tableName)
       .select("id, seat_grade, selected_seats, booking_date, special_request, name, student_id")

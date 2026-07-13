@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
+import { isKnownMusicalId } from "@/lib/musical-config"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -20,6 +21,10 @@ export async function GET(request: NextRequest) {
 
   if (!musicalId) {
     return NextResponse.json({ error: "musicalId is required." }, { status: 400 })
+  }
+
+  if (!isKnownMusicalId(musicalId)) {
+    return NextResponse.json({ error: "존재하지 않는 공연 ID입니다." }, { status: 404 })
   }
 
   try {
@@ -50,6 +55,10 @@ export async function POST(request: NextRequest) {
 
     if (!musicalId || !name || !password || !content) {
       return NextResponse.json({ error: "이름, 비밀번호, 내용은 필수입니다." }, { status: 400 })
+    }
+
+    if (!isKnownMusicalId(musicalId)) {
+      return NextResponse.json({ error: "존재하지 않는 공연 ID입니다." }, { status: 404 })
     }
 
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
