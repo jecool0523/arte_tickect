@@ -43,7 +43,6 @@ function parseMediaUrls(urlJson: string | null): string[] {
 }
 
 export default function ReviewSection({ musicalId }: { musicalId: string }) {
-  const supabase = getSupabaseBrowserClient()
   const [reviews, setReviews] = useState<Review[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -118,6 +117,7 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
 
     try {
       if (selectedFiles.length > 0) {
+        const supabase = getSupabaseBrowserClient()
         const urls = await Promise.all(
           selectedFiles.map(async (file) => {
             const fileExt = file.name.split(".").pop()
