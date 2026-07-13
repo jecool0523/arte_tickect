@@ -12,7 +12,7 @@ export const musicals: Record<string, MusicalInfo> = {
     venue: "신관 4층 대강당",
     date: "2026년 7월 20일(월)",
     time: "방과후",
-    posterImage: "/toc-toc/poster.jpg",
+    posterImage: "/toc-toc/poster.png",
     cast: [
       {
         name: "프레드",
