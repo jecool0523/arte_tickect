@@ -569,7 +569,7 @@ export default function MusicalBookingSite() {
                 {isValidatingPresaleKey ? "예매 코드 확인 중..." : "예매 코드로 예매하기"}
               </Button>
               <p className="mt-2 text-xs leading-5 text-purple-700">
-                선예매 코드를 받고싶다면 2325제시원에게 연락해주세요!
+                선예매 코드를 못받았다면 2325제시원에게 연락해주세요!
               </p>
             </div>
 

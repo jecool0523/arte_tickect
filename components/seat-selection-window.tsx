@@ -223,20 +223,21 @@ export default function SeatSelectionWindow({
                 minHeight: `${100 / zoomLevel}%`,
               }}
             >
-              <div className="mb-6 flex justify-center">
-                <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-2 text-white shadow-lg">
-                  <Theater className="h-4 w-4" />
-                  <span className="text-sm font-bold">무대</span>
-                  <Theater className="h-4 w-4" />
+              <div className="w-fit min-w-full">
+                <div className="mb-6 flex justify-center">
+                  <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-2 text-white shadow-lg">
+                    <Theater className="h-4 w-4" />
+                    <span className="text-sm font-bold">무대</span>
+                    <Theater className="h-4 w-4" />
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex flex-col items-start gap-10">
-                {getSeatSectionsByFloor(selectedFloor).map((section) => {
-                  const gradeInfo = getGradeInfo(section.grade)
+                <div className="flex flex-col items-start gap-10">
+                  {getSeatSectionsByFloor(selectedFloor).map((section) => {
+                    const gradeInfo = getGradeInfo(section.grade)
 
-                  return (
-                    <section key={section.id} className="w-fit min-w-fit rounded-xl border-2 border-gray-200 bg-white p-4 shadow-sm">
+                    return (
+                      <section key={section.id} className="w-fit min-w-fit rounded-xl border-2 border-gray-200 bg-white p-4 shadow-sm">
                       <div className="sticky left-0 z-10 mb-4 flex items-center gap-3 border-b border-gray-200 bg-white pb-2">
                         <div className={`h-6 w-6 rounded border-2 ${gradeInfo?.color ?? "bg-gray-100 border-gray-300"}`} />
                         <div>
@@ -260,9 +261,10 @@ export default function SeatSelectionWindow({
                           </div>
                         ))}
                       </div>
-                    </section>
-                  )
-                })}
+                      </section>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>

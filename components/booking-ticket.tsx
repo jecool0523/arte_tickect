@@ -76,6 +76,11 @@ function getTicketImageFileName(ticket: BookingTicketData) {
   return `ARTE-${safeTitle || "ticket"}-${ticket.bookingId}.png`
 }
 
+const seatMapGridTemplate = {
+  gridTemplateColumns:
+    "16px repeat(6, minmax(0, 1fr)) 12px repeat(12, minmax(0, 1fr)) 12px repeat(6, minmax(0, 1fr))",
+}
+
 function SeatLocationMap({ selectedSeats }: { selectedSeats: string[] }) {
   const parsedSeats = selectedSeats.map(parseSeatId).filter((seat): seat is NonNullable<ReturnType<typeof parseSeatId>> => Boolean(seat))
 
@@ -114,36 +119,35 @@ function SeatLocationMap({ selectedSeats }: { selectedSeats: string[] }) {
                 <span className="text-gray-400">앞쪽이 무대 방향</span>
               </div>
 
-              <div className="mb-1 grid grid-cols-[1fr_1.8fr_1fr] gap-2 px-5 text-center text-[10px] font-semibold text-gray-400">
-                <span>왼쪽</span>
-                <span>중앙</span>
-                <span>오른쪽</span>
+              <div className="mb-1.5 grid text-center text-[10px] font-semibold text-gray-400" style={seatMapGridTemplate}>
+                <span className="col-start-2 col-span-6">왼쪽</span>
+                <span className="col-start-9 col-span-12">중앙</span>
+                <span className="col-start-[22] col-span-6">오른쪽</span>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {getSeatRows(section).map(({ row, areas }) => (
-                  <div key={row} className="flex items-center gap-1">
-                    <div className="w-4 shrink-0 text-right text-[9px] font-bold text-gray-400">{row}</div>
-                    <div className="grid flex-1 grid-cols-[1fr_1.8fr_1fr] gap-2">
-                      {areas.map(({ area, seats }) => (
-                        <div key={area.id} className="flex justify-center gap-0.5">
-                          {seats.map((seat) => {
-                            const isSelected = selectedSeatIds.has(seat.id)
+                  <div key={row} className="grid items-center" style={seatMapGridTemplate}>
+                    <div className="pr-1 text-right text-[9px] font-bold text-gray-400">{row}</div>
+                    {areas.map(({ area, seats }, areaIndex) => (
+                      <div key={area.id} className="contents">
+                        {areaIndex > 0 && <span aria-hidden="true" className="mx-auto h-3 w-0.5 rounded-full bg-purple-300" />}
+                        {seats.map((seat) => {
+                          const isSelected = selectedSeatIds.has(seat.id)
 
-                            return (
-                              <span
-                                key={seat.id}
-                                title={seat.label}
-                                className={cn(
-                                  "h-1.5 w-1.5 rounded-[2px] bg-gray-200",
-                                  isSelected && "h-2 w-2 bg-purple-600 shadow-[0_0_0_2px_rgba(147,51,234,0.25)]",
-                                )}
-                              />
-                            )
-                          })}
-                        </div>
-                      ))}
-                    </div>
+                          return (
+                            <span
+                              key={seat.id}
+                              title={seat.label}
+                              className={cn(
+                                "mx-auto h-2 w-2 rounded-[2px] bg-gray-200",
+                                isSelected && "relative z-10 bg-purple-600 ring-2 ring-purple-200",
+                              )}
+                            />
+                          )
+                        })}
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>

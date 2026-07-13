@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     siteName: "DIMI-ARTE",
     images: [
       {
-        url: "/rent-poster.png",
+        url: "/toc-toc/poster.jpg",
         width: 1200,
         height: 630,
       },
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   icons: {
-    icon: "/icon.png",
+    icon: "/arte_icon.png",
   },
   verification: {
     google:"8dWSZu37D_Ii3mHGfkZ3bBoyxWazDyLAroX2qVjJsuA",

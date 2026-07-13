@@ -49,12 +49,12 @@ export default function ArteInfo({ onNavigateToHome, onNavigateToMusical, onNavi
             <CardContent className="p-5">
               <h3 className="mb-3 flex items-center gap-2 font-bold text-gray-900">
                 <Instagram className="h-5 w-5 text-pink-600" />
-                공식 인스타그램
+                공식 랜딩페이지
               </h3>
               <p className="mb-4 text-sm text-gray-600">
-                ARTE의 새로운 소식, 연습 과정, 비하인드 스토리를 인스타그램에서 확인하세요.
+                ARTE의 새로운 소식, 연습 과정, 비하인드 스토리를 확인하세요.(PC 환경 감상을 추천드립니다.)
               </p>
-              <Link href="https://www.instagram.com/arte_dimigo" target="_blank">
+              <Link href="https://arte-randingpage.vercel.app/" target="_blank">
                 <Button variant="outline" className="w-full border-pink-200 text-pink-700 hover:bg-pink-50 hover:text-pink-800">
                   @arte_dimigo
                 </Button>
