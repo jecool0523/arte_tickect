@@ -89,7 +89,7 @@ export default function MusicalDetail({
   )
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col bg-white dark:bg-gray-900">
+    <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-white dark:bg-gray-900">
       <header className="sticky top-0 z-20 bg-white/90 shadow-sm backdrop-blur-sm dark:bg-gray-900/90">
         <div className="flex items-center p-4">
           <Button onClick={onNavigateBack} variant="ghost" size="icon" className="rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -99,7 +99,7 @@ export default function MusicalDetail({
         </div>
       </header>
 
-      <main className="grow pb-32">
+      <main className="min-h-0 flex-1 overflow-y-auto pb-6">
         <div className="relative">
           <div className="relative h-80 w-full overflow-hidden bg-gray-200">
             <Image src={musicalInfo.posterImage || "/placeholder.svg"} alt={musicalInfo.title} fill className="object-cover" />
@@ -179,7 +179,7 @@ export default function MusicalDetail({
         </div>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 z-30 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-gray-700 dark:bg-gray-900">
+      <footer className="z-30 shrink-0 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-gray-700 dark:bg-gray-900">
         <div className="px-4 pb-2 pt-3">
           <Button
             onClick={onNavigateToBooking}

@@ -377,6 +377,7 @@ export default function MusicalBookingSite() {
       toast({
         title: "예매 코드 확인 완료",
         description: "예매 코드가 확인되었습니다. 예매를 계속 진행해주세요.",
+        duration: 2200,
       })
     } catch (error) {
       console.error("Presale key validation failed:", error)

@@ -106,7 +106,7 @@ export default function BookingForm({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-gray-50">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex items-center p-4">
           <Button onClick={onBack} variant="ghost" size="icon" className="rounded-full p-2 hover:bg-gray-100">
@@ -116,7 +116,7 @@ export default function BookingForm({
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto pb-32">
+      <main className="min-h-0 flex-1 overflow-y-auto pb-6">
         <div className="mx-auto max-w-2xl space-y-4 p-4">
           <Card className="border border-gray-200 bg-white shadow-sm">
             <CardContent className="p-4">
@@ -284,7 +284,7 @@ export default function BookingForm({
         </div>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 z-30 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)]">
+      <footer className="z-30 shrink-0 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-start justify-around pb-2 pt-1">
           <Button variant="ghost" className="flex h-auto flex-col items-center space-y-1 p-2 text-gray-600 hover:text-purple-600" onClick={onNavigateToHome}>
             <Home className="h-5 w-5" />
