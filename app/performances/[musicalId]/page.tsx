@@ -19,7 +19,13 @@ export function generateMetadata({ params }: PerformancePageProps): Metadata {
     openGraph: {
       title: musical.title,
       description: musical.synopsis,
-      images: [musical.posterImage],
+      images: ["/toc-toc/poster.jpg"],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: musical.title,
+      description: musical.synopsis,
+      images: ["/toc-toc/poster.jpg"],
     },
   }
 }

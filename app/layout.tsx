@@ -46,6 +46,12 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "DIMI-ARTE",
+    description: "디미고 연극/뮤지컬 동아리 ARTE의 공식 사이트",
+    images: ["/toc-toc/poster.jpg"],
+  },
   icons: {
     icon: "/arte_icon.png",
   },

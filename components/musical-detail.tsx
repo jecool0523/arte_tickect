@@ -173,7 +173,7 @@ export default function MusicalDetail({
           {activeTab === "기대평/관람후기" && (
             <div>
               <h3 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">기대평/관람후기</h3>
-              <ReviewSection musicalId={musicalInfo.id} />
+              <ReviewSection key={musicalInfo.id} musicalId={musicalInfo.id} />
             </div>
           )}
         </div>
