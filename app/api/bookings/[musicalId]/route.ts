@@ -49,6 +49,13 @@ export async function POST(request: NextRequest, { params }: { params: { musical
       return NextResponse.json({ error: "필수 예약 정보가 누락되었습니다." }, { status: 400, headers })
     }
 
+    if (musicalId === "toctoc" && presaleKey && selectedSeats.length > 2) {
+      return NextResponse.json(
+        { error: "톡톡 선예매 코드는 최대 2석까지 예매할 수 있습니다." },
+        { status: 400, headers },
+      )
+    }
+
     const supabase = createServerClient()
     const currentDate = new Date()
 

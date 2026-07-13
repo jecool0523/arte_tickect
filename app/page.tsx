@@ -194,10 +194,15 @@ export default function MusicalBookingSite() {
       return
     }
 
-    if (selectedSeats.length >= 100 && !selectedSeats.includes(seatId)) {
+    const maxSelectableSeats = selectedMusicalId === "toctoc" && presaleKey.trim() ? 2 : 100
+
+    if (selectedSeats.length >= maxSelectableSeats && !selectedSeats.includes(seatId)) {
       toast({
         title: "선택 제한",
-        description: "최대 100개의 좌석까지 선택할 수 있습니다.",
+        description:
+          maxSelectableSeats === 2
+            ? "톡톡 선예매 코드는 최대 2석까지 예매할 수 있습니다."
+            : "최대 100개의 좌석까지 선택할 수 있습니다.",
         variant: "destructive",
       })
       return
@@ -557,7 +562,7 @@ export default function MusicalBookingSite() {
                 {isValidatingPresaleKey ? "예매 코드 확인 중..." : "예매 코드로 예매하기"}
               </Button>
               <p className="mt-2 text-xs leading-5 text-purple-700">
-                예매 코드는 최종 예매 제출 시 서버에서 다시 검증됩니다.
+                선예매 코드를 받고싶다면 2325제시원에게 연락해주세요!
               </p>
             </div>
 
