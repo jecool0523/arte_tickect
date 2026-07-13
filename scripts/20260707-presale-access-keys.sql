@@ -8,11 +8,13 @@ CREATE TABLE IF NOT EXISTS public.presale_access_keys (
   starts_at TIMESTAMPTZ,
   ends_at TIMESTAMPTZ,
   max_uses INTEGER,
+  max_seats_per_booking INTEGER,
   used_count INTEGER NOT NULL DEFAULT 0,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT presale_access_keys_max_uses_positive CHECK (max_uses IS NULL OR max_uses > 0),
+  CONSTRAINT presale_access_keys_max_seats_positive CHECK (max_seats_per_booking IS NULL OR max_seats_per_booking > 0),
   CONSTRAINT presale_access_keys_used_count_nonnegative CHECK (used_count >= 0),
   CONSTRAINT presale_access_keys_time_range CHECK (starts_at IS NULL OR ends_at IS NULL OR starts_at <= ends_at)
 );
@@ -198,21 +200,49 @@ AS $$
     );
 $$;
 
+CREATE OR REPLACE FUNCTION public.get_presale_access_key_seat_limit(
+  p_musical_id TEXT,
+  p_key TEXT
+)
+RETURNS INTEGER
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
+  SELECT max_seats_per_booking
+  FROM public.presale_access_keys
+  WHERE p_musical_id IS NOT NULL
+    AND p_key IS NOT NULL
+    AND BTRIM(p_key) <> ''
+    AND musical_id = BTRIM(p_musical_id)
+    AND is_active = TRUE
+    AND key_hash = extensions.crypt(BTRIM(p_key), key_hash)
+    AND (starts_at IS NULL OR NOW() >= starts_at)
+    AND (ends_at IS NULL OR NOW() <= ends_at)
+    AND (max_uses IS NULL OR used_count < max_uses)
+  ORDER BY id
+  LIMIT 1;
+$$;
+
 REVOKE ALL ON FUNCTION public.touch_presale_access_keys_updated_at() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.create_presale_access_key(TEXT, TEXT, TEXT, TIMESTAMPTZ, TIMESTAMPTZ, INTEGER) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.consume_presale_access_key(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.release_presale_access_key(TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.validate_presale_access_key(TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.get_presale_access_key_seat_limit(TEXT, TEXT) FROM PUBLIC;
 
 REVOKE ALL ON FUNCTION public.create_presale_access_key(TEXT, TEXT, TEXT, TIMESTAMPTZ, TIMESTAMPTZ, INTEGER) FROM anon, authenticated;
 REVOKE ALL ON FUNCTION public.consume_presale_access_key(TEXT, TEXT) FROM anon, authenticated;
 REVOKE ALL ON FUNCTION public.release_presale_access_key(TEXT, TEXT) FROM anon, authenticated;
 REVOKE ALL ON FUNCTION public.validate_presale_access_key(TEXT, TEXT) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.get_presale_access_key_seat_limit(TEXT, TEXT) FROM anon, authenticated;
 
 GRANT EXECUTE ON FUNCTION public.create_presale_access_key(TEXT, TEXT, TEXT, TIMESTAMPTZ, TIMESTAMPTZ, INTEGER) TO service_role;
 GRANT EXECUTE ON FUNCTION public.consume_presale_access_key(TEXT, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.release_presale_access_key(TEXT, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.validate_presale_access_key(TEXT, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.get_presale_access_key_seat_limit(TEXT, TEXT) TO service_role;
 
 -- Example:
 -- SELECT public.create_presale_access_key(

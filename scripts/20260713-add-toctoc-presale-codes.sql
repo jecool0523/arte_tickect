@@ -22,6 +22,7 @@ SET
   starts_at = LEAST(COALESCE(access_key.starts_at, NOW()), NOW()),
   ends_at = NULL,
   max_uses = 1,
+  max_seats_per_booking = 2,
   is_active = TRUE
 FROM codes
 WHERE access_key.musical_id = 'toctoc'
@@ -50,6 +51,7 @@ INSERT INTO public.presale_access_keys (
   starts_at,
   ends_at,
   max_uses,
+  max_seats_per_booking,
   used_count,
   is_active
 )
@@ -60,6 +62,7 @@ SELECT
   NOW(),
   NULL,
   1,
+  2,
   0,
   TRUE
 FROM codes

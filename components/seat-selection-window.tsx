@@ -215,12 +215,12 @@ export default function SeatSelectionWindow({
                 </div>
               </div>
 
-              <div className="space-y-6">
+              <div className="flex flex-col items-center gap-10">
                 {getSeatSectionsByFloor(selectedFloor).map((section) => {
                   const gradeInfo = getGradeInfo(section.grade)
 
                   return (
-                    <section key={section.id} className="inline-block min-w-fit rounded-xl border-2 border-gray-200 bg-white p-4 shadow-sm">
+                    <section key={section.id} className="w-fit min-w-fit rounded-xl border-2 border-gray-200 bg-white p-4 shadow-sm">
                       <div className="sticky left-0 z-10 mb-4 flex items-center gap-3 border-b border-gray-200 bg-white pb-2">
                         <div className={`h-6 w-6 rounded border-2 ${gradeInfo?.color ?? "bg-gray-100 border-gray-300"}`} />
                         <div>

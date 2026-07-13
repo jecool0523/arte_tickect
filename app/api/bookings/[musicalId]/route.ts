@@ -49,13 +49,6 @@ export async function POST(request: NextRequest, { params }: { params: { musical
       return NextResponse.json({ error: "필수 예약 정보가 누락되었습니다." }, { status: 400, headers })
     }
 
-    if (musicalId === "toctoc" && presaleKey && selectedSeats.length > 2) {
-      return NextResponse.json(
-        { error: "톡톡 선예매 코드는 최대 2석까지 예매할 수 있습니다." },
-        { status: 400, headers },
-      )
-    }
-
     const supabase = createServerClient()
     const currentDate = new Date()
 
@@ -84,6 +77,26 @@ export async function POST(request: NextRequest, { params }: { params: { musical
             error: `현재는 일반 예매 기간이 아닙니다. 예매 코드가 있으면 예매할 수 있습니다. 일반 예매 기간: ${periodLabel}`,
           },
           { status: 403, headers },
+        )
+      }
+
+      const { data: maxSeats, error: seatLimitError } = await supabase.rpc("get_presale_access_key_seat_limit", {
+        p_musical_id: musicalId,
+        p_key: presaleKey,
+      })
+
+      if (seatLimitError) {
+        console.error("Presale key seat limit lookup failed:", seatLimitError)
+        return NextResponse.json(
+          { code: "PRESALE_KEY_UNAVAILABLE", error: "예매 코드 설정을 확인할 수 없습니다." },
+          { status: 500, headers },
+        )
+      }
+
+      if (typeof maxSeats === "number" && selectedSeats.length > maxSeats) {
+        return NextResponse.json(
+          { error: `이 예매 코드는 최대 ${maxSeats}석까지 예매할 수 있습니다.` },
+          { status: 400, headers },
         )
       }
 

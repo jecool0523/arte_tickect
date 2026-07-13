@@ -17,48 +17,58 @@ export const musicals: Record<string, MusicalInfo> = {
       {
         name: "프레드",
         actor: "구민찬",
-        intro: "틱 장애를 가진 욕쟁이 젠틀맨",
+        intro: "본인의 의지와는 상관없이 사람들에게 욕을 하는 신사.",
+        image: "/toc-toc/fred.png",
       },
       {
         name: "카밀로",
         actor: "박근우",
-        intro: "숫자와 계산이 미친 택시운전기사",
+        intro: "숫자와 계산에 미친 택시운전기사",
+        image: "/toc-toc/camilo.jpg",
       },
       {
         name: "앤시어",
         actor: "김우찬",
-        intro: "불안에 사로잡힌 일중독 어른아이",
+        intro: "성취로 자신을 입증하려는 불안한 어른아이",
+        image: "/toc-toc/ansier.jpg",
       },
       {
         name: "블랑카",
         actor: "박소은",
-        intro: "과탄산소다와 소독약으로 살아가는 결벽증 생물학 연구원",
+        intro: "세균을 싫어하며 항상 병에 걸릴까 봐 두려움에 떠는 부잣집 아가씨",
+        image: "/toc-toc/blanca.jpg",
       },
       {
         name: "윌리엄",
         actor: "김근우",
-        intro: "블랑카의 비서",
+        intro: "깨끔함을 위해 언제나 달리는, 블랑카의 허당 비서",
+        image: "/toc-toc/william.jpg",
+
       },
       {
         name: "이센스",
         actor: "곽승현",
         intro:
-          "모든 것이 힙합, \"내 노래를 찾겠어. 죽기전에\"",
+          "모든 것이 힙합인 래퍼, \"내 노래를 찾겠어. 죽기전에\"",
+        image: "/toc-toc/essence.jpg",
       },
       {
         name: "마리",
         actor: "김보경",
-        intro: "확인강박증으로 끊임없이 불안을 느끼며, 불안한 순간마다 하느님을 찾으며 마음의 안정을 얻으려 하는 인물.",
+        intro: "확인강박증으로 끊임없이 하느님을 찾는 불안자.",
+        image: "/toc-toc/mari.jpg",
       },
       {
         name: "릴리",
         actor: "김아린",
         intro: "반드시 두 번씩 말하는 수줍은 소녀. 반드시 두 번씩 말하는 수줍은 소녀.",
+        image: "/toc-toc/riley.jpg",
       },
       {
         name: "밥",
         actor: "김승현",
         intro: "대칭에 집착하고, 선을 밟으면 약?간의 경기를 일으키는 박사.",
+        image: "/toc-toc/bob.png",
       },
     ],
     synopsis:

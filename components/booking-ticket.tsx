@@ -1,7 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { CalendarDays, Check, Clock, Copy, MapPin, Share2, Ticket, UserRound } from "lucide-react"
+import { useMemo, useRef, useState } from "react"
+import { CalendarDays, Check, Clock, Copy, Loader2, MapPin, Share2, Ticket, UserRound } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
@@ -57,6 +57,23 @@ function buildShareMessage(ticket: BookingTicketData) {
     `예매자: ${ticket.name} (학번 ${maskStudentId(ticket.studentId)})`,
     `예매번호: #${ticket.bookingId}`,
   ].join("\n")
+}
+
+function isMobileShareDevice() {
+  if (typeof navigator === "undefined") return false
+
+  const userAgent = navigator.userAgent
+
+  return /Android|iPhone|iPad|iPod/i.test(userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(userAgent))
+}
+
+function getTicketImageFileName(ticket: BookingTicketData) {
+  const safeTitle = ticket.musicalTitle
+    .replace(/[<>:"/\\|?*]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+
+  return `ARTE-${safeTitle || "ticket"}-${ticket.bookingId}.png`
 }
 
 function SeatLocationMap({ selectedSeats }: { selectedSeats: string[] }) {
@@ -139,8 +156,10 @@ function SeatLocationMap({ selectedSeats }: { selectedSeats: string[] }) {
 }
 
 export default function BookingTicket({ ticket, variant = "list" }: BookingTicketProps) {
+  const ticketRef = useRef<HTMLElement>(null)
   const [fallbackMessage, setFallbackMessage] = useState("")
   const [copied, setCopied] = useState(false)
+  const [isSavingImage, setIsSavingImage] = useState(false)
   const seatLabels = useMemo(() => ticket.selectedSeats.map(getSeatDisplayLabel), [ticket.selectedSeats])
   const shareMessage = useMemo(() => buildShareMessage(ticket), [ticket])
   const bookingDateText = formatDateTime(ticket.bookingDate)
@@ -164,7 +183,51 @@ export default function BookingTicket({ ticket, variant = "list" }: BookingTicke
     })
   }
 
+  const downloadTicketImage = async () => {
+    if (!ticketRef.current) throw new Error("Ticket element is not ready")
+
+    setIsSavingImage(true)
+
+    try {
+      await document.fonts?.ready
+      const { toPng } = await import("html-to-image")
+      const dataUrl = await toPng(ticketRef.current, {
+        backgroundColor: "#ffffff",
+        cacheBust: true,
+        pixelRatio: 2,
+        filter: (node) => !(node instanceof HTMLElement && node.dataset.ticketCaptureExclude === "true"),
+      })
+      const downloadLink = document.createElement("a")
+      downloadLink.download = getTicketImageFileName(ticket)
+      downloadLink.href = dataUrl
+      document.body.appendChild(downloadLink)
+      downloadLink.click()
+      downloadLink.remove()
+
+      toast({
+        title: "티켓 이미지 저장 완료",
+        description: "다운로드 폴더에서 PNG 티켓을 확인할 수 있어요.",
+      })
+    } finally {
+      setIsSavingImage(false)
+    }
+  }
+
   const handleShare = async () => {
+    if (!isMobileShareDevice()) {
+      try {
+        await downloadTicketImage()
+      } catch (error) {
+        console.error("Ticket image download failed:", error)
+        toast({
+          title: "티켓 이미지 저장 실패",
+          description: "잠시 후 다시 시도해 주세요.",
+          variant: "destructive",
+        })
+      }
+      return
+    }
+
     try {
       if (navigator.share) {
         await navigator.share({
@@ -198,6 +261,7 @@ export default function BookingTicket({ ticket, variant = "list" }: BookingTicke
 
   return (
     <section
+      ref={ticketRef}
       className={cn(
         "overflow-hidden rounded-lg border border-purple-200 bg-white text-left shadow-sm",
         variant === "success" && "shadow-lg",
@@ -271,13 +335,24 @@ export default function BookingTicket({ ticket, variant = "list" }: BookingTicke
 
         <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">예매 일시: {bookingDateText}</div>
 
-        <Button onClick={handleShare} className="h-11 w-full bg-purple-600 font-bold text-white hover:bg-purple-700">
-          {copied ? <Check className="mr-2 h-4 w-4" /> : <Share2 className="mr-2 h-4 w-4" />}
-          {copied ? "복사 완료" : "티켓 공유하기"}
+        <Button
+          onClick={handleShare}
+          disabled={isSavingImage}
+          data-ticket-capture-exclude="true"
+          className="h-11 w-full bg-purple-600 font-bold text-white hover:bg-purple-700"
+        >
+          {isSavingImage ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : copied ? (
+            <Check className="mr-2 h-4 w-4" />
+          ) : (
+            <Share2 className="mr-2 h-4 w-4" />
+          )}
+          {isSavingImage ? "이미지 저장 중..." : copied ? "복사 완료" : "티켓 공유하기"}
         </Button>
 
         {fallbackMessage && (
-          <div className="space-y-2 rounded-md border border-purple-100 bg-purple-50 p-3">
+          <div data-ticket-capture-exclude="true" className="space-y-2 rounded-md border border-purple-100 bg-purple-50 p-3">
             <div className="flex items-center gap-2 text-xs font-bold text-purple-700">
               <Copy className="h-3.5 w-3.5" />
               공유 메시지

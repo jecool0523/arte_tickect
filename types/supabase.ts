@@ -57,6 +57,7 @@ export type PresaleAccessKeyRow = {
   starts_at: string | null
   ends_at: string | null
   max_uses: number | null
+  max_seats_per_booking: number | null
   used_count: number
   is_active: boolean
   created_at: string
@@ -101,6 +102,7 @@ export type Database = {
           starts_at?: string | null
           ends_at?: string | null
           max_uses?: number | null
+          max_seats_per_booking?: number | null
           used_count?: number
           is_active?: boolean
           created_at?: string
@@ -113,6 +115,7 @@ export type Database = {
           starts_at?: string | null
           ends_at?: string | null
           max_uses?: number | null
+          max_seats_per_booking?: number | null
           used_count?: number
           is_active?: boolean
           created_at?: string
@@ -209,6 +212,13 @@ export type Database = {
           p_key: string
         }
         Returns: boolean
+      }
+      get_presale_access_key_seat_limit: {
+        Args: {
+          p_musical_id: string
+          p_key: string
+        }
+        Returns: number | null
       }
       validate_presale_access_key: {
         Args: {

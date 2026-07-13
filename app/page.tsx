@@ -66,6 +66,7 @@ export default function MusicalBookingSite() {
   const [bookingData, setBookingData] = useState<BookingData>(emptyBookingData)
   const [successData, setSuccessData] = useState<SuccessData | null>(null)
   const [presaleKey, setPresaleKey] = useState("")
+  const [presaleSeatLimit, setPresaleSeatLimit] = useState<number | null>(null)
   const [bookingBlock, setBookingBlock] = useState<BookingBlock>(emptyBookingBlock)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isCheckingBookingPeriod, setIsCheckingBookingPeriod] = useState(false)
@@ -164,6 +165,7 @@ export default function MusicalBookingSite() {
     setSelectedSeats([])
     setSuccessData(null)
     setPresaleKey("")
+    setPresaleSeatLimit(null)
     setBookingBlock(emptyBookingBlock)
   }
 
@@ -194,14 +196,14 @@ export default function MusicalBookingSite() {
       return
     }
 
-    const maxSelectableSeats = selectedMusicalId === "toctoc" && presaleKey.trim() ? 2 : 100
+    const maxSelectableSeats = presaleKey.trim() ? (presaleSeatLimit ?? 100) : 100
 
     if (selectedSeats.length >= maxSelectableSeats && !selectedSeats.includes(seatId)) {
       toast({
         title: "선택 제한",
         description:
-          maxSelectableSeats === 2
-            ? "톡톡 선예매 코드는 최대 2석까지 예매할 수 있습니다."
+          maxSelectableSeats < 100
+            ? `이 예매 코드는 최대 ${maxSelectableSeats}석까지 예매할 수 있습니다.`
             : "최대 100개의 좌석까지 선택할 수 있습니다.",
         variant: "destructive",
       })
@@ -355,7 +357,11 @@ export default function MusicalBookingSite() {
           presaleKey: presaleKey.trim(),
         }),
       })
-      const data = (await response.json().catch(() => ({}))) as { success?: boolean; error?: string }
+      const data = (await response.json().catch(() => ({}))) as {
+        success?: boolean
+        error?: string
+        maxSeats?: number | null
+      }
 
       if (!response.ok || !data.success) {
         toast({
@@ -366,6 +372,7 @@ export default function MusicalBookingSite() {
         return
       }
 
+      setPresaleSeatLimit(typeof data.maxSeats === "number" ? data.maxSeats : null)
       setCurrentPage("form")
       toast({
         title: "예매 코드 확인 완료",
