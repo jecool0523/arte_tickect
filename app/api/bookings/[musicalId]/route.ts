@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 import { getBookingTableName, isKnownMusicalId } from "@/lib/musical-config"
+import { createTicketShareToken } from "@/lib/ticket-share-token"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -159,6 +160,8 @@ export async function POST(request: NextRequest, { params }: { params: { musical
         success: true,
         bookingId: result.bookingId,
         bookingDate: result.bookingDate,
+        shareToken:
+          typeof result.bookingId === "number" ? createTicketShareToken(musicalId, result.bookingId) : null,
         presale: usedPresaleKey,
         message: usedPresaleKey ? "예매 코드로 예매가 완료되었습니다." : "예매 신청이 완료되었습니다.",
       },

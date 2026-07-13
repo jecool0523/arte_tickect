@@ -1,17 +1,16 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, Home, Instagram, Music, Ticket, User } from "lucide-react"
+import { ArrowLeft, Instagram } from "lucide-react"
+import AppBottomNav from "@/components/app-bottom-nav"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface ArteInfoProps {
   onNavigateToHome: () => void
-  onNavigateToMusical: () => void
-  onNavigateToVerification: () => void
 }
 
-export default function ArteInfo({ onNavigateToHome, onNavigateToMusical, onNavigateToVerification }: ArteInfoProps) {
+export default function ArteInfo({ onNavigateToHome }: ArteInfoProps) {
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-gray-50">
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm">
@@ -65,24 +64,7 @@ export default function ArteInfo({ onNavigateToHome, onNavigateToMusical, onNavi
       </main>
 
       <footer className="z-30 shrink-0 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)]">
-        <div className="flex items-start justify-around pb-2 pt-1">
-          <Button variant="ghost" className="flex h-auto flex-col items-center space-y-1 p-2 text-gray-600 hover:text-purple-600" onClick={onNavigateToHome}>
-            <Home className="h-5 w-5" />
-            <span className="text-xs">홈</span>
-          </Button>
-          <Button variant="ghost" className="flex h-auto flex-col items-center space-y-1 p-2 text-gray-600 hover:text-purple-600" onClick={onNavigateToMusical}>
-            <Music className="h-5 w-5" />
-            <span className="text-xs">공연</span>
-          </Button>
-          <Button variant="ghost" className="flex h-auto flex-col items-center space-y-1 p-2 text-gray-600 hover:text-purple-600" onClick={onNavigateToVerification}>
-            <Ticket className="h-5 w-5" />
-            <span className="text-xs">예매</span>
-          </Button>
-          <Button variant="ghost" className="flex h-auto flex-col items-center space-y-1 p-2 text-purple-600">
-            <User className="h-5 w-5" />
-            <span className="font-serif text-xs font-semibold">ARTE</span>
-          </Button>
-        </div>
+        <AppBottomNav active="club" />
       </footer>
     </div>
   )

@@ -23,6 +23,7 @@ interface BookingInfo {
   selected_seats: string[]
   booking_date: string
   special_request?: string
+  shareToken?: string | null
 }
 
 export default function BookingVerification({ onBack }: BookingVerificationProps) {
@@ -145,6 +146,7 @@ export default function BookingVerification({ onBack }: BookingVerificationProps
             <BookingTicket
               key={booking.id}
               variant="list"
+              shareToken={booking.shareToken}
               ticket={{
                 bookingId: booking.id,
                 bookingDate: booking.booking_date,

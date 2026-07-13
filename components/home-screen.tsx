@@ -1,32 +1,23 @@
 "use client"
 
 import Image from "next/image"
-import { CheckCircle2, Home, Info, Music, Search, Ticket, User } from "lucide-react"
+import Link from "next/link"
+import { CheckCircle2, Info, Search } from "lucide-react"
+import AppBottomNav from "@/components/app-bottom-nav"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getAllMusicals } from "@/data/musicals"
 
-interface HomeScreenProps {
-  onNavigateToMusical: (musicalId?: string) => void
-  isMobile: boolean
-  onNavigateToVerification: () => void
-  onNavigateToArte: () => void
-}
-
 function formatDate(date: string) {
   return date.replace(/년 |월 /g, ".").replace("일", "")
 }
 
-export default function HomeScreen({
-  onNavigateToMusical,
-  onNavigateToVerification,
-  onNavigateToArte,
-}: HomeScreenProps) {
+export default function HomeScreen() {
   const musicals = getAllMusicals()
 
   return (
-    <div className="flex h-screen w-full flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-[100dvh] w-full flex-col bg-gray-50 dark:bg-gray-900">
       <header className="shrink-0 bg-gray-50 dark:bg-gray-900">
         <div className="flex items-center justify-between p-4">
           <div className="w-10" />
@@ -47,12 +38,11 @@ export default function HomeScreen({
         </div>
 
         <div className="px-4 pb-4">
-          <Button
-            onClick={onNavigateToVerification}
-            className="w-full rounded-lg bg-purple-600 py-3 font-semibold text-white shadow-md hover:bg-purple-700"
-          >
-            <CheckCircle2 className="mr-2 h-5 w-5" />
-            예매 확인
+          <Button asChild className="w-full rounded-lg bg-purple-600 py-3 font-semibold text-white shadow-md hover:bg-purple-700">
+            <Link href="/booking/verify">
+              <CheckCircle2 className="mr-2 h-5 w-5" />
+              예매 확인
+            </Link>
           </Button>
         </div>
       </header>
@@ -62,11 +52,10 @@ export default function HomeScreen({
           <h2 className="px-4 pb-3 text-xl font-bold text-gray-900 dark:text-white">인기 티켓</h2>
           <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-4">
             {musicals.map((musical, index) => (
-              <button
+              <Link
                 key={musical.id}
-                type="button"
+                href={`/performances/${musical.id}`}
                 className="w-40 shrink-0 snap-center cursor-pointer text-left"
-                onClick={() => onNavigateToMusical(musical.id)}
               >
                 <div className="relative aspect-[620/877] w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
                   <Image
@@ -84,43 +73,41 @@ export default function HomeScreen({
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{musical.title.replace(/[<>]/g, "")}</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">{musical.venue}</p>
                 </div>
-              </button>
+              </Link>
             ))}
           </div>
         </section>
 
         <div className="px-4 pb-8">
-          <button
-            type="button"
-            onClick={onNavigateToArte}
-            className="group relative w-full cursor-pointer overflow-hidden rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-5 text-left shadow-lg shadow-gray-200 transition-all active:scale-95"
+          <Link
+            href="/club"
+            className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-5 text-left shadow-lg shadow-gray-200 transition-all active:scale-[0.99]"
           >
             <div className="absolute right-0 top-0 -mr-6 -mt-6 h-32 w-32 rounded-full bg-purple-500/20 blur-2xl" />
             <div className="absolute bottom-0 left-0 -mb-6 -ml-6 h-24 w-24 rounded-full bg-indigo-500/10 blur-xl" />
-            <div className="relative z-10 flex items-center justify-between">
-              <div>
+            <div className="relative z-10 flex min-w-0 items-center justify-between gap-4">
+              <div className="min-w-0 flex-1">
                 <span className="mb-2 inline-block rounded-full border border-white/5 bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-purple-400 backdrop-blur-sm">
                   DIMI-ARTE
                 </span>
                 <h3 className="text-lg font-bold leading-tight tracking-wide text-white">What is ARTE?</h3>
                 <p className="mt-1 text-xs font-medium text-gray-400">연극과 뮤지컬 동아리 소개</p>
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white shadow-sm transition-all duration-300 group-hover:bg-white group-hover:text-black">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white shadow-sm transition-all duration-300 group-hover:bg-white group-hover:text-black">
                 <Info className="h-5 w-5" />
               </div>
             </div>
-          </button>
+          </Link>
         </div>
 
         <section className="px-4 pb-20">
           <h2 className="pb-3 text-xl font-bold text-gray-900 dark:text-white">공연 목록</h2>
           <div className="space-y-4">
             {musicals.map((musical) => (
-              <button
+              <Link
                 key={musical.id}
-                type="button"
+                href={`/performances/${musical.id}`}
                 className="flex w-full cursor-pointer items-center gap-4 rounded-lg p-2 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-                onClick={() => onNavigateToMusical(musical.id)}
               >
                 <div className="flex-1">
                   <p className="text-sm font-medium text-purple-600 dark:text-purple-400">{musical.genre.replace(/[{}]/g, "")}</p>
@@ -139,43 +126,14 @@ export default function HomeScreen({
                     className="object-contain"
                   />
                 </div>
-              </button>
+              </Link>
             ))}
           </div>
         </section>
       </main>
 
       <footer className="shrink-0 border-t border-gray-200 bg-gray-50/80 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/80">
-        <nav className="flex items-center justify-around px-4 pb-4 pt-2">
-          <Button variant="ghost" className="flex flex-col items-center gap-1 text-purple-600 dark:text-purple-400">
-            <Home className="h-6 w-6" />
-            <span className="text-xs font-medium">홈</span>
-          </Button>
-          <Button
-            variant="ghost"
-            className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-            onClick={() => onNavigateToMusical()}
-          >
-            <Music className="h-6 w-6" />
-            <span className="text-xs font-medium">공연</span>
-          </Button>
-          <Button
-            variant="ghost"
-            className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-            onClick={onNavigateToVerification}
-          >
-            <Ticket className="h-6 w-6" />
-            <span className="text-xs font-medium">예매</span>
-          </Button>
-          <Button
-            variant="ghost"
-            className="flex flex-col items-center gap-1 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-            onClick={onNavigateToArte}
-          >
-            <User className="h-6 w-6" />
-            <span className="font-serif text-xs font-semibold">ARTE</span>
-          </Button>
-        </nav>
+        <AppBottomNav active="home" />
       </footer>
     </div>
   )

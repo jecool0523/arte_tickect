@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { ArrowLeft, Home, Music, Ticket, User } from "lucide-react"
+import { ArrowLeft, User } from "lucide-react"
+import AppBottomNav from "@/components/app-bottom-nav"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import ReviewSection from "@/components/review-section"
@@ -13,7 +14,6 @@ interface MusicalDetailProps {
   onNavigateBack: () => void
   onNavigateToBooking: () => void
   isCheckingBookingPeriod?: boolean
-  isMobile: boolean
 }
 
 const tabs = ["공연정보", "캐스트", "기대평/관람후기"] as const
@@ -190,24 +190,7 @@ export default function MusicalDetail({
           </Button>
         </div>
 
-        <div className="flex items-start justify-around pb-2 pt-1">
-          <Button variant="ghost" className="flex h-auto flex-col items-center space-y-1 p-2 text-gray-600 transition-colors hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400" onClick={onNavigateBack}>
-            <Home className="h-5 w-5" />
-            <span className="text-xs">홈</span>
-          </Button>
-          <Button variant="ghost" className="flex h-auto flex-col items-center space-y-1 p-2 text-purple-600 dark:text-purple-400">
-            <Music className="h-5 w-5" />
-            <span className="text-xs font-bold">공연</span>
-          </Button>
-          <Button variant="ghost" className="flex h-auto flex-col items-center space-y-1 p-2 text-gray-600 transition-colors hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400">
-            <Ticket className="h-5 w-5" />
-            <span className="text-xs">예매</span>
-          </Button>
-          <Button variant="ghost" className="flex h-auto flex-col items-center space-y-1 p-2 text-gray-600 transition-colors hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400">
-            <User className="h-5 w-5" />
-            <span className="font-serif text-xs font-semibold">ARTE</span>
-          </Button>
-        </div>
+        <AppBottomNav active="performances" />
       </footer>
     </div>
   )

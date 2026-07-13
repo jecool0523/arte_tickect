@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
-import { getBookingTableName } from "@/lib/musical-config"
+import { getBookingTableName, isKnownMusicalId } from "@/lib/musical-config"
+import { createTicketShareToken } from "@/lib/ticket-share-token"
 
 type VerifyRequestBody = {
   name?: string
@@ -17,12 +18,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "공연, 이름, 학번을 모두 입력해주세요." }, { status: 400 })
     }
 
-    const supabase = createServerClient()
-    const tableName = getBookingTableName(musicalId)
-
-    if (!tableName) {
+    if (!isKnownMusicalId(musicalId)) {
       return NextResponse.json({ error: "존재하지 않는 공연 ID입니다." }, { status: 404 })
     }
+
+    const supabase = createServerClient()
+    const tableName = getBookingTableName(musicalId)
+    if (!tableName) return NextResponse.json({ error: "존재하지 않는 공연 ID입니다." }, { status: 404 })
 
     const { data: bookings, error } = await supabase
       .from(tableName)
@@ -47,9 +49,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const bookingsWithShareTokens = bookings.map((booking) => ({
+      ...booking,
+      shareToken: createTicketShareToken(musicalId, booking.id),
+    }))
+
     return NextResponse.json({
       success: true,
-      bookings,
+      bookings: bookingsWithShareTokens,
     })
   } catch (error) {
     console.error("Booking verification request failed:", error)

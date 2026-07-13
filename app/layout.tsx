@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
+import { BookingDraftProvider } from "@/components/booking-draft-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -65,7 +66,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className={inter.className}>
-        {children}
+        <BookingDraftProvider>{children}</BookingDraftProvider>
         <Toaster />
         <Analytics />
       </body>

@@ -1,7 +1,8 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
-import { CalendarDays, Check, Clock, Copy, Loader2, MapPin, Share2, Ticket, UserRound } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { CalendarDays, Check, Clock, Copy, Download, Link2, Loader2, MapPin, Share2, Ticket, UserRound } from "lucide-react"
+import { toPng } from "html-to-image"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
@@ -24,6 +25,7 @@ export interface BookingTicketData {
 interface BookingTicketProps {
   ticket: BookingTicketData
   variant?: "success" | "list"
+  shareToken?: string | null
 }
 
 function maskStudentId(studentId: string) {
@@ -42,21 +44,6 @@ function formatDateTime(value?: string | null) {
   if (Number.isNaN(date.getTime())) return "예매 일시 확인 중"
 
   return date.toLocaleString("ko-KR")
-}
-
-function buildShareMessage(ticket: BookingTicketData) {
-  const seatLabels = ticket.selectedSeats.map(getSeatDisplayLabel).join(", ")
-  const seatSummary = `${ticket.seatGrade} ${ticket.selectedSeats.length}매${seatLabels ? ` - ${seatLabels}` : ""}`
-
-  return [
-    "[ARTE 예매 티켓]",
-    `공연: ${ticket.musicalTitle}`,
-    `일시: ${ticket.musicalDate} ${ticket.musicalTime}`.trim(),
-    `장소: ${ticket.venue}`,
-    `좌석: ${seatSummary}`,
-    `예매자: ${ticket.name} (학번 ${maskStudentId(ticket.studentId)})`,
-    `예매번호: #${ticket.bookingId}`,
-  ].join("\n")
 }
 
 function isMobileShareDevice() {
@@ -159,30 +146,47 @@ function SeatLocationMap({ selectedSeats }: { selectedSeats: string[] }) {
   )
 }
 
-export default function BookingTicket({ ticket, variant = "list" }: BookingTicketProps) {
+export default function BookingTicket({ ticket, variant = "list", shareToken }: BookingTicketProps) {
   const ticketRef = useRef<HTMLElement>(null)
-  const [fallbackMessage, setFallbackMessage] = useState("")
+  const [fallbackUrl, setFallbackUrl] = useState("")
   const [copied, setCopied] = useState(false)
   const [isSavingImage, setIsSavingImage] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const seatLabels = useMemo(() => ticket.selectedSeats.map(getSeatDisplayLabel), [ticket.selectedSeats])
-  const shareMessage = useMemo(() => buildShareMessage(ticket), [ticket])
   const bookingDateText = formatDateTime(ticket.bookingDate)
 
-  const copyMessage = async () => {
-    if (!navigator.clipboard) {
-      setFallbackMessage(shareMessage)
+  useEffect(() => {
+    setIsMobile(isMobileShareDevice())
+  }, [])
+
+  const getShareUrl = () =>
+    shareToken ? `${window.location.origin}/tickets/${encodeURIComponent(shareToken)}` : null
+
+  const copyShareUrl = async () => {
+    const shareUrl = getShareUrl()
+    if (!shareUrl) {
       toast({
-        title: "공유 메시지를 준비했어요",
-        description: "아래 메시지를 길게 눌러 복사해 주세요.",
+        title: "공유 링크를 만들 수 없어요",
+        description: "잠시 후 예매 내역을 다시 조회해 주세요.",
+        variant: "destructive",
       })
       return
     }
 
-    await navigator.clipboard.writeText(shareMessage)
+    if (!navigator.clipboard) {
+      setFallbackUrl(shareUrl)
+      toast({
+        title: "공유 링크를 준비했어요",
+        description: "아래 링크를 길게 눌러 복사해 주세요.",
+      })
+      return
+    }
+
+    await navigator.clipboard.writeText(shareUrl)
     setCopied(true)
     window.setTimeout(() => setCopied(false), 1600)
     toast({
-      title: "공유 메시지 복사 완료",
+      title: "티켓 URL 복사 완료",
       description: "카카오톡, 문자, DM 등에 붙여넣을 수 있어요.",
     })
   }
@@ -194,7 +198,6 @@ export default function BookingTicket({ ticket, variant = "list" }: BookingTicke
 
     try {
       await document.fonts?.ready
-      const { toPng } = await import("html-to-image")
       const dataUrl = await toPng(ticketRef.current, {
         backgroundColor: "#ffffff",
         cacheBust: true,
@@ -217,46 +220,48 @@ export default function BookingTicket({ ticket, variant = "list" }: BookingTicke
     }
   }
 
+  const handleImageDownload = async () => {
+    try {
+      await downloadTicketImage()
+    } catch (error) {
+      console.error("Ticket image download failed:", error)
+      toast({
+        title: "티켓 이미지 저장 실패",
+        description: "잠시 후 다시 시도해 주세요.",
+        variant: "destructive",
+      })
+    }
+  }
+
   const handleShare = async () => {
-    if (!isMobileShareDevice()) {
-      try {
-        await downloadTicketImage()
-      } catch (error) {
-        console.error("Ticket image download failed:", error)
-        toast({
-          title: "티켓 이미지 저장 실패",
-          description: "잠시 후 다시 시도해 주세요.",
-          variant: "destructive",
-        })
-      }
+    const shareUrl = getShareUrl()
+    if (!shareUrl) {
+      await copyShareUrl()
       return
     }
 
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: `${ticket.musicalTitle} 예매 티켓`,
-          text: shareMessage,
-        })
-        toast({
-          title: "티켓 공유 완료",
-          description: "예매 정보를 안전하게 전달했어요.",
-        })
+      if (!navigator.share) {
+        await copyShareUrl()
         return
       }
 
-      await copyMessage()
+      await navigator.share({
+        title: "ARTE 예매 티켓",
+        text: "예매 티켓을 확인해 주세요.",
+        url: shareUrl,
+      })
+      toast({ title: "티켓 공유 완료", description: "티켓 링크를 전달했어요." })
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return
-
       try {
-        await copyMessage()
+        await copyShareUrl()
       } catch (copyError) {
         console.error("Ticket share failed:", copyError)
-        setFallbackMessage(shareMessage)
+        setFallbackUrl(shareUrl)
         toast({
           title: "자동 공유가 어려워요",
-          description: "아래 공유 메시지를 직접 복사해 주세요.",
+          description: "아래 티켓 링크를 직접 복사해 주세요.",
           variant: "destructive",
         })
       }
@@ -339,32 +344,42 @@ export default function BookingTicket({ ticket, variant = "list" }: BookingTicke
 
         <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">예매 일시: {bookingDateText}</div>
 
-        <Button
-          onClick={handleShare}
-          disabled={isSavingImage}
-          data-ticket-capture-exclude="true"
-          className="h-11 w-full bg-purple-600 font-bold text-white hover:bg-purple-700"
-        >
-          {isSavingImage ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : copied ? (
-            <Check className="mr-2 h-4 w-4" />
+        <div data-ticket-capture-exclude="true" className={cn("grid gap-2", !isMobile && shareToken && "sm:grid-cols-2")}>
+          {isMobile ? (
+            <Button onClick={handleShare} className="h-11 w-full bg-purple-600 font-bold text-white hover:bg-purple-700">
+              {copied ? <Check className="mr-2 h-4 w-4" /> : <Share2 className="mr-2 h-4 w-4" />}
+              {copied ? "URL 복사 완료" : "티켓 공유하기"}
+            </Button>
           ) : (
-            <Share2 className="mr-2 h-4 w-4" />
+            <>
+              <Button
+                onClick={handleImageDownload}
+                disabled={isSavingImage}
+                className="h-11 w-full bg-purple-600 font-bold text-white hover:bg-purple-700"
+              >
+                {isSavingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                {isSavingImage ? "이미지 저장 중..." : "티켓 이미지 저장"}
+              </Button>
+              {shareToken && (
+                <Button onClick={copyShareUrl} variant="outline" className="h-11 w-full border-purple-200 font-bold text-purple-700">
+                  {copied ? <Check className="mr-2 h-4 w-4" /> : <Link2 className="mr-2 h-4 w-4" />}
+                  {copied ? "URL 복사 완료" : "티켓 URL 복사"}
+                </Button>
+              )}
+            </>
           )}
-          {isSavingImage ? "이미지 저장 중..." : copied ? "복사 완료" : "티켓 공유하기"}
-        </Button>
+        </div>
 
-        {fallbackMessage && (
+        {fallbackUrl && (
           <div data-ticket-capture-exclude="true" className="space-y-2 rounded-md border border-purple-100 bg-purple-50 p-3">
             <div className="flex items-center gap-2 text-xs font-bold text-purple-700">
               <Copy className="h-3.5 w-3.5" />
-              공유 메시지
+              공유 링크
             </div>
-            <textarea
+            <input
               readOnly
-              value={fallbackMessage}
-              className="h-36 w-full resize-none rounded-md border border-purple-100 bg-white p-2 text-xs leading-5 text-gray-700"
+              value={fallbackUrl}
+              className="h-10 w-full rounded-md border border-purple-100 bg-white px-2 text-xs text-gray-700"
               onFocus={(event) => event.currentTarget.select()}
             />
           </div>

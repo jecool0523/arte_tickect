@@ -1,8 +1,9 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useRef, useState } from "react"
-import { ArrowLeft, ArrowRight, CheckCircle2, Home, MapPin, Music, Ticket, User, Users } from "lucide-react"
+import { useEffect, useRef } from "react"
+import { ArrowLeft, ArrowRight, CheckCircle2, MapPin, Ticket, Users } from "lucide-react"
+import AppBottomNav from "@/components/app-bottom-nav"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { getSeatDisplayLabel } from "@/lib/seat-map"
 import type { MusicalInfo } from "@/types/musical"
+import type { BookingAttendee } from "@/lib/booking-draft"
 
 interface BookingFormProps {
   musicalInfo: MusicalInfo
@@ -21,11 +23,14 @@ interface BookingFormProps {
     specialRequest: string
   }
   selectedSeats: string[]
+  attendees: BookingAttendee[]
+  userMemo: string
   onInputChange: (field: string, value: string | number | boolean) => void
+  onAttendeesChange: (attendees: BookingAttendee[]) => void
+  onUserMemoChange: (value: string) => void
   onNavigateToSeatSelection: () => void
   onSubmit: (e: React.FormEvent) => void
   onBack: () => void
-  onNavigateToHome: () => void
   isSubmitting: boolean
 }
 
@@ -33,32 +38,33 @@ export default function BookingForm({
   musicalInfo,
   bookingData,
   selectedSeats,
+  attendees,
+  userMemo,
   onInputChange,
+  onAttendeesChange,
+  onUserMemoChange,
   onNavigateToSeatSelection,
   onSubmit,
   onBack,
-  onNavigateToHome,
   isSubmitting,
 }: BookingFormProps) {
-  const [attendees, setAttendees] = useState<{ name: string; studentId: string }[]>([])
-  const [userMemo, setUserMemo] = useState("")
   const previousSpecialRequestRef = useRef("")
 
   useEffect(() => {
-    setAttendees((prev) => {
-      const next = [...prev]
+    if (attendees.length === selectedSeats.length) return
 
-      if (next.length < selectedSeats.length) {
-        for (let i = next.length; i < selectedSeats.length; i++) {
-          next.push({ name: "", studentId: "" })
-        }
-      } else if (next.length > selectedSeats.length) {
-        next.splice(selectedSeats.length)
+    const next = [...attendees]
+
+    if (next.length < selectedSeats.length) {
+      for (let i = next.length; i < selectedSeats.length; i++) {
+        next.push({ name: "", studentId: "" })
       }
+    } else {
+      next.splice(selectedSeats.length)
+    }
 
-      return next
-    })
-  }, [selectedSeats.length])
+    onAttendeesChange(next)
+  }, [attendees, onAttendeesChange, selectedSeats.length])
 
   useEffect(() => {
     if (attendees.length === 0) return
@@ -87,11 +93,9 @@ export default function BookingForm({
   }, [attendees, userMemo, selectedSeats, onInputChange])
 
   const handleAttendeeChange = (index: number, field: "name" | "studentId", value: string) => {
-    setAttendees((prev) => {
-      const next = [...prev]
-      next[index] = { ...next[index], [field]: value }
-      return next
-    })
+    const next = [...attendees]
+    next[index] = { ...next[index], [field]: value }
+    onAttendeesChange(next)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -244,7 +248,7 @@ export default function BookingForm({
                   <Textarea
                     id="userMemo"
                     value={userMemo}
-                    onChange={(e) => setUserMemo(e.target.value)}
+                    onChange={(e) => onUserMemoChange(e.target.value)}
                     placeholder="문의사항이 있다면 적어주세요."
                     rows={2}
                     disabled={isSubmitting}
@@ -285,24 +289,7 @@ export default function BookingForm({
       </main>
 
       <footer className="z-30 shrink-0 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)]">
-        <div className="flex items-start justify-around pb-2 pt-1">
-          <Button variant="ghost" className="flex h-auto flex-col items-center space-y-1 p-2 text-gray-600 hover:text-purple-600" onClick={onNavigateToHome}>
-            <Home className="h-5 w-5" />
-            <span className="text-xs">홈</span>
-          </Button>
-          <Button variant="ghost" className="flex h-auto flex-col items-center space-y-1 p-2 text-purple-600">
-            <Music className="h-5 w-5" />
-            <span className="text-xs font-bold">공연</span>
-          </Button>
-          <Button variant="ghost" className="flex h-auto flex-col items-center space-y-1 p-2 text-gray-600 hover:text-purple-600">
-            <Ticket className="h-5 w-5" />
-            <span className="text-xs">예매</span>
-          </Button>
-          <Button variant="ghost" className="flex h-auto flex-col items-center space-y-1 p-2 text-gray-600 hover:text-purple-600">
-            <User className="h-5 w-5" />
-            <span className="font-serif text-xs font-semibold">ARTE</span>
-          </Button>
-        </div>
+        <AppBottomNav active="performances" />
       </footer>
     </div>
   )
