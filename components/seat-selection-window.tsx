@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ArrowLeft, Check, MapPin, Minimize2, RotateCcw, Theater, X, ZoomIn, ZoomOut } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -50,6 +50,18 @@ export default function SeatSelectionWindow({
   const [selectedFloor, setSelectedFloor] = useState<SeatFloor>(FLOOR_1)
   const [zoomLevel, setZoomLevel] = useState(0.7)
   const [isZoomMenuOpen, setIsZoomMenuOpen] = useState(false)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current
+    if (!scrollContainer) return
+
+    const frame = window.requestAnimationFrame(() => {
+      scrollContainer.scrollLeft = Math.max(0, (scrollContainer.scrollWidth - scrollContainer.clientWidth) / 2)
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [selectedFloor, zoomLevel])
 
   const getGradeInfo = (grade: string) => seatGrades.find((seatGrade) => seatGrade.grade === grade)
 
@@ -198,7 +210,11 @@ export default function SeatSelectionWindow({
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto px-3 py-3">
+          <div
+            ref={scrollContainerRef}
+            data-testid="seat-map-scroll"
+            className="flex-1 touch-pan-x touch-pan-y overflow-auto overscroll-contain px-3 py-3"
+          >
             <div
               style={{
                 transform: `scale(${zoomLevel})`,
@@ -215,7 +231,7 @@ export default function SeatSelectionWindow({
                 </div>
               </div>
 
-              <div className="flex flex-col items-center gap-10">
+              <div className="flex flex-col items-start gap-10">
                 {getSeatSectionsByFloor(selectedFloor).map((section) => {
                   const gradeInfo = getGradeInfo(section.grade)
 

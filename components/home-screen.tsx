@@ -68,8 +68,16 @@ export default function HomeScreen({
                 className="w-40 shrink-0 snap-center cursor-pointer text-left"
                 onClick={() => onNavigateToMusical(musical.id)}
               >
-                <div className="relative w-full overflow-hidden rounded-lg" style={{ paddingBottom: "133.33%" }}>
-                  <Image src={musical.posterImage || "/placeholder.svg"} alt={musical.title} fill className="object-cover" />
+                <div className="relative aspect-[620/877] w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+                  <Image
+                    src={musical.posterImage || "/placeholder.svg"}
+                    alt={musical.title}
+                    fill
+                    unoptimized
+                    priority={index === 0}
+                    sizes="160px"
+                    className="object-contain"
+                  />
                   {index === 0 && <Badge className="absolute left-2 top-2 bg-red-500 text-xs text-white">HOT</Badge>}
                 </div>
                 <div className="pt-2">
@@ -121,8 +129,15 @@ export default function HomeScreen({
                     {musical.venue} · {formatDate(musical.date)}
                   </p>
                 </div>
-                <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-lg">
-                  <Image src={musical.posterImage || "/placeholder.svg"} alt={musical.title} fill className="object-cover" />
+                <div className="relative h-24 w-[68px] shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+                  <Image
+                    src={musical.posterImage || "/placeholder.svg"}
+                    alt={musical.title}
+                    fill
+                    unoptimized
+                    sizes="68px"
+                    className="object-contain"
+                  />
                 </div>
               </button>
             ))}
