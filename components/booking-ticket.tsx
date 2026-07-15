@@ -339,19 +339,10 @@ export default function BookingTicket({ ticket, variant = "list", shareToken }: 
 
         <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">예매 일시: {bookingDateText}</div>
 
-        <div data-ticket-capture-exclude="true" className="grid grid-cols-2 gap-2 sm:hidden">
+        <div data-ticket-capture-exclude="true" className="sm:hidden">
           <Button onClick={handleShare} className="h-11 w-full bg-purple-600 font-bold text-white hover:bg-purple-700">
             <Share2 className="mr-2 h-4 w-4" />
             공유하기
-          </Button>
-          <Button
-            onClick={copyShareUrl}
-            disabled={!shareToken}
-            variant="outline"
-            className="h-11 w-full border-purple-200 font-bold text-purple-700"
-          >
-            {copied ? <Check className="mr-2 h-4 w-4" /> : <Link2 className="mr-2 h-4 w-4" />}
-            {copied ? "복사 완료" : "링크 복사"}
           </Button>
         </div>
 
