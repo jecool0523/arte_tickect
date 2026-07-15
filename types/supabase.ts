@@ -170,6 +170,10 @@ export type Database = {
           error?: string
         }
       }
+      check_rate_limit: {
+        Args: { p_bucket: string; p_subject_hash: string; p_limit: number; p_window_seconds: number }
+        Returns: boolean
+      }
       consume_presale_access_key: {
         Args: {
           p_musical_id: string
@@ -192,12 +196,16 @@ export type Database = {
         Args: {
           p_musical_id: string
           p_user_name: string
-          p_password: string
+          p_deletion_token: string
           p_content: string
           p_rating: number
           p_image_url: string | null
         }
         Returns: PublicReviewRow
+      }
+      delete_review_with_token: {
+        Args: { p_review_id: number; p_deletion_token: string }
+        Returns: boolean
       }
       delete_review_with_password: {
         Args: {

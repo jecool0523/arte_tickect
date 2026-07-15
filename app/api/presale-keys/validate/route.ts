@@ -1,59 +1,38 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { isKnownMusicalId } from "@/lib/musical-config"
-import { createServerClient } from "@/lib/supabase"
+import { createServerClient } from "@/lib/server/supabase-admin"
+import { enforceRateLimit } from "@/lib/server/rate-limit"
+import { readJsonBody, RequestBodyError } from "@/lib/security/request"
+import { presaleValidationSchema } from "@/lib/security/validation"
 
-export const dynamic = "force-dynamic"
-export const revalidate = 0
-
-const headers = {
-  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-  Pragma: "no-cache",
-  Expires: "0",
-}
-
-type ValidatePresaleKeyBody = {
-  musicalId?: string
-  presaleKey?: string
-}
+const headers = { "Cache-Control": "no-store, no-cache, must-revalidate", Pragma: "no-cache" }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as ValidatePresaleKeyBody
-    const musicalId = body.musicalId?.trim() ?? ""
-    const presaleKey = body.presaleKey?.trim() ?? ""
-
-    if (!isKnownMusicalId(musicalId) || !presaleKey) {
-      return NextResponse.json(
-        { success: false, error: "유효한 예매 코드를 입력해주세요." },
-        { status: 400, headers },
-      )
-    }
-
+    const { musicalId, presaleKey } = await readJsonBody(request, presaleValidationSchema)
     const supabase = createServerClient()
-    const validationArgs = { p_musical_id: musicalId, p_key: presaleKey }
-    const [{ data: isValid, error }, { data: maxSeats, error: seatLimitError }] = await Promise.all([
-      supabase.rpc("validate_presale_access_key", validationArgs),
-      supabase.rpc("get_presale_access_key_seat_limit", validationArgs),
+    const { data: period, error: periodError } = await supabase
+      .from("arte_musical_application_period")
+      .select("end_time")
+      .eq("musical_name", musicalId)
+      .single()
+    if (periodError || new Date() > new Date(period.end_time)) {
+      return NextResponse.json({ success: false, error: "Presale access is closed." }, { status: 403, headers })
+    }
+    const rate = await enforceRateLimit(supabase, request, { bucket: "presale-validate", limit: 5, windowSeconds: 300 }, musicalId)
+    if (rate.unavailable) return NextResponse.json({ success: false, error: "Rate limiting is unavailable." }, { status: 503, headers })
+    if (!rate.allowed) return NextResponse.json({ success: false, error: "Too many attempts." }, { status: 429, headers })
+
+    const args = { p_musical_id: musicalId, p_key: presaleKey }
+    const [{ data: valid, error }, { data: maxSeats, error: limitError }] = await Promise.all([
+      supabase.rpc("validate_presale_access_key", args),
+      supabase.rpc("get_presale_access_key_seat_limit", args),
     ])
-
-    if (error || seatLimitError) {
-      console.error("Presale key validation failed:", error || seatLimitError)
-      return NextResponse.json(
-        { success: false, error: "예매 코드를 확인할 수 없습니다. 잠시 후 다시 시도해주세요." },
-        { status: 500, headers },
-      )
-    }
-
-    if (!isValid) {
-      return NextResponse.json(
-        { success: false, error: "예매 코드가 유효하지 않거나 사용 가능 기간/횟수를 초과했습니다." },
-        { status: 403, headers },
-      )
-    }
-
+    if (error || limitError) return NextResponse.json({ success: false, error: "Presale validation is unavailable." }, { status: 503, headers })
+    if (valid !== true) return NextResponse.json({ success: false, error: "Invalid or expired presale key." }, { status: 403, headers })
     return NextResponse.json({ success: true, maxSeats }, { headers })
   } catch (error) {
-    console.error("Presale key validation request failed:", error)
-    return NextResponse.json({ success: false, error: "잘못된 요청입니다." }, { status: 400, headers })
+    if (error instanceof RequestBodyError) return NextResponse.json({ success: false, error: error.message }, { status: error.status, headers })
+    console.error("Presale validation request failed")
+    return NextResponse.json({ success: false, error: "Invalid request." }, { status: 400, headers })
   }
 }

@@ -36,11 +36,6 @@ export default function BookingRoutePage({ musical }: { musical: MusicalInfo }) 
 
   useEffect(() => {
     if (!hydrated) return
-    if (draft.accessGranted) {
-      setStatus("open")
-      return
-    }
-
     let cancelled = false
 
     const checkBookingPeriod = async () => {
@@ -62,6 +57,30 @@ export default function BookingRoutePage({ musical }: { musical: MusicalInfo }) 
           return
         }
 
+        if (draft.presaleKey.trim()) {
+          const presaleResponse = await fetch("/api/presale-keys/validate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
+            cache: "no-store",
+            body: JSON.stringify({ musicalId: musical.id, presaleKey: draft.presaleKey.trim() }),
+          })
+          const presaleData = (await presaleResponse.json().catch(() => ({}))) as {
+            success?: boolean
+            maxSeats?: number | null
+          }
+
+          if (presaleResponse.ok && presaleData.success) {
+            updateDraft(musical.id, {
+              accessGranted: true,
+              presaleSeatLimit: typeof presaleData.maxSeats === "number" ? presaleData.maxSeats : null,
+            })
+            setStatus("open")
+            return
+          }
+        }
+
+        updateDraft(musical.id, { accessGranted: false })
+
         setBlockMessage(data.message || "현재는 일반 예매 기간이 아닙니다.")
         setStatus("closed")
       } catch {
@@ -76,7 +95,7 @@ export default function BookingRoutePage({ musical }: { musical: MusicalInfo }) 
     return () => {
       cancelled = true
     }
-  }, [draft.accessGranted, hydrated, musical.id, updateDraft])
+  }, [draft.presaleKey, hydrated, musical.id, updateDraft])
 
   const handleInputChange = useCallback(
     (field: string, value: string | number | boolean) => updateDraft(musical.id, { [field]: value }),

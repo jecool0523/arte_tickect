@@ -1,7 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@/lib/supabase"
-import { getBookingTableName, isKnownMusicalId } from "@/lib/musical-config"
+import { createServerClient } from "@/lib/server/supabase-admin"
+import { enforceRateLimit } from "@/lib/server/rate-limit"
+import { readJsonBody, RequestBodyError } from "@/lib/security/request"
+import { bookingRequestSchema } from "@/lib/security/validation"
 import { createTicketShareToken } from "@/lib/ticket-share-token"
+import { isKnownMusicalId } from "@/lib/musical-config"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -12,217 +15,95 @@ const headers = {
   Expires: "0",
 }
 
-type BookingRequestBody = {
-  name?: string
-  studentId?: string
-  seatGrade?: string
-  selectedSeats?: string[]
-  specialRequest?: string
-  presaleKey?: string
-}
-
-type ServerClient = ReturnType<typeof createServerClient>
-
-async function releasePresaleKeyUsage(supabase: ServerClient, musicalId: string, presaleKey: string) {
-  const { error } = await supabase.rpc("release_presale_access_key", {
-    p_musical_id: musicalId,
-    p_key: presaleKey,
-  })
-
-  if (error) {
-    console.error("Presale key release failed:", error)
-  }
-}
-
 export async function POST(request: NextRequest, { params }: { params: { musicalId: string } }) {
   try {
     const musicalId = params.musicalId
-
     if (!isKnownMusicalId(musicalId)) {
-      return NextResponse.json({ error: "존재하지 않는 공연 ID입니다." }, { status: 404, headers })
+      return NextResponse.json({ error: "Unknown musical." }, { status: 404, headers })
     }
 
-    const body = (await request.json()) as BookingRequestBody
-    const { name, studentId, seatGrade, selectedSeats, specialRequest } = body
-    const presaleKey = body.presaleKey?.trim() ?? ""
-
-    if (!name || !studentId || !seatGrade || !selectedSeats?.length) {
-      return NextResponse.json({ error: "필수 예약 정보가 누락되었습니다." }, { status: 400, headers })
-    }
-
+    const body = await readJsonBody(request, bookingRequestSchema)
     const supabase = createServerClient()
-    const currentDate = new Date()
+    const rate = await enforceRateLimit(supabase, request, {
+      bucket: "booking-create",
+      limit: 5,
+      windowSeconds: 300,
+    }, musicalId)
+    if (rate.unavailable) return NextResponse.json({ error: "Rate limiting is unavailable." }, { status: 503, headers })
+    if (!rate.allowed) return NextResponse.json({ error: "Too many booking attempts." }, { status: 429, headers })
 
-    const { data: periodData, error: periodDataError } = await supabase
+    const { data: period, error: periodError } = await supabase
       .from("arte_musical_application_period")
       .select("start_time, end_time")
       .eq("musical_name", musicalId)
       .single()
-
-    if (periodDataError) {
-      console.error("Application period load failed:", periodDataError)
-      return NextResponse.json({ error: "예매 기간 정보를 불러올 수 없습니다." }, { status: 500, headers })
+    if (periodError) {
+      console.error("Booking period load failed", { code: periodError.code })
+      return NextResponse.json({ error: "Booking period is unavailable." }, { status: 503, headers })
     }
 
-    const startDate = new Date(periodData.start_time)
-    const endDate = new Date(periodData.end_time)
-    const periodLabel = `${startDate.toLocaleString("ko-KR")} ~ ${endDate.toLocaleString("ko-KR")}`
-    const isInBookingPeriod = currentDate >= startDate && currentDate <= endDate
-    let usedPresaleKey = false
+    const now = new Date()
+    const start = new Date(period.start_time)
+    const end = new Date(period.end_time)
+    const inPublicPeriod = now >= start && now <= end
+    let consumedPresale = false
 
-    if (!isInBookingPeriod) {
-      if (!presaleKey) {
-        return NextResponse.json(
-          {
-            code: "PRESALE_KEY_REQUIRED",
-            error: `현재는 일반 예매 기간이 아닙니다. 예매 코드가 있으면 예매할 수 있습니다. 일반 예매 기간: ${periodLabel}`,
-          },
-          { status: 403, headers },
-        )
-      }
+    if (now > end) {
+      return NextResponse.json({ code: "BOOKING_CLOSED", error: "Booking is closed." }, { status: 403, headers })
+    }
 
-      const { data: maxSeats, error: seatLimitError } = await supabase.rpc("get_presale_access_key_seat_limit", {
+    if (!inPublicPeriod) {
+      if (!body.presaleKey) return NextResponse.json({ code: "PRESALE_KEY_REQUIRED", error: "A valid presale key is required." }, { status: 403, headers })
+
+      const presaleKey = body.presaleKey
+      const { data: maxSeats, error: limitError } = await supabase.rpc("get_presale_access_key_seat_limit", {
         p_musical_id: musicalId,
         p_key: presaleKey,
       })
-
-      if (seatLimitError) {
-        console.error("Presale key seat limit lookup failed:", seatLimitError)
-        return NextResponse.json(
-          { code: "PRESALE_KEY_UNAVAILABLE", error: "예매 코드 설정을 확인할 수 없습니다." },
-          { status: 500, headers },
-        )
+      if (limitError || (typeof maxSeats === "number" && body.selectedSeats.length > maxSeats)) {
+        return NextResponse.json({ code: "INVALID_PRESALE_KEY", error: "Invalid presale key or seat limit exceeded." }, { status: 403, headers })
       }
 
-      if (typeof maxSeats === "number" && selectedSeats.length > maxSeats) {
-        return NextResponse.json(
-          { error: `이 예매 코드는 최대 ${maxSeats}석까지 예매할 수 있습니다.` },
-          { status: 400, headers },
-        )
-      }
-
-      const { data: canUsePresaleKey, error: presaleError } = await supabase.rpc("consume_presale_access_key", {
+      const { data: consumed, error: consumeError } = await supabase.rpc("consume_presale_access_key", {
         p_musical_id: musicalId,
         p_key: presaleKey,
       })
-
-      if (presaleError) {
-        console.error("Presale key validation failed:", presaleError)
-        return NextResponse.json(
-          { code: "PRESALE_KEY_UNAVAILABLE", error: "예매 코드 설정을 확인할 수 없습니다." },
-          { status: 500, headers },
-        )
+      if (consumeError || consumed !== true) {
+        return NextResponse.json({ code: "INVALID_PRESALE_KEY", error: "Invalid or expired presale key." }, { status: 403, headers })
       }
-
-      if (!canUsePresaleKey) {
-        return NextResponse.json(
-          { code: "INVALID_PRESALE_KEY", error: "예매 코드가 유효하지 않거나 사용 가능 기간/횟수를 초과했습니다." },
-          { status: 403, headers },
-        )
-      }
-
-      usedPresaleKey = true
+      consumedPresale = true
     }
 
-    const { data: result, error: rpcError } = await supabase.rpc("book_musical_seats", {
+    const { data: result, error } = await supabase.rpc("book_musical_seats", {
       p_musical_id: musicalId,
-      p_name: name,
-      p_student_id: studentId,
-      p_seat_grade: seatGrade,
-      p_selected_seats: selectedSeats,
-      p_special_request: specialRequest || null,
+      p_name: body.name,
+      p_student_id: body.studentId,
+      p_seat_grade: body.seatGrade,
+      p_selected_seats: body.selectedSeats,
+      p_special_request: body.specialRequest || null,
     })
-
-    if (rpcError) {
-      console.error("Booking RPC failed:", rpcError)
-      if (usedPresaleKey) await releasePresaleKeyUsage(supabase, musicalId, presaleKey)
-      return NextResponse.json({ error: "예매 처리 중 오류가 발생했습니다." }, { status: 500, headers })
-    }
-
-    if (!result.success) {
-      if (usedPresaleKey) await releasePresaleKeyUsage(supabase, musicalId, presaleKey)
-
-      if (result.conflictSeats) {
-        return NextResponse.json(
-          {
-            error: "선택한 좌석 중 이미 예매된 좌석이 있습니다.",
-            conflictSeats: result.conflictSeats,
-          },
-          { status: 409, headers },
-        )
+    if (error || !result?.success) {
+      if (consumedPresale) {
+        await supabase.rpc("release_presale_access_key", { p_musical_id: musicalId, p_key: body.presaleKey || "" })
       }
-
-      return NextResponse.json({ error: result.error || "예매에 실패했습니다." }, { status: 500, headers })
+      if (result?.conflictSeats) return NextResponse.json({ error: "One or more seats are already booked.", conflictSeats: result.conflictSeats }, { status: 409, headers })
+      return NextResponse.json({ error: "Booking could not be completed." }, { status: 409, headers })
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        bookingId: result.bookingId,
-        bookingDate: result.bookingDate,
-        shareToken:
-          typeof result.bookingId === "number" ? createTicketShareToken(musicalId, result.bookingId) : null,
-        presale: usedPresaleKey,
-        message: usedPresaleKey ? "예매 코드로 예매가 완료되었습니다." : "예매 신청이 완료되었습니다.",
-      },
-      { headers },
-    )
+    return NextResponse.json({
+      success: true,
+      bookingId: result.bookingId,
+      bookingDate: result.bookingDate,
+      shareToken: typeof result.bookingId === "number" ? createTicketShareToken(musicalId, result.bookingId) : null,
+      presale: consumedPresale,
+    }, { headers })
   } catch (error) {
-    console.error("Booking request failed:", error)
-    return NextResponse.json(
-      { error: "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요." },
-      { status: 500, headers },
-    )
+    if (error instanceof RequestBodyError) return NextResponse.json({ error: error.message }, { status: error.status, headers })
+    console.error("Booking request failed")
+    return NextResponse.json({ error: "Booking request failed." }, { status: 500, headers })
   }
 }
 
-export async function GET(_request: NextRequest, { params }: { params: { musicalId: string } }) {
-  try {
-    const tableName = getBookingTableName(params.musicalId)
-
-    if (!tableName) {
-      return NextResponse.json({ error: "존재하지 않는 공연 ID입니다." }, { status: 404, headers })
-    }
-
-    const supabase = createServerClient()
-
-    const { error: tableCheckError } = await supabase.from(tableName).select("count", { count: "exact", head: true })
-
-    if (tableCheckError) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `${params.musicalId} booking table is not ready.`,
-          bookings: [],
-          needsSetup: true,
-        },
-        { headers },
-      )
-    }
-
-    const { data: bookings, error } = await supabase
-      .from(tableName)
-      .select("*")
-      .order("booking_date", { ascending: false })
-
-    if (error) throw error
-
-    const bookingsWithSeatCount =
-      bookings?.map((booking) => ({
-        ...booking,
-        seat_count: booking.selected_seats?.length || 0,
-      })) || []
-
-    return NextResponse.json(
-      {
-        success: true,
-        bookings: bookingsWithSeatCount,
-        timestamp: new Date().toISOString(),
-      },
-      { headers },
-    )
-  } catch (error) {
-    console.error("Booking list load failed:", error)
-    return NextResponse.json({ error: "예약 정보 조회 중 오류가 발생했습니다." }, { status: 500, headers })
-  }
+export function GET() {
+  return NextResponse.json({ error: "Booking list access is disabled." }, { status: 410, headers })
 }

@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@/lib/supabase"
+import { createServerClient } from "@/lib/server/supabase-admin"
 import { isKnownMusicalId } from "@/lib/musical-config"
 
 export const dynamic = "force-dynamic"

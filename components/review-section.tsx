@@ -9,7 +9,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { getSupabaseBrowserClient } from "@/lib/supabase"
 
 interface Review {
   id: number
@@ -107,7 +106,7 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!form.name || !form.password || !form.content) {
+    if (!form.name || !form.content) {
       toast({ title: "입력 오류", description: "이름, 비밀번호, 내용을 모두 입력해주세요.", variant: "destructive" })
       return
     }
@@ -117,22 +116,21 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
 
     try {
       if (selectedFiles.length > 0) {
-        const supabase = getSupabaseBrowserClient()
         const urls = await Promise.all(
           selectedFiles.map(async (file) => {
-            const fileExt = file.name.split(".").pop()
-            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`
-
-            const { error: uploadError } = await supabase.storage.from("review-images").upload(fileName, file)
-            if (uploadError) throw uploadError
-
-            const { data: publicUrlData } = supabase.storage.from("review-images").getPublicUrl(fileName)
-            return publicUrlData.publicUrl
+            const upload = new FormData()
+            upload.set("musicalId", musicalId)
+            upload.set("file", file)
+            const response = await fetch("/api/reviews/media", { method: "POST", body: upload })
+            const data = await response.json()
+            if (!response.ok || typeof data.url !== "string") throw new Error(data.error || "Upload failed")
+            return data.url as string
           }),
         )
         uploadedUrls.push(...urls)
       }
 
+      const deletionToken = crypto.randomUUID().replaceAll("-", "") + crypto.randomUUID().replaceAll("-", "")
       const response = await fetch("/api/reviews", {
         method: "POST",
         headers: {
@@ -141,7 +139,7 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
         body: JSON.stringify({
           musicalId,
           name: form.name,
-          password: form.password,
+          deletionToken,
           content: form.content,
           rating: form.rating,
           imageUrl: uploadedUrls.length > 0 ? JSON.stringify(uploadedUrls) : null,
@@ -150,6 +148,8 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
       const responseData = await response.json()
 
       if (!response.ok) throw new Error(responseData.error || "Review create failed.")
+      const created = Array.isArray(responseData.review) ? responseData.review[0] : responseData.review
+      if (created?.id) localStorage.setItem(`review-deletion-token:${created.id}`, deletionToken)
 
       toast({ title: "작성 완료", description: "리뷰가 등록되었습니다." })
       setForm({ name: "", password: "", content: "", rating: 5 })
@@ -169,6 +169,17 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
   }
 
   const handleDelete = async (id: number) => {
+    const deletionToken = localStorage.getItem(`review-deletion-token:${id}`) || prompt("리뷰 작성 시 발급된 삭제 토큰을 입력하세요.")
+    if (!deletionToken) return
+    const secureResponse = await fetch(`/api/reviews/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ deletionToken }) })
+    if (secureResponse.ok) {
+      localStorage.removeItem(`review-deletion-token:${id}`)
+      fetchReviews()
+    } else {
+      const data = await secureResponse.json().catch(() => ({}))
+      alert(data.error || "리뷰 삭제에 실패했습니다.")
+    }
+    return
     const inputPassword = prompt("등록할 때 입력한 비밀번호 4자리를 입력하세요.")
     if (!inputPassword) {
       alert("비밀번호를 입력해주세요.")

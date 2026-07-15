@@ -3,7 +3,7 @@ import BookingTicket from "@/components/booking-ticket"
 import TicketShareError from "@/components/ticket-share-error"
 import { getMusicalById } from "@/data/musicals"
 import { getBookingTableName } from "@/lib/musical-config"
-import { createServerClient } from "@/lib/supabase"
+import { createServerClient } from "@/lib/server/supabase-admin"
 import { verifyTicketShareToken } from "@/lib/ticket-share-token"
 
 export const dynamic = "force-dynamic"

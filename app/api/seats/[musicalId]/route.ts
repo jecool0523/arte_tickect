@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { createServerClient } from "@/lib/supabase"
+import { createServerClient } from "@/lib/server/supabase-admin"
 import {
   EMPTY_SEAT_STATISTICS,
   buildUnavailableSeats,

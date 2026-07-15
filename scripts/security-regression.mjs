@@ -1,0 +1,27 @@
+import assert from "node:assert/strict"
+import { readFile } from "node:fs/promises"
+
+const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8")
+const legacy = await read("app/api/bookings/route.ts")
+const verify = await read("app/api/bookings/verify/route.ts")
+const booking = await read("app/api/bookings/[musicalId]/route.ts")
+const reviewDelete = await read("app/api/reviews/[reviewId]/route.ts")
+const upload = await read("app/api/reviews/media/route.ts")
+const migration = await read("scripts/20260715-security-hardening.sql")
+
+assert.match(legacy, /status:\s*410/)
+assert.doesNotMatch(legacy, /\.select\("\*"\)|\.insert\(/)
+assert.match(verify, /status:\s*410/)
+assert.doesNotMatch(verify, /student_id|\.eq\("name"/)
+assert.match(booking, /book_musical_seats/)
+assert.match(booking, /bookingRequestSchema/)
+assert.match(booking, /enforceRateLimit/)
+assert.match(booking, /consume_presale_access_key/)
+assert.match(reviewDelete, /delete_review_with_token/)
+assert.doesNotMatch(reviewDelete, /p_password|delete_review_with_password/)
+assert.match(upload, /MAX_BYTES/)
+assert.match(upload, /MIME_EXTENSIONS/)
+assert.match(migration, /LOCK TABLE/)
+assert.match(migration, /check_rate_limit/)
+assert.match(migration, /deletion_token_hash/)
+console.log("security regression checks passed")

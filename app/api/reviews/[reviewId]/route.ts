@@ -1,49 +1,24 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@/lib/supabase"
-
-export const dynamic = "force-dynamic"
-export const revalidate = 0
-
-type DeleteReviewBody = {
-  password?: string
-}
+import { createServerClient } from "@/lib/server/supabase-admin"
+import { enforceRateLimit } from "@/lib/server/rate-limit"
+import { readJsonBody, RequestBodyError } from "@/lib/security/request"
+import { deleteReviewSchema } from "@/lib/security/validation"
 
 export async function DELETE(request: NextRequest, { params }: { params: { reviewId: string } }) {
   const reviewId = Number(params.reviewId)
-
-  if (!Number.isInteger(reviewId) || reviewId <= 0) {
-    return NextResponse.json({ error: "잘못된 리뷰 ID입니다." }, { status: 400 })
-  }
-
+  if (!Number.isSafeInteger(reviewId) || reviewId <= 0) return NextResponse.json({ error: "Invalid review ID." }, { status: 400 })
   try {
-    const body = (await request.json()) as DeleteReviewBody
-    const password = body.password?.trim()
-
-    if (!password) {
-      return NextResponse.json({ error: "비밀번호를 입력해주세요." }, { status: 400 })
-    }
-
+    const { deletionToken } = await readJsonBody(request, deleteReviewSchema)
     const supabase = createServerClient()
-    const { data: deleted, error } = await supabase.rpc("delete_review_with_password", {
-      p_review_id: reviewId,
-      p_password: password,
-    })
-
-    if (error) {
-      console.error("Delete review RPC failed:", error)
-      return NextResponse.json(
-        { error: "리뷰 보안 SQL이 아직 적용되지 않았습니다. scripts/20260704-review-password-security.sql을 실행해주세요." },
-        { status: 500 },
-      )
-    }
-
-    if (!deleted) {
-      return NextResponse.json({ error: "비밀번호가 일치하지 않습니다." }, { status: 403 })
-    }
-
+    const rate = await enforceRateLimit(supabase, request, { bucket: "review-delete", limit: 5, windowSeconds: 900 }, String(reviewId))
+    if (rate.unavailable) return NextResponse.json({ error: "Rate limiting is unavailable." }, { status: 503 })
+    if (!rate.allowed) return NextResponse.json({ error: "Too many attempts." }, { status: 429 })
+    const { data: deleted, error } = await supabase.rpc("delete_review_with_token", { p_review_id: reviewId, p_deletion_token: deletionToken })
+    if (error) { console.error("Delete review RPC failed", { code: error.code }); return NextResponse.json({ error: "Review deletion is unavailable." }, { status: 503 }) }
+    if (deleted !== true) return NextResponse.json({ error: "Invalid deletion token." }, { status: 403 })
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Review delete request failed:", error)
-    return NextResponse.json({ error: "리뷰 삭제 중 오류가 발생했습니다." }, { status: 500 })
+    if (error instanceof RequestBodyError) return NextResponse.json({ error: error.message }, { status: error.status })
+    return NextResponse.json({ error: "Review deletion failed." }, { status: 500 })
   }
 }
