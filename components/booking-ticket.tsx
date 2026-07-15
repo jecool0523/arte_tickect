@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { CalendarDays, Check, Clock, Copy, Download, Link2, Loader2, MapPin, Share2, Ticket, UserRound } from "lucide-react"
 import { toPng } from "html-to-image"
 import { Badge } from "@/components/ui/badge"
@@ -44,14 +44,6 @@ function formatDateTime(value?: string | null) {
   if (Number.isNaN(date.getTime())) return "예매 일시 확인 중"
 
   return date.toLocaleString("ko-KR")
-}
-
-function isMobileShareDevice() {
-  if (typeof navigator === "undefined") return false
-
-  const userAgent = navigator.userAgent
-
-  return /Android|iPhone|iPad|iPod/i.test(userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(userAgent))
 }
 
 function getTicketImageFileName(ticket: BookingTicketData) {
@@ -151,13 +143,8 @@ export default function BookingTicket({ ticket, variant = "list", shareToken }: 
   const [fallbackUrl, setFallbackUrl] = useState("")
   const [copied, setCopied] = useState(false)
   const [isSavingImage, setIsSavingImage] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
   const seatLabels = useMemo(() => ticket.selectedSeats.map(getSeatDisplayLabel), [ticket.selectedSeats])
   const bookingDateText = formatDateTime(ticket.bookingDate)
-
-  useEffect(() => {
-    setIsMobile(isMobileShareDevice())
-  }, [])
 
   const getShareUrl = () =>
     shareToken ? `${window.location.origin}/tickets/${encodeURIComponent(shareToken)}` : null
@@ -182,13 +169,21 @@ export default function BookingTicket({ ticket, variant = "list", shareToken }: 
       return
     }
 
-    await navigator.clipboard.writeText(shareUrl)
-    setCopied(true)
-    window.setTimeout(() => setCopied(false), 1600)
-    toast({
-      title: "티켓 URL 복사 완료",
-      description: "카카오톡, 문자, DM 등에 붙여넣을 수 있어요.",
-    })
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1600)
+      toast({
+        title: "티켓 URL 복사 완료",
+        description: "카카오톡, 문자, DM 등에 붙여넣을 수 있어요.",
+      })
+    } catch {
+      setFallbackUrl(shareUrl)
+      toast({
+        title: "공유 링크를 준비했어요",
+        description: "아래 링크를 길게 눌러 복사해 주세요.",
+      })
+    }
   }
 
   const downloadTicketImage = async () => {
@@ -344,29 +339,39 @@ export default function BookingTicket({ ticket, variant = "list", shareToken }: 
 
         <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">예매 일시: {bookingDateText}</div>
 
-        <div data-ticket-capture-exclude="true" className={cn("grid gap-2", !isMobile && shareToken && "sm:grid-cols-2")}>
-          {isMobile ? (
-            <Button onClick={handleShare} className="h-11 w-full bg-purple-600 font-bold text-white hover:bg-purple-700">
-              {copied ? <Check className="mr-2 h-4 w-4" /> : <Share2 className="mr-2 h-4 w-4" />}
-              {copied ? "URL 복사 완료" : "티켓 공유하기"}
+        <div data-ticket-capture-exclude="true" className="grid grid-cols-2 gap-2 sm:hidden">
+          <Button onClick={handleShare} className="h-11 w-full bg-purple-600 font-bold text-white hover:bg-purple-700">
+            <Share2 className="mr-2 h-4 w-4" />
+            공유하기
+          </Button>
+          <Button
+            onClick={copyShareUrl}
+            disabled={!shareToken}
+            variant="outline"
+            className="h-11 w-full border-purple-200 font-bold text-purple-700"
+          >
+            {copied ? <Check className="mr-2 h-4 w-4" /> : <Link2 className="mr-2 h-4 w-4" />}
+            {copied ? "복사 완료" : "링크 복사"}
+          </Button>
+        </div>
+
+        <div
+          data-ticket-capture-exclude="true"
+          className={cn("hidden gap-2 sm:grid", shareToken && "sm:grid-cols-2")}
+        >
+          <Button
+            onClick={handleImageDownload}
+            disabled={isSavingImage}
+            className="h-11 w-full bg-purple-600 font-bold text-white hover:bg-purple-700"
+          >
+            {isSavingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+            {isSavingImage ? "이미지 저장 중..." : "티켓 이미지 저장"}
+          </Button>
+          {shareToken && (
+            <Button onClick={copyShareUrl} variant="outline" className="h-11 w-full border-purple-200 font-bold text-purple-700">
+              {copied ? <Check className="mr-2 h-4 w-4" /> : <Link2 className="mr-2 h-4 w-4" />}
+              {copied ? "URL 복사 완료" : "티켓 URL 복사"}
             </Button>
-          ) : (
-            <>
-              <Button
-                onClick={handleImageDownload}
-                disabled={isSavingImage}
-                className="h-11 w-full bg-purple-600 font-bold text-white hover:bg-purple-700"
-              >
-                {isSavingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                {isSavingImage ? "이미지 저장 중..." : "티켓 이미지 저장"}
-              </Button>
-              {shareToken && (
-                <Button onClick={copyShareUrl} variant="outline" className="h-11 w-full border-purple-200 font-bold text-purple-700">
-                  {copied ? <Check className="mr-2 h-4 w-4" /> : <Link2 className="mr-2 h-4 w-4" />}
-                  {copied ? "URL 복사 완료" : "티켓 URL 복사"}
-                </Button>
-              )}
-            </>
           )}
         </div>
 

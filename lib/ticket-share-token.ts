@@ -1,10 +1,10 @@
 import "server-only"
 
-import { createHmac, timingSafeEqual } from "node:crypto"
+import { createHash, createHmac, timingSafeEqual } from "node:crypto"
 import { isKnownMusicalId, type MusicalId } from "@/lib/musical-config"
 
 const TOKEN_VERSION = 1
-const DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 7
+const DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 30
 
 type TicketSharePayload = {
   v: typeof TOKEN_VERSION
@@ -18,8 +18,13 @@ export type TicketShareValidation =
   | { valid: false; reason: "invalid" | "expired" | "not-configured" }
 
 function getSecret() {
-  const secret = process.env.TICKET_SHARE_SECRET
-  return secret && secret.length >= 32 ? secret : null
+  const configuredSecret = process.env.TICKET_SHARE_SECRET
+  if (configuredSecret && configuredSecret.length >= 32) return configuredSecret
+
+  const serverSecret = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!serverSecret || serverSecret.length < 32) return null
+
+  return createHash("sha256").update(`arte-ticket-share:v1:${serverSecret}`).digest("hex")
 }
 
 function getTtlSeconds() {
