@@ -28,8 +28,9 @@ function maskStudentId(studentId: string) {
   return `${"*".repeat(Math.max(2, trimmed.length - suffix.length))}${suffix}`
 }
 
-export default async function SharedTicketPage({ params }: { params: { shareToken: string } }) {
-  const validation = verifyTicketShareToken(params.shareToken)
+export default async function SharedTicketPage({ params }: { params: Promise<{ shareToken: string }> }) {
+  const { shareToken } = await params
+  const validation = verifyTicketShareToken(shareToken)
   if (!validation.valid) {
     return <TicketShareError reason={validation.reason === "expired" ? "expired" : "invalid"} />
   }
@@ -59,7 +60,7 @@ export default async function SharedTicketPage({ params }: { params: { shareToke
           <p className="mb-3 text-center text-xs font-semibold text-purple-700">ARTE 공유 티켓</p>
           <BookingTicket
             variant="success"
-            shareToken={params.shareToken}
+            shareToken={shareToken}
             ticket={{
               bookingId: booking.id,
               bookingDate: booking.booking_date,

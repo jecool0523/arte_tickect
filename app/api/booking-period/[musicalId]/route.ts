@@ -11,8 +11,9 @@ const headers = {
   Expires: "0",
 }
 
-export async function GET(_request: NextRequest, { params }: { params: { musicalId: string } }) {
-  if (!isKnownMusicalId(params.musicalId)) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ musicalId: string }> }) {
+  const { musicalId } = await params
+  if (!isKnownMusicalId(musicalId)) {
     return NextResponse.json({ error: "존재하지 않는 공연 ID입니다." }, { status: 404, headers })
   }
 
@@ -23,7 +24,7 @@ export async function GET(_request: NextRequest, { params }: { params: { musical
     const { data: periodData, error } = await supabase
       .from("arte_musical_application_period")
       .select("start_time, end_time")
-      .eq("musical_name", params.musicalId)
+      .eq("musical_name", musicalId)
       .single()
 
     if (error) {

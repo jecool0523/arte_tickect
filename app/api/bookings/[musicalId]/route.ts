@@ -15,9 +15,9 @@ const headers = {
   Expires: "0",
 }
 
-export async function POST(request: NextRequest, { params }: { params: { musicalId: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ musicalId: string }> }) {
   try {
-    const musicalId = params.musicalId
+    const { musicalId } = await params
     if (!isKnownMusicalId(musicalId)) {
       return NextResponse.json({ error: "Unknown musical." }, { status: 404, headers })
     }

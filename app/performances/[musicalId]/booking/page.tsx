@@ -8,8 +8,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-export default function BookingPage({ params }: { params: { musicalId: string } }) {
-  const musical = getMusicalById(params.musicalId)
+export default async function BookingPage({ params }: { params: Promise<{ musicalId: string }> }) {
+  const { musicalId } = await params
+  const musical = getMusicalById(musicalId)
   if (!musical) notFound()
   return <BookingRoutePage musical={musical} />
 }

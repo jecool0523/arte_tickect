@@ -3,14 +3,15 @@ import { notFound } from "next/navigation"
 import PerformanceDetailPage from "@/components/performance-detail-page"
 import { getAllMusicals, getMusicalById } from "@/data/musicals"
 
-type PerformancePageProps = { params: { musicalId: string } }
+type PerformancePageProps = { params: Promise<{ musicalId: string }> }
 
 export function generateStaticParams() {
   return getAllMusicals().map((musical) => ({ musicalId: musical.id }))
 }
 
-export function generateMetadata({ params }: PerformancePageProps): Metadata {
-  const musical = getMusicalById(params.musicalId)
+export async function generateMetadata({ params }: PerformancePageProps): Promise<Metadata> {
+  const { musicalId } = await params
+  const musical = getMusicalById(musicalId)
   if (!musical) return { title: "공연을 찾을 수 없음" }
 
   return {
@@ -30,8 +31,9 @@ export function generateMetadata({ params }: PerformancePageProps): Metadata {
   }
 }
 
-export default function PerformancePage({ params }: PerformancePageProps) {
-  const musical = getMusicalById(params.musicalId)
+export default async function PerformancePage({ params }: PerformancePageProps) {
+  const { musicalId } = await params
+  const musical = getMusicalById(musicalId)
   if (!musical) notFound()
   return <PerformanceDetailPage musical={musical} />
 }

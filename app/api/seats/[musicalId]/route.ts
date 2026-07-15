@@ -17,8 +17,8 @@ const headers = {
   Expires: "0",
 }
 
-export async function GET(_request: Request, { params }: { params: { musicalId: string } }) {
-  const musicalId = params.musicalId
+export async function GET(_request: Request, { params }: { params: Promise<{ musicalId: string }> }) {
+  const { musicalId } = await params
   const tableName = getBookingTableName(musicalId)
   const defaultUnavailableSeats = createEmptyUnavailableSeats()
 

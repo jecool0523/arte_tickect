@@ -4,8 +4,9 @@ import { enforceRateLimit } from "@/lib/server/rate-limit"
 import { readJsonBody, RequestBodyError } from "@/lib/security/request"
 import { deleteReviewSchema } from "@/lib/security/validation"
 
-export async function DELETE(request: NextRequest, { params }: { params: { reviewId: string } }) {
-  const reviewId = Number(params.reviewId)
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ reviewId: string }> }) {
+  const { reviewId: reviewIdParam } = await params
+  const reviewId = Number(reviewIdParam)
   if (!Number.isSafeInteger(reviewId) || reviewId <= 0) return NextResponse.json({ error: "Invalid review ID." }, { status: 400 })
   try {
     const { deletionToken } = await readJsonBody(request, deleteReviewSchema)
