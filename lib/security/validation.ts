@@ -50,6 +50,12 @@ export const presaleValidationSchema = z.object({
   presaleKey: trimmedString(8, 128),
 })
 
+export const bookingVerificationSchema = z.object({
+  musicalId: z.string().trim().refine(isKnownMusicalId),
+  name: trimmedString(1, 100),
+  studentId: trimmedString(1, 20).regex(/^[A-Za-z0-9_-]+$/),
+})
+
 export const createReviewSchema = z.object({
   musicalId: z.string().trim().refine(isKnownMusicalId),
   name: trimmedString(1, 80),
