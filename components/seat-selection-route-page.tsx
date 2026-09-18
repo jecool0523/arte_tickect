@@ -66,7 +66,7 @@ export default function SeatSelectionRoutePage({ musical }: { musical: MusicalIn
       return
     }
 
-    const maxSelectableSeats = draft.presaleKey.trim() ? (draft.presaleSeatLimit ?? 100) : 100
+    const maxSelectableSeats = draft.presaleKey.trim() ? (draft.presaleSeatLimit ?? 10) : 10
     if (draft.selectedSeats.length >= maxSelectableSeats && !draft.selectedSeats.includes(seatId)) {
       toast({
         title: "선택 제한",

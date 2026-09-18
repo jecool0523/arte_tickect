@@ -1,25 +1,20 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import { createBrowserClient } from "@supabase/ssr"
+import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/supabase"
 
 type TypedSupabaseClient = SupabaseClient<Database>
 
 let browserClient: TypedSupabaseClient | null = null
 
-function requireEnv(name: string) {
-  const value = process.env[name]
-
-  if (!value) {
-    throw new Error(`${name} is required to create a Supabase client.`)
-  }
-
-  return value
-}
-
 export function getSupabaseBrowserClient() {
   if (!browserClient) {
-    browserClient = createClient<Database>(
-      requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
-      requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!url || !publishableKey) throw new Error("Supabase public environment variables are required.")
+
+    browserClient = createBrowserClient<Database>(
+      url,
+      publishableKey,
     )
   }
 

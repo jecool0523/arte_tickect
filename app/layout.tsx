@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { BookingDraftProvider } from "@/components/booking-draft-provider"
+import { AuthProvider } from "@/components/auth/auth-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -72,9 +73,11 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className={inter.className}>
-        <BookingDraftProvider>{children}</BookingDraftProvider>
-        <Toaster />
-        <Analytics />
+        <AuthProvider>
+          <BookingDraftProvider>{children}</BookingDraftProvider>
+          <Toaster />
+          <Analytics />
+        </AuthProvider>
       </body>
     </html>
   )

@@ -39,9 +39,9 @@ export default function HomeScreen() {
 
         <div className="px-4 pb-4">
           <Button asChild className="w-full rounded-lg bg-purple-600 py-3 font-semibold text-white shadow-md hover:bg-purple-700">
-            <Link href="/booking/verify">
+            <Link href="/profile#tickets">
               <CheckCircle2 className="mr-2 h-5 w-5" />
-              예매 확인
+              내 티켓 확인
             </Link>
           </Button>
         </div>

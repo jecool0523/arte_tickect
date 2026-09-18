@@ -278,7 +278,7 @@ export default function BookingForm({
             <CardContent className="p-4">
               <p className="mb-2 text-sm font-semibold text-blue-700">안내사항</p>
               <ul className="space-y-1 text-sm text-blue-600">
-                <li>대표 예매자의 이름과 학번으로 예매 내역을 조회할 수 있습니다.</li>
+                <li>완료된 예매는 로그인한 계정의 내 티켓에서 확인할 수 있습니다.</li>
                 <li>동반 관람자의 정보를 정확하게 입력해주세요.</li>
                 <li>공연 시간과 좌석을 확인한 뒤 입장해주세요.</li>
                 <li>문의는 아르떼 인스타그램 DM으로 부탁드립니다.</li>

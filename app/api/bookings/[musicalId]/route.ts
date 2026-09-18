@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/server/supabase-admin"
+import { createAuthServerClient } from "@/lib/server/supabase-auth"
 import { enforceRateLimit } from "@/lib/server/rate-limit"
 import { readJsonBody, RequestBodyError } from "@/lib/security/request"
 import { bookingRequestSchema } from "@/lib/security/validation"
@@ -20,6 +21,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { musicalId } = await params
     if (!isKnownMusicalId(musicalId)) {
       return NextResponse.json({ error: "Unknown musical." }, { status: 404, headers })
+    }
+
+    const authClient = await createAuthServerClient()
+    const { data: { user }, error: authError } = await authClient.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ code: "AUTH_REQUIRED", error: "로그인이 필요합니다." }, { status: 401, headers })
     }
 
     const body = await readJsonBody(request, bookingRequestSchema)
@@ -52,7 +59,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ code: "BOOKING_CLOSED", error: "Booking is closed." }, { status: 403, headers })
     }
 
-    if (!inPublicPeriod) {
+    // Check if user is a presale user (can book before public period without key)
+    const { data: isPresaleUser } = await supabase.rpc("is_current_user_presale")
+    const isUserPresale = isPresaleUser === true
+
+    if (!inPublicPeriod && !isUserPresale) {
       if (!body.presaleKey) return NextResponse.json({ code: "PRESALE_KEY_REQUIRED", error: "A valid presale key is required." }, { status: 403, headers })
 
       const presaleKey = body.presaleKey
@@ -72,6 +83,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         return NextResponse.json({ code: "INVALID_PRESALE_KEY", error: "Invalid or expired presale key." }, { status: 403, headers })
       }
       consumedPresale = true
+    } else if (!inPublicPeriod && isUserPresale) {
+      // Presale user booking before public period - mark as presale but no key consumed
+      consumedPresale = true
     }
 
     const { data: result, error } = await supabase.rpc("book_musical_seats", {
@@ -81,9 +95,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       p_seat_grade: body.seatGrade,
       p_selected_seats: body.selectedSeats,
       p_special_request: body.specialRequest || null,
+      p_user_id: user.id,
     })
     if (error || !result?.success) {
-      if (consumedPresale) {
+      if (consumedPresale && !isUserPresale) {
         await supabase.rpc("release_presale_access_key", { p_musical_id: musicalId, p_key: body.presaleKey || "" })
       }
       if (result?.conflictSeats) return NextResponse.json({ error: "One or more seats are already booked.", conflictSeats: result.conflictSeats }, { status: 409, headers })
