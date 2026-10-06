@@ -7,7 +7,7 @@ const config = checkSiteEnvironment()
 const base = "http://127.0.0.1:8799"
 const cases = [
   ["/", 200], ["/performances", 200], ["/club", 200], ["/login", 200],
-  ["/profile", 307], ["/profile/setup", 307], ["/performances/rent/booking", 307],
+  ["/profile", 200], ["/profile/setup", [200, 307]], ["/performances/rent/booking", 307],
   ["/api/profile/sync", 401, "POST"],
   ["/api/profile", 401, "PATCH"], ["/api/bookings/rent", 401, "POST"],
   ["/api/reviews?musicalId=rent", 200], ["/api/seats/rent", 200],
@@ -15,11 +15,21 @@ const cases = [
 ]
 for (const [pathname, expected, method = "GET"] of cases) {
   const response = await fetch(new URL(pathname, base), { method, redirect: "manual", signal: AbortSignal.timeout(30000) })
-  assert.equal(response.status, expected, `${method} ${pathname}`)
+  assert.ok((Array.isArray(expected) ? expected : [expected]).includes(response.status), `${method} ${pathname}: expected ${expected}, got ${response.status}`)
   if (pathname.startsWith("/api") || pathname.startsWith("/profile") || pathname === "/login" || pathname.includes("/booking")) {
     assert.match(response.headers.get("Cache-Control"), /private.*no-store/, pathname)
   }
   const body = await response.text()
+  if (pathname === "/profile/setup" && response.status === 200) {
+    // A parent loading boundary can stream HTTP 200 before Next emits its auth redirect.
+    assert.match(body, /<meta[^>]*http-equiv="refresh"[^>]*url=\/login\?next=/)
+    assert.ok(!body.includes('id="studentId"'), "Anonymous setup must not render the private form")
+  }
+  if (pathname === "/profile" || pathname === "/login") {
+    assert.ok(body.includes("Google로 계속하기"), `${pathname}: Google login preserved`)
+    assert.ok(!body.includes("이메일로 로그인"), `${pathname}: no email login`)
+    assert.ok(!body.includes("이메일로 회원가입"), `${pathname}: no email signup`)
+  }
   if (pathname === "/") {
     for (const label of ["홈", "공연", "아르떼", "프로필"]) assert.ok(body.includes(label), `Bottom nav: ${label}`)
     const script = body.match(/<script[^>]*src="([^"]+\.js)"/)

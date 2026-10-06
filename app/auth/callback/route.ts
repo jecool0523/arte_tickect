@@ -28,14 +28,14 @@ export async function GET(request: NextRequest) {
 
       const { data: profile } = await supabase.from("profiles")
         .select("username, display_name, student_id, contact_number, profile_completed_at").eq("id", data.user.id).maybeSingle()
-      if (!isProfileComplete(profile)) {
+      if (!isProfileComplete(profile) && next.pathname !== "/profile") {
         const setup = new URL("/profile/setup", next.origin)
         setup.searchParams.set("next", `${next.pathname}${next.search}${next.hash}`)
         const response = NextResponse.redirect(setup)
         response.headers.set("Cache-Control", "private, no-store")
         return response
       }
-      await syncLegacyBookings(data.user.id)
+      if (isProfileComplete(profile)) await syncLegacyBookings(data.user.id)
 
       const response = NextResponse.redirect(next)
       response.headers.set("Cache-Control", "private, no-store")

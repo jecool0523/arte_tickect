@@ -22,6 +22,7 @@ export default function AppBottomNav({ active }: { active: AppSection }) {
           <Link
             key={item.href}
             href={item.href}
+            prefetch={item.section === "profile" ? false : undefined}
             aria-current={isActive ? "page" : undefined}
             className={cn(
               "group relative flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl px-2 text-gray-400 transition-colors hover:text-gray-700",

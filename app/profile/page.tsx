@@ -9,9 +9,10 @@ import ProfileForm from "@/components/auth/profile-form"
 import AccountDeleteButton from "@/components/auth/account-delete-button"
 import ResendConfirmationButton from "@/components/auth/resend-confirmation-button"
 import SyncProfileButton from "@/components/auth/sync-profile-button"
-import { requireAuthUser } from "@/lib/server/require-auth"
+import LoginCard from "@/components/auth/login-card"
+import { createAuthServerClient } from "@/lib/server/supabase-auth"
 import { createServerClient } from "@/lib/server/supabase-admin"
-import { defaultUsername } from "@/lib/profile"
+import { defaultUsername, isProfileComplete } from "@/lib/profile"
 import { syncLegacyBookings } from "@/lib/server/profile-onboarding"
 
 export const metadata: Metadata = {
@@ -47,10 +48,34 @@ async function getEmailStatus(userId: string) {
 }
 
 export default async function ProfilePage() {
-  const { supabase, user } = await requireAuthUser("/profile")
+  // Always open the profile destination; private data still requires a verified user.
+  const supabase = await createAuthServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return <AccountPageShell title="프로필"><LoginCard next="/profile" /></AccountPageShell>
+
+  const { data: profile, error: profileError } = await supabase.from("profiles")
+    .select("display_name, student_id, avatar_url, username, contact_number, profile_completed_at").eq("id", user.id).maybeSingle()
+  if (profileError) throw new Error("Profile is temporarily unavailable")
+  if (!isProfileComplete(profile)) {
+    return (
+      <AccountPageShell title="프로필">
+        <Card className="border-gray-200 bg-white shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg">내 정보를 알려주세요</CardTitle>
+            <p className="pt-1 text-base leading-6 text-gray-600">이전 공연 예약을 찾아 내 티켓에 연결해 드려요. 본인의 이름과 학번을 입력해주세요.</p>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-6 break-all text-sm text-gray-500">로그인한 이메일: {user.email}</p>
+            <ProfileForm initialUsername={profile?.username ?? defaultUsername(user.email)} initialDisplayName={profile?.display_name ?? ""} initialStudentId={profile?.student_id ?? ""} initialContactNumber={profile?.contact_number ?? ""} />
+          </CardContent>
+        </Card>
+        <LogoutButton />
+      </AccountPageShell>
+    )
+  }
+
   const syncResult = await syncLegacyBookings(user.id)
-  const [{ data: profile }, emailStatus, ...bookingResults] = await Promise.all([
-    supabase.from("profiles").select("display_name, student_id, avatar_url, username, contact_number").eq("id", user.id).maybeSingle(),
+  const [emailStatus, ...bookingResults] = await Promise.all([
     getEmailStatus(user.id),
     ...bookingSources.map(({ table }) =>
       supabase

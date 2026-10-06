@@ -2,7 +2,7 @@
 
 Sites의 기존 소유자 전용 사이트에 적용하며 Google 로그인을 그대로 사용한다. 학교 이메일 도메인 제한은 없다.
 
-- 최초 로그인 후 `/profile/setup`에서 아이디·이름·학번·연락처를 필수 입력한다. 기존 로그인 사용자도 네 필드 등록이 필요하다.
+- 프로필 탭은 항상 `/profile`을 연다. 미로그인 상태에는 기존 Google 로그인 UI, 미등록 계정에는 아이디·이름·학번·연락처 입력, 완료 계정에는 내 정보·티켓을 표시한다. 예매 중 미등록 계정은 `/profile/setup?next=...`에서 등록 후 원래 예매 화면으로 돌아간다. 기존 로그인 사용자도 네 필드 등록이 필요하다.
 - 아이디 기본값은 이메일 local part이다. 영문·숫자만 허용하므로 점·더하기 등은 기본값에서 제외한다. 1~30자, 대소문자 구분 없는 중복 검사를 한다. 로그인 방식 자체는 Google OAuth이다.
 - 연락처는 구분 기호를 제거하여 저장하며 숫자 9~15자리와 국제번호 `+`를 허용한다. 전화번호 인증을 의미하지 않는다.
 - 입력한 이름·학번을 양끝 공백 제거 후 정확히 대조한다. 이메일/Google 이름을 본인 인증 근거로 사용하지 않는다.
@@ -30,3 +30,11 @@ Supabase 연결 도구로 다음 마이그레이션을 적용했다. 로컬 임�
 Supabase advisors에서 기존 GraphQL 테이블 노출 경고와 유출 비밀번호 보호 비활성화 경고가 남아 있다. 이번 필드는 profiles의 본인 전용 SELECT RLS 적용 대상이며 다른 이용자의 연락처는 노출되지 않는다. [GraphQL 권한 점검](https://supabase.com/docs/guides/database/database-linter?lint=0027_pg_graphql_authenticated_table_exposed), [유출 비밀번호 보호 설정](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
 
 실제 Google 계정의 최종 로그인 성공 여부는 사용자 로그인이 필요하다. Supabase Auth Redirect URLs에는 `https://dimi-arte-ticket.gpt-class2-4.chatgpt.site/auth/callback`이 허용되어야 한다.
+
+## 프로필 탭 이동 수정
+
+링크 주소는 `/profile`로 정확했지만 `requireAuthUser`가 미로그인 사용자는 `/login`, 미등록 사용자는 `/profile/setup`으로 다시 보내는 원인이 있었다. 실제 미로그인 요청에서 307 및 `/login?next=%2Fprofile`을 재현했다. 프로필은 상태별 화면을 직접 렌더링하며, `getUser()`로 확인된 사용자만 본인 프로필·티켓을 조회한다. 미등록 계정의 예약 연결은 정보 저장 후 실행하고 예매 화면/API의 등록 검사는 그대로 유지한다.
+
+프로필 링크의 사전 읽기를 꺼서 로그인 전 리다이렉트가 캐시에 남지 않도록 했다. 로딩/재시도 화면도 기존 프레임을 사용한다. 로그인과 Google callback이 프로필로 돌아갈 때는 별도 등록 화면으로 이동시키지 않는다. `scripts/test-profile-navigation.mjs`로 세 사용자 상태와 예매 복귀를 확인한다.
+
+사용자 요청에 따라 이메일·비밀번호 기능의 실험 변경은 모두 되돌렸다. Google 로그인만 유지하며 Supabase 인증 설정/SMTP에는 변경을 적용하지 않았다.
