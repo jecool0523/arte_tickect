@@ -8,7 +8,7 @@
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 또는 기존 `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_SITE_URL`: `https://dimi-arte-ticket.candy-bull-2773.chatgpt.site`
+- `NEXT_PUBLIC_SITE_URL`: `https://dimi-arte-ticket.gpt-class2-4.chatgpt.site`
 - `ARTE_DEPLOY_TARGET`: `sites` (Vercel에는 설정하지 않는다)
 - `SUPABASE_SERVICE_ROLE_KEY`, `RATE_LIMIT_SECRET`: Sites **비밀 변수**
 - 기존 `TICKET_SHARE_SECRET`, `TICKET_SHARE_TTL_SECONDS`가 있다면 그대로 유지한다. 서명 키를 변경하면 기존 티켓 공유 링크가 무효화된다.
@@ -19,7 +19,7 @@
 
 [URL Configuration](https://supabase.com/dashboard/project/kwkhydnvbxvcfvhksxna/auth/url-configuration)의 Redirect URLs에 아래 주소를 추가한다. 기존 Vercel/개발 주소는 제거하지 않는다.
 
-`https://dimi-arte-ticket.candy-bull-2773.chatgpt.site/auth/callback`
+`https://dimi-arte-ticket.gpt-class2-4.chatgpt.site/auth/callback`
 
 Google 공급자를 활성화한다. Google Cloud에 등록하는 주소는 앱 주소가 아니라 Supabase가 안내하는 `/auth/v1/callback`이다. [공식 리디렉션 안내](https://supabase.com/docs/guides/auth/redirect-urls).
 
@@ -28,7 +28,7 @@ Google 공급자를 활성화한다. Google Cloud에 등록하는 주소는 앱 
 PowerShell:
 
 ```powershell
-$env:NEXT_PUBLIC_SITE_URL='https://dimi-arte-ticket.candy-bull-2773.chatgpt.site'
+$env:NEXT_PUBLIC_SITE_URL='https://dimi-arte-ticket.gpt-class2-4.chatgpt.site'
 pnpm check:sites
 node scripts/security-regression.mjs
 node scripts/test-sites-settings.mjs
@@ -75,3 +75,5 @@ DB 설정 스크립트를 일괄 실행하지 않는다. 레거시 정리나 특
 - 이 사이트는 기존 소유자 전용 접근 범위를 유지해 발행한다. 원본 GitHub 원격 저장소는 변경하지 않는다. 최종 발행 여부와 URL은 Sites의 배포 성공 결과를 기준으로 한다.
 - Windows에서는 Next의 standalone 빌드와 OpenNext 포장을 별도 프로세스로 실행한다. Next가 생성한 전방 참조 디렉터리 링크가 완성된 뒤 호환 처리를 실행하므로, 전체 빌드 뒤 포장 단계의 디렉터리 접근 오류를 방지한다. 이번 검증에서도 성공한 Next 빌드와 별도 포장 실행으로 확인했다.
 - 최종 로컬 Worker 검사 전체가 통과했다: 홈/공연/아르떼/로그인 200, 프로필·예매 화면 307, 미인증 프로필 수정·예매·관리자 목록 API 401, 리뷰·좌석 API 200. 정적 JS 로딩, 개인 응답 캐시 금지, 외부 URL로 향하는 인증 콜백 차단, 배포 번들의 서버 비밀값 미포함도 확인했다.
+- 최초 Sites 배포는 성공했으나, 실제 성공 응답 URL은 `https://dimi-arte-ticket.gpt-class2-4.chatgpt.site`로 이전 예상 주소와 달랐다. 실제 주소에 맞춰 공개 빌드 설정 및 Sites 런타임 설정을 다시 맞춘다. Supabase에도 위의 실제 `/auth/callback` 주소가 허용되어야 한다. 이전 주소는 허용 목록에 남겨도 되지만 실제 주소 등록을 대신하지 않는다.
+- 공식 Sites 포장 도구를 Windows에서 실행할 때는 설치된 Git Bash를 PATH 앞에 두고 `TAR_OPTIONS=--force-local`을 설정한다. GNU tar가 `C:` 경로를 원격 주소로 오인하지 않도록 하는 실행 환경 설정이며, WSL 설치나 원본 파일 삭제는 필요 없다.
