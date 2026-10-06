@@ -6,6 +6,7 @@ import { readJsonBody, RequestBodyError } from "@/lib/security/request"
 import { bookingRequestSchema } from "@/lib/security/validation"
 import { createTicketShareToken } from "@/lib/ticket-share-token"
 import { isKnownMusicalId } from "@/lib/musical-config"
+import { isProfileComplete } from "@/lib/profile"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -28,6 +29,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (authError || !user) {
       return NextResponse.json({ code: "AUTH_REQUIRED", error: "로그인이 필요합니다." }, { status: 401, headers })
     }
+
+    const { data: profile, error: profileError } = await authClient.from("profiles")
+      .select("username, display_name, student_id, contact_number, profile_completed_at").eq("id", user.id).maybeSingle()
+    if (profileError) return NextResponse.json({ error: "프로필을 확인하지 못했습니다." }, { status: 503, headers })
+    if (!isProfileComplete(profile)) return NextResponse.json({ code: "PROFILE_INCOMPLETE", error: "내 정보를 먼저 등록해주세요.", setupUrl: `/profile/setup?next=/performances/${musicalId}/booking` }, { status: 403, headers })
 
     const body = await readJsonBody(request, bookingRequestSchema)
     const supabase = createServerClient()

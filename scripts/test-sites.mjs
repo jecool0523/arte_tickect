@@ -7,7 +7,8 @@ const config = checkSiteEnvironment()
 const base = "http://127.0.0.1:8799"
 const cases = [
   ["/", 200], ["/performances", 200], ["/club", 200], ["/login", 200],
-  ["/profile", 307], ["/performances/rent/booking", 307],
+  ["/profile", 307], ["/profile/setup", 307], ["/performances/rent/booking", 307],
+  ["/api/profile/sync", 401, "POST"],
   ["/api/profile", 401, "PATCH"], ["/api/bookings/rent", 401, "POST"],
   ["/api/reviews?musicalId=rent", 200], ["/api/seats/rent", 200],
   ["/api/admin/users", 401],
@@ -15,7 +16,7 @@ const cases = [
 for (const [pathname, expected, method = "GET"] of cases) {
   const response = await fetch(new URL(pathname, base), { method, redirect: "manual", signal: AbortSignal.timeout(30000) })
   assert.equal(response.status, expected, `${method} ${pathname}`)
-  if (pathname.startsWith("/api") || ["/login", "/profile"].includes(pathname) || pathname.includes("/booking")) {
+  if (pathname.startsWith("/api") || pathname.startsWith("/profile") || pathname === "/login" || pathname.includes("/booking")) {
     assert.match(response.headers.get("Cache-Control"), /private.*no-store/, pathname)
   }
   const body = await response.text()

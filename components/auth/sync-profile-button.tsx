@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Loader2, RefreshCw, CheckCircle2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 export default function SyncProfileButton() {
   const { toast } = useToast()
+  const router = useRouter()
   const [pending, setPending] = useState(false)
   const [lastSynced, setLastSynced] = useState<Date | null>(null)
 
@@ -25,8 +27,9 @@ export default function SyncProfileButton() {
       }
 
       if (data.synced) {
-        toast({ title: "동기화 완료", description: "Google 계정 정보로 프로필이 업데이트되었습니다." })
+        toast({ title: "동기화 완료", description: "Google 프로필 사진을 업데이트했어요. 입력한 이름·학번은 유지됩니다." })
         setLastSynced(new Date())
+        router.refresh()
       } else {
         toast({ title: "변경 사항 없음", description: data.message || "동기화할 새 정보가 없습니다." })
       }
@@ -46,7 +49,7 @@ export default function SyncProfileButton() {
         className="w-full gap-2"
       >
         <RefreshCw className={pending ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
-        {pending ? "동기화 중..." : "Google 계정과 동기화"}
+        {pending ? "동기화 중..." : "Google 프로필 사진 동기화"}
       </Button>
 
       {lastSynced && (

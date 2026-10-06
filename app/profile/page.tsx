@@ -9,6 +9,8 @@ import ResendConfirmationButton from "@/components/auth/resend-confirmation-butt
 import SyncProfileButton from "@/components/auth/sync-profile-button"
 import { requireAuthUser } from "@/lib/server/require-auth"
 import { createServerClient } from "@/lib/server/supabase-admin"
+import { defaultUsername } from "@/lib/profile"
+import { syncLegacyBookings } from "@/lib/server/profile-onboarding"
 
 export const metadata: Metadata = {
   title: "프로필",
@@ -21,6 +23,7 @@ const bookingSources = [
   { table: "dead_poets_society_bookings" as const, title: "죽은 시인의 사회" },
   { table: "rent_bookings" as const, title: "RENT" },
   { table: "toctoc_bookings" as const, title: "TOC TOC" },
+  { table: "arte_musical_tickets" as const, title: "아르떼 이전 공연" },
 ]
 
 function getStatusLabel(status: string) {
@@ -43,8 +46,9 @@ async function getEmailStatus(userId: string) {
 
 export default async function ProfilePage() {
   const { supabase, user } = await requireAuthUser("/profile")
+  const syncResult = await syncLegacyBookings(user.id)
   const [{ data: profile }, emailStatus, ...bookingResults] = await Promise.all([
-    supabase.from("profiles").select("display_name, student_id, avatar_url").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("display_name, student_id, avatar_url, username, contact_number").eq("id", user.id).maybeSingle(),
     getEmailStatus(user.id),
     ...bookingSources.map(({ table }) =>
       supabase
@@ -130,8 +134,11 @@ export default async function ProfilePage() {
               </div>
             </div>
             <ProfileForm
+              initialUsername={profile?.username ?? defaultUsername(user.email)}
               initialDisplayName={profile?.display_name ?? user.user_metadata.full_name ?? user.user_metadata.name ?? ""}
               initialStudentId={profile?.student_id ?? ""}
+              initialContactNumber={profile?.contact_number ?? ""}
+              identityLocked={tickets.length > 0}
             />
             <div className="mt-4 pt-4 border-t border-slate-100">
               <SyncProfileButton />
@@ -139,6 +146,7 @@ export default async function ProfilePage() {
           </section>
 
           <section id="tickets" className="scroll-mt-5 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
+            {(!syncResult.success || bookingResults.some((result) => result.error)) && <p role="status" className="mb-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">예약 동기화 또는 조회가 지연되고 있어요. 잠시 후 새로고침해주세요.</p>}
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">

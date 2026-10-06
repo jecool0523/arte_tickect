@@ -12,10 +12,9 @@ export async function syncProfileFromAuth(userId: string) {
   }
 
   const meta = user.user_metadata || {}
-  const displayName = meta.full_name || meta.name || null
   const avatarUrl = meta.avatar_url || meta.picture || null
 
-  if (!displayName && !avatarUrl) {
+  if (!avatarUrl) {
     return { success: true, synced: false, message: "No metadata to sync" }
   }
 
@@ -23,16 +22,14 @@ export async function syncProfileFromAuth(userId: string) {
   const { error: updateError } = await supabase
     .from("profiles")
     .update({
-      display_name: displayName ? displayName.slice(0, 100) : null,
       avatar_url: avatarUrl,
       updated_at: new Date().toISOString(),
-    })
-    .eq("id", userId)
+    }).eq("id", userId)
 
   if (updateError) {
     console.error("Profile sync failed", { userId, code: updateError.code })
     return { success: false, error: updateError.message }
   }
 
-  return { success: true, synced: true, displayName, avatarUrl }
+  return { success: true, synced: true, avatarUrl }
 }

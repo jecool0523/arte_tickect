@@ -69,6 +69,9 @@ export type PresaleAccessKeyRow = {
 
 export type ProfileRow = {
   id: string
+  username: string | null
+  contact_number: string | null
+  profile_completed_at: string | null
   display_name: string | null
   student_id: string | null
   avatar_url: string | null
@@ -142,6 +145,9 @@ export type Database = {
           display_name?: string | null
           student_id?: string | null
           avatar_url?: string | null
+          username?: string | null
+          contact_number?: string | null
+          profile_completed_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -149,6 +155,9 @@ export type Database = {
           display_name?: string | null
           student_id?: string | null
           avatar_url?: string | null
+          username?: string | null
+          contact_number?: string | null
+          profile_completed_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -280,6 +289,14 @@ export type Database = {
           error?: string
           code?: string
         }
+      }
+      save_profile_and_sync_bookings: {
+        Args: { p_user_id: string; p_username: string; p_display_name: string; p_student_id: string; p_contact_number: string }
+        Returns: { success: boolean; linked_count?: number; error?: string; code?: string }
+      }
+      sync_legacy_bookings: {
+        Args: { p_user_id: string }
+        Returns: { success: boolean; linked_count: number; code?: string }
       }
       delete_account: {
         Args: { p_user_id: string }

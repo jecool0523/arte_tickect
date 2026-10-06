@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { ShieldCheck } from "lucide-react"
 import OAuthLoginButton from "@/components/auth/oauth-login-button"
 import { createAuthServerClient } from "@/lib/server/supabase-auth"
+import { isProfileComplete, safeProfileNext } from "@/lib/profile"
 
 export const metadata: Metadata = {
   title: "로그인",
@@ -14,7 +15,7 @@ export const dynamic = "force-dynamic"
 
 function safeNextPath(value: string | string[] | undefined) {
   const path = Array.isArray(value) ? value[0] : value
-  return path?.startsWith("/") && !path.startsWith("//") ? path : "/profile"
+  return safeProfileNext(path)
 }
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string | string[]; error?: string }> }) {
@@ -22,7 +23,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const next = safeNextPath(params.next)
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (user) redirect(next)
+  if (user) {
+    const { data: profile, error } = await supabase.from("profiles")
+      .select("username, display_name, student_id, contact_number, profile_completed_at").eq("id", user.id).maybeSingle()
+    if (error) throw new Error("Profile is temporarily unavailable")
+    if (!isProfileComplete(profile)) redirect(`/profile/setup?next=${encodeURIComponent(next)}`)
+    redirect(next)
+  }
 
   return (
     <main className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-b from-purple-50 to-white px-4 py-10">
@@ -42,7 +49,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         )}
 
         <OAuthLoginButton next={next} />
-        <p className="mt-5 text-center text-xs leading-5 text-gray-500">로그인하면 서비스 운영에 필요한 이메일, 이름, 프로필 이미지를 Supabase Auth에 저장하는 데 동의하게 됩니다.</p>
+        <p className="mt-5 text-center text-xs leading-5 text-gray-500">이메일 도메인 제한 없이 로그인할 수 있어요. 로그인 후 아이디·이름·학번·연락처를 입력하면 이전 예약을 자동으로 확인합니다.</p>
         <Link href="/" className="mt-5 block text-center text-sm font-medium text-purple-600 hover:text-purple-700">홈으로 돌아가기</Link>
       </section>
     </main>

@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createAuthServerClient } from "@/lib/server/supabase-auth"
 import { syncProfileFromAuth } from "@/lib/server/sync-profile"
 import { getSiteOrigin } from "@/lib/site-url"
+import { isProfileComplete } from "@/lib/profile"
+import { syncLegacyBookings } from "@/lib/server/profile-onboarding"
 
 function safeNextUrl(request: NextRequest) {
   const origin = getSiteOrigin(request.nextUrl.origin)
@@ -23,6 +25,17 @@ export async function GET(request: NextRequest) {
     if (!error && data.user) {
       // 프로필 메타데이터 동기화 (아바타, 이름)
       await syncProfileFromAuth(data.user.id)
+
+      const { data: profile } = await supabase.from("profiles")
+        .select("username, display_name, student_id, contact_number, profile_completed_at").eq("id", data.user.id).maybeSingle()
+      if (!isProfileComplete(profile)) {
+        const setup = new URL("/profile/setup", next.origin)
+        setup.searchParams.set("next", `${next.pathname}${next.search}${next.hash}`)
+        const response = NextResponse.redirect(setup)
+        response.headers.set("Cache-Control", "private, no-store")
+        return response
+      }
+      await syncLegacyBookings(data.user.id)
 
       const response = NextResponse.redirect(next)
       response.headers.set("Cache-Control", "private, no-store")
