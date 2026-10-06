@@ -57,6 +57,7 @@ let profile = { username: "Alice123", display_name: "본인", student_id: "1323"
 let syncCount = 0
 const reservations = [{ ...own, sourceId: "rent", musicalTitle: "RENT" }, { ...own, id: 14, sourceId: "rent", musicalTitle: "RENT", status: "cancelled" }]
 const mocks = {
+  "@/lib/server/performances": { getLiveMusical: async () => null },
   "@/components/auth/account-page-shell": stub,
   "@/components/auth/login-card": { __esModule: true, default: () => React.createElement("p", null, "Google 로그인") },
   "@/components/ui/card": card, "@/components/ui/button": { Button: stub.default }, "next/link": { __esModule: true, default: ({ children, href }) => React.createElement("a", { href }, children) },

@@ -35,6 +35,8 @@ export default async function ProfilePage() {
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return <AccountPageShell title="프로필"><LoginCard next="/profile" /></AccountPageShell>
+  const { data: isAdmin } = await supabase.rpc("is_current_user_admin")
+  const adminEntry = isAdmin ? <Button asChild className="h-11 w-full bg-purple-600 text-white hover:bg-purple-700"><Link href="/admin" prefetch={false}>관리자 · 공연 관리</Link></Button> : null
 
   const { data: profile, error: profileError } = await supabase.from("profiles")
     .select("display_name, student_id, avatar_url, username, contact_number, profile_completed_at").eq("id", user.id).maybeSingle()
@@ -42,6 +44,7 @@ export default async function ProfilePage() {
   if (!isProfileComplete(profile)) {
     return (
       <AccountPageShell title="프로필">
+        {adminEntry}
         <Card className="border-gray-200 bg-white shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg">내 정보를 알려주세요</CardTitle>
@@ -69,6 +72,7 @@ export default async function ProfilePage() {
 
   return (
     <AccountPageShell title="프로필">
+      {adminEntry}
       <Card className="border-gray-200 bg-white shadow-sm">
         <CardContent className="flex items-center gap-4 p-5">
           <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-purple-100 text-xl font-bold text-purple-700">

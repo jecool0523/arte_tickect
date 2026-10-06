@@ -6,14 +6,13 @@ import { CheckCircle2, Info } from "lucide-react"
 import AppBottomNav from "@/components/app-bottom-nav"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { getAllMusicals } from "@/data/musicals"
+import type { MusicalInfo } from "@/types/musical"
 
 function formatDate(date: string) {
   return date.replace(/년 |월 /g, ".").replace("일", "")
 }
 
-export default function HomeScreen() {
-  const musicals = getAllMusicals()
+export default function HomeScreen({ musicals }: { musicals: MusicalInfo[] }) {
 
   return (
     <div className="flex h-[100dvh] w-full flex-col bg-gray-50 dark:bg-gray-900">

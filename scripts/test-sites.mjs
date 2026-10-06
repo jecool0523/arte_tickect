@@ -14,6 +14,8 @@ const cases = [
   ["/api/profile", 401, "PATCH"], ["/api/bookings/rent", 401, "POST"],
   ["/api/reviews?musicalId=rent", 200], ["/api/seats/rent", 200],
   ["/api/admin/users", 401],
+  ["/api/admin/performances", 401], ["/api/admin/performances", 401, "PATCH"],
+  ["/api/admin/booking-stats", 401],
 ]
 for (const [pathname, expected, method = "GET"] of cases) {
   const response = await fetch(new URL(pathname, base), { method, redirect: "manual", signal: AbortSignal.timeout(30000) })

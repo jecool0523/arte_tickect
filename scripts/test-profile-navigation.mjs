@@ -16,9 +16,10 @@ const profile = load("lib/profile.ts")
 const reservationModel = load("lib/reservations.ts", { "@/data/musicals": { getMusicalById: () => null } })
 const reservationQueries = load("lib/server/reservations.ts", { "server-only": {}, "@/lib/reservations": reservationModel })
 const stub = (name) => ({ __esModule: true, default: (props) => React.createElement("div", { "data-component": name }, name === "ProfileForm" ? props.initialUsername : props.children) })
-let user = null, savedProfile = null, syncCalls = 0
+let user = null, savedProfile = null, syncCalls = 0, isAdmin = false
 const reads = []
 const client = {
+  rpc: async () => ({ data: isAdmin, error: null }),
   auth: { getUser: async () => ({ data: { user }, error: null }) },
   from: (table) => ({ select: () => ({ eq: (column, id) => {
     reads.push({ table, column, id })
@@ -52,6 +53,10 @@ savedProfile = { ...savedProfile, display_name: "테스트", student_id: "1323",
 assert.match(renderToStaticMarkup(await Page()), /내 예약 내역 보기/)
 assert.equal(syncCalls, 1)
 assert.equal(reads.filter((r) => r.column === "user_id").length, 4)
+assert.doesNotMatch(renderToStaticMarkup(await Page()), /관리자 · 공연 관리/)
+isAdmin = true
+assert.match(renderToStaticMarkup(await Page()), /관리자 · 공연 관리/)
+isAdmin = false
 const Login = load("app/login/page.tsx", { ...mocks, "next/navigation": { redirect: (location) => { throw new Error(`REDIRECT:${location}`) } } }).default
 savedProfile = null
 await assert.rejects(Login({ searchParams: Promise.resolve({ next: "/profile" }) }), /REDIRECT:\/profile$/)

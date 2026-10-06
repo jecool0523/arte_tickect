@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import BookingCompleteRoutePage from "@/components/booking-complete-route-page"
-import { getMusicalById } from "@/data/musicals"
+import { getLiveMusical } from "@/lib/server/performances"
 import { requireAuthUser } from "@/lib/server/require-auth"
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default async function BookingCompletePage({ params }: { params: Promise<{ musicalId: string }> }) {
   const { musicalId } = await params
-  const musical = getMusicalById(musicalId)
+  const musical = await getLiveMusical(musicalId)
   if (!musical) notFound()
   await requireAuthUser(`/performances/${musicalId}/booking/complete`)
   return <BookingCompleteRoutePage musical={musical} />

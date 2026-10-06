@@ -1,17 +1,14 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import PerformanceDetailPage from "@/components/performance-detail-page"
-import { getAllMusicals, getMusicalById } from "@/data/musicals"
+import { getLiveMusical } from "@/lib/server/performances"
+export const dynamic = "force-dynamic"
 
 type PerformancePageProps = { params: Promise<{ musicalId: string }> }
 
-export function generateStaticParams() {
-  return getAllMusicals().map((musical) => ({ musicalId: musical.id }))
-}
-
 export async function generateMetadata({ params }: PerformancePageProps): Promise<Metadata> {
   const { musicalId } = await params
-  const musical = getMusicalById(musicalId)
+  const musical = await getLiveMusical(musicalId)
   if (!musical) return { title: "공연을 찾을 수 없음" }
 
   return {
@@ -33,7 +30,7 @@ export async function generateMetadata({ params }: PerformancePageProps): Promis
 
 export default async function PerformancePage({ params }: PerformancePageProps) {
   const { musicalId } = await params
-  const musical = getMusicalById(musicalId)
+  const musical = await getLiveMusical(musicalId)
   if (!musical) notFound()
   return <PerformanceDetailPage musical={musical} />
 }

@@ -82,6 +82,12 @@ export type ProfileRow = {
 export type Database = {
   public: {
     Tables: {
+      performance_settings: {
+        Row: { musical_id: string; details: Json; updated_at: string }
+        Insert: { musical_id: string; details: Json; updated_at?: string }
+        Update: { details?: Json; updated_at?: string }
+        Relationships: []
+      }
       arte_musical_application_period: {
         Row: {
           id: number
@@ -194,6 +200,7 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      save_admin_performance: { Args: { p_musical_id: string; p_details: Json; p_start: string; p_end: string }; Returns: undefined }
       book_musical_seats: {
         Args: {
           p_musical_id: string

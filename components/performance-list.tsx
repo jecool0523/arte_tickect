@@ -3,10 +3,9 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import AppBottomNav from "@/components/app-bottom-nav"
 import { Button } from "@/components/ui/button"
-import { getAllMusicals } from "@/data/musicals"
+import type { MusicalInfo } from "@/types/musical"
 
-export default function PerformanceList() {
-  const musicals = getAllMusicals()
+export default function PerformanceList({ musicals }: { musicals: MusicalInfo[] }) {
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-gray-50">

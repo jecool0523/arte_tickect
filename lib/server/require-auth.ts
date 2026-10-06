@@ -27,7 +27,7 @@ export async function requireAuthUser(nextPath: string, allowIncomplete = false)
 }
 
 export async function requireAdminUser(nextPath: string) {
-  const { supabase, user } = await requireAuthUser(nextPath)
+  const { supabase, user } = await requireAuthUser(nextPath, true)
 
   const { data: isAdmin, error } = await supabase.rpc("is_current_user_admin")
 

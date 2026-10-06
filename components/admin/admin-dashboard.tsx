@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import PerformanceManager from "@/components/admin/performance-manager"
 
 type AdminUser = {
   id: string
@@ -47,7 +48,7 @@ type Pagination = { total: number; limit: number; offset: number }
 
 export default function AdminDashboard() {
   const { toast } = useToast()
-  const [activeTab, setActiveTab] = useState<string>("users")
+  const [activeTab, setActiveTab] = useState<string>("performances")
 
   // Users state
   const [users, setUsers] = useState<AdminUser[]>([])
@@ -84,7 +85,7 @@ export default function AdminDashboard() {
       }
 
       setUsers(data.users)
-      setUserPagination({ total: data.total, limit: data.limit, offset: data.offset })
+      setUserPagination(data.pagination)
     } catch (error) {
       toast({ title: "사용자 목록 조회 실패", description: error instanceof Error ? error.message : "잠시 후 다시 시도해주세요.", variant: "destructive" })
     } finally {
@@ -116,15 +117,14 @@ export default function AdminDashboard() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setUserSearchDebounced(userSearch)
-      fetchUsers(0, userSearch)
+      if (activeTab === "users") fetchUsers(0, userSearch)
     }, 300)
     return () => clearTimeout(timer)
-  }, [userSearch])
+  }, [userSearch, activeTab])
 
   useEffect(() => {
-    fetchUsers()
-    fetchBookingStats()
-  }, [])
+    if (activeTab === "bookings" || activeTab === "presale") fetchBookingStats()
+  }, [activeTab])
 
   // Toggle admin status
   const handleToggleAdmin = async (userId: string, currentIsAdmin: boolean) => {
@@ -175,12 +175,14 @@ export default function AdminDashboard() {
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4">
+            <TabsTrigger value="performances"><CalendarDays className="mr-2 h-4 w-4" />공연 관리</TabsTrigger>
             <TabsTrigger value="users"><Users className="mr-2 h-4 w-4" />사용자 관리</TabsTrigger>
             <TabsTrigger value="bookings"><Ticket className="mr-2 h-4 w-4" />예매 현황</TabsTrigger>
             <TabsTrigger value="presale"><Ticket className="mr-2 h-4 w-4" />선예매 코드</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="performances"><PerformanceManager /></TabsContent>
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

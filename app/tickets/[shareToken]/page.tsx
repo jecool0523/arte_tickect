@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import BookingTicket from "@/components/booking-ticket"
 import TicketShareError from "@/components/ticket-share-error"
-import { getMusicalById } from "@/data/musicals"
+import { getLiveMusical } from "@/lib/server/performances"
 import { getBookingTableName } from "@/lib/musical-config"
 import { createServerClient } from "@/lib/server/supabase-admin"
 import { verifyTicketShareToken } from "@/lib/ticket-share-token"
@@ -36,7 +36,7 @@ export default async function SharedTicketPage({ params }: { params: Promise<{ s
   }
 
   const tableName = getBookingTableName(validation.musicalId)
-  const musical = getMusicalById(validation.musicalId)
+  const musical = await getLiveMusical(validation.musicalId)
   if (!tableName || !musical) return <TicketShareError reason="invalid" />
 
   try {

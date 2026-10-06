@@ -51,6 +51,10 @@
 
 [전체 작업 정리](docs/work-summary-2026-10-06.md) · [프로필 및 예약 연결 규칙](docs/profile-onboarding.md) · [Sites 배포 및 설정](docs/sites-deployment.md)
 
+## 관리자 공연 관리
+
+지정된 관리자 Google 계정은 프로필의 ‘관리자 · 공연 관리’에서 기존 공연 정보·포스터·줄거리와 일반 예매 기간(한국 시간)을 수정할 수 있습니다. 공연 정보와 기간을 함께 저장하고 기존 예약은 보존합니다. [관리자 권한과 관리 범위](docs/admin-performances.md)를 참고하세요.
+
 ### 실행과 확인
 
 ```bash
@@ -61,6 +65,7 @@ node scripts/test-profile-form.mjs
 node scripts/test-profile-api.mjs
 node scripts/test-profile-navigation.mjs
 node scripts/test-reservations.mjs
+node scripts/test-admin-performances.mjs
 node scripts/security-regression.mjs
 node scripts/test-sites-settings.mjs
 pnpm build:sites
