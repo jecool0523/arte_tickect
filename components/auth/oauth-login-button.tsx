@@ -37,9 +37,9 @@ export default function OAuthLoginButton({ next = "/profile" }: { next?: string 
         type="button"
         onClick={signIn}
         disabled={pending}
-        className="w-full bg-white py-6 font-semibold text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-50"
+        className="h-11 w-full rounded-lg bg-purple-600 font-semibold text-white shadow-sm hover:bg-purple-700"
       >
-        <LogIn className="mr-2 h-5 w-5 text-purple-600" />
+        <LogIn className="mr-2 h-5 w-5" />
         {pending ? "Google로 이동 중..." : "Google로 계속하기"}
       </Button>
       {errorMessage && <p role="alert" className="text-sm text-red-600">{errorMessage}</p>}

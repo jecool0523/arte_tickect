@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { ShieldCheck } from "lucide-react"
+import AccountPageShell from "@/components/auth/account-page-shell"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import OAuthLoginButton from "@/components/auth/oauth-login-button"
 import { createAuthServerClient } from "@/lib/server/supabase-auth"
 import { isProfileComplete, safeProfileNext } from "@/lib/profile"
@@ -32,16 +34,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   }
 
   return (
-    <main className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-b from-purple-50 to-white px-4 py-10">
-      <section className="w-full max-w-sm rounded-2xl border border-purple-100 bg-white p-6 shadow-xl shadow-purple-100/60">
-        <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
-            <ShieldCheck className="h-6 w-6 text-purple-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">ARTE 로그인</h1>
-          <p className="mt-2 text-sm leading-6 text-gray-600">로그인하면 예매가 계정에 안전하게 연결되고 내 티켓을 한곳에서 확인할 수 있습니다.</p>
-        </div>
-
+    <AccountPageShell title="로그인">
+      <Card className="mx-auto mt-6 max-w-md border-gray-200 bg-white shadow-sm sm:mt-10">
+        <CardHeader className="items-center pb-4 text-center">
+          <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 text-purple-700"><ShieldCheck className="h-7 w-7" /></div>
+          <CardTitle className="text-lg">ARTE 로그인</CardTitle>
+          <p className="pt-1 text-base leading-6 text-gray-600">로그인하고 내 티켓을 한곳에서 확인하세요.</p>
+        </CardHeader>
+        <CardContent>
         {params.error && (
           <p role="alert" className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
             로그인을 완료하지 못했습니다. 다시 시도해주세요.
@@ -49,9 +49,10 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         )}
 
         <OAuthLoginButton next={next} />
-        <p className="mt-5 text-center text-xs leading-5 text-gray-500">이메일 도메인 제한 없이 로그인할 수 있어요. 로그인 후 아이디·이름·학번·연락처를 입력하면 이전 예약을 자동으로 확인합니다.</p>
+        <p className="mt-5 text-sm leading-6 text-gray-500">이메일 도메인 제한 없이 로그인할 수 있어요. 처음 로그인하면 아이디·이름·학번·연락처를 입력하고 이전 예약을 연결합니다.</p>
         <Link href="/" className="mt-5 block text-center text-sm font-medium text-purple-600 hover:text-purple-700">홈으로 돌아가기</Link>
-      </section>
-    </main>
+        </CardContent>
+      </Card>
+    </AccountPageShell>
   )
 }

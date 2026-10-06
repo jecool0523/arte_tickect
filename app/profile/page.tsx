@@ -1,7 +1,9 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { CalendarDays, ChevronRight, Mail, ShieldAlert, Sparkles, Ticket, Trash2, UserRound } from "lucide-react"
-import AppBottomNav from "@/components/app-bottom-nav"
+import { CalendarDays, Mail, ShieldAlert, Ticket, Trash2, UserRound } from "lucide-react"
+import AccountPageShell from "@/components/auth/account-page-shell"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import LogoutButton from "@/components/auth/logout-button"
 import ProfileForm from "@/components/auth/profile-form"
 import AccountDeleteButton from "@/components/auth/account-delete-button"
@@ -70,162 +72,82 @@ export default async function ProfilePage() {
   const initial = displayName.trim().charAt(0).toUpperCase() || "A"
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50 text-slate-950">
-      <main className="mx-auto w-full max-w-2xl pb-28">
-        <section className="relative overflow-hidden bg-slate-950 px-5 pb-24 pt-6 text-white">
-          <div aria-hidden="true" className="absolute -right-12 -top-20 h-56 w-56 rounded-full bg-purple-600/35 blur-3xl" />
-          <div aria-hidden="true" className="absolute -bottom-16 -left-16 h-44 w-44 rounded-full bg-fuchsia-500/20 blur-3xl" />
-          <div className="relative mx-auto max-w-xl">
-            <div className="mb-8 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-purple-300">DIMI ARTE</p>
-                <h1 className="mt-1 text-2xl font-bold tracking-tight">프로필</h1>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/10">
-                <Sparkles className="h-5 w-5 text-purple-200" />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-purple-500 to-fuchsia-500 text-2xl font-bold shadow-xl shadow-purple-950/30">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt={`${displayName} 프로필 사진`} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
-                ) : (
-                  <span aria-hidden="true">{initial}</span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-xl font-bold">{displayName}</p>
-                <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-slate-300">
-                  <Mail className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{user.email}</span>
-                  {!emailStatus.emailConfirmed && (
-                    <>
-                      <ShieldAlert className="h-3.5 w-3.5 text-yellow-300" aria-hidden="true" />
-                      <span className="text-xs text-yellow-300">이메일 미인증</span>
-                    </>
-                  )}
-                  {emailStatus.emailConfirmed && (
-                    <span className="text-xs text-green-300">이메일 인증됨</span>
-                  )}
-                </p>
-                {!emailStatus.emailConfirmed && (
-                  <p className="mt-2">
-                    <ResendConfirmationButton />
-                  </p>
-                )}
-                <div className="mt-3 inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-purple-100 ring-1 ring-inset ring-white/10">
-                  예매 {tickets.length}건
-                </div>
-              </div>
-            </div>
+    <AccountPageShell title="프로필">
+      <Card className="border-gray-200 bg-white shadow-sm">
+        <CardContent className="flex items-center gap-4 p-5">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-purple-100 text-xl font-bold text-purple-700">
+            {avatarUrl ? <img src={avatarUrl} alt={`${displayName} 프로필 사진`} className="h-full w-full object-cover" referrerPolicy="no-referrer" /> : <span aria-hidden="true">{initial}</span>}
           </div>
-        </section>
-
-        <div className="relative -mt-14 space-y-5 px-4">
-          <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-lg shadow-slate-200/60">
-            <div className="mb-5 flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-purple-100 text-purple-700">
-                <UserRound className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold">내 정보</h2>
-                <p className="mt-0.5 text-sm leading-5 text-slate-500">티켓 확인에 사용할 이름과 학번을 관리해요.</p>
-              </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="break-words text-lg font-bold text-gray-900">{displayName}</h2>
+            <p className="mt-1 flex items-start gap-1.5 text-sm text-gray-500">
+              <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /><span className="min-w-0 break-all">{user.email}</span>
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+              <span className="rounded-full bg-purple-100 px-2.5 py-1 font-medium text-purple-700">예매 {tickets.length}건</span>
+              <span className={emailStatus.emailConfirmed ? "text-gray-500" : "flex items-center gap-1 text-amber-700"}>
+                {!emailStatus.emailConfirmed && <ShieldAlert className="h-3.5 w-3.5" aria-hidden="true" />}
+                {emailStatus.emailConfirmed ? "이메일 인증됨" : "이메일 미인증"}
+              </span>
             </div>
-            <ProfileForm
-              initialUsername={profile?.username ?? defaultUsername(user.email)}
-              initialDisplayName={profile?.display_name ?? user.user_metadata.full_name ?? user.user_metadata.name ?? ""}
-              initialStudentId={profile?.student_id ?? ""}
-              initialContactNumber={profile?.contact_number ?? ""}
-              identityLocked={tickets.length > 0}
-            />
-            <div className="mt-4 pt-4 border-t border-slate-100">
-              <SyncProfileButton />
+            {!emailStatus.emailConfirmed && <div className="mt-3"><ResendConfirmationButton /></div>}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-gray-200 bg-white shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg"><UserRound className="h-5 w-5 text-purple-600" aria-hidden="true" />내 정보</CardTitle>
+          <p className="text-sm leading-6 text-gray-500">예약 확인에 사용할 정보를 관리해요.</p>
+        </CardHeader>
+        <CardContent>
+          <ProfileForm initialUsername={profile?.username ?? defaultUsername(user.email)} initialDisplayName={profile?.display_name ?? user.user_metadata.full_name ?? user.user_metadata.name ?? ""} initialStudentId={profile?.student_id ?? ""} initialContactNumber={profile?.contact_number ?? ""} identityLocked={tickets.length > 0} />
+          <div className="mt-4 border-t border-gray-200 pt-4"><SyncProfileButton /></div>
+        </CardContent>
+      </Card>
+
+      <Card id="tickets" className="scroll-mt-4 border-gray-200 bg-white shadow-sm">
+        <CardHeader className="flex-row flex-wrap items-center justify-between gap-3 space-y-0">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-lg"><Ticket className="h-5 w-5 text-purple-600" aria-hidden="true" />내 티켓</CardTitle>
+            <p className="mt-1 text-sm text-gray-500">예매 내역 {tickets.length}건</p>
+          </div>
+          <Link href="/performances" className="text-sm font-medium text-purple-600 hover:text-purple-700">공연 보기</Link>
+        </CardHeader>
+        <CardContent>
+          {(!syncResult.success || bookingResults.some((result) => result.error)) && <p role="status" className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">예약 동기화 또는 조회가 지연되고 있어요. 잠시 후 새로고침해주세요.</p>}
+          {tickets.length === 0 ? (
+            <div className="rounded-lg bg-gray-50 px-4 py-8 text-center">
+              <Ticket className="mx-auto h-8 w-8 text-gray-400" aria-hidden="true" />
+              <p className="mt-3 font-semibold text-gray-900">아직 예매한 티켓이 없어요</p>
+              <p className="mt-1 text-sm leading-6 text-gray-500">이전 예약이 없다면 공연을 둘러보고 예매해 보세요.</p>
+              <Button asChild className="mt-4 rounded-lg bg-purple-600 text-white hover:bg-purple-700"><Link href="/performances">공연 둘러보기</Link></Button>
             </div>
-          </section>
+          ) : (
+            <ul className="space-y-3">
+              {tickets.map((ticket) => (
+                <li key={`${ticket.musicalTitle}-${ticket.id}`} className="rounded-lg border border-gray-200 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <p className="min-w-0 break-words font-bold text-gray-900">{ticket.musicalTitle}</p>
+                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${["cancelled", "canceled"].includes(ticket.status.toLowerCase()) ? "bg-gray-100 text-gray-600" : "bg-purple-100 text-purple-700"}`}>{getStatusLabel(ticket.status)}</span>
+                  </div>
+                  <p className="mt-2 break-words text-sm leading-6 text-gray-600">{ticket.seat_grade} · {ticket.selected_seats.join(", ")}</p>
+                  <p className="mt-3 flex items-start gap-1.5 text-xs leading-5 text-gray-500"><CalendarDays className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />{new Date(ticket.booking_date).toLocaleString("ko-KR")}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
-          <section id="tickets" className="scroll-mt-5 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
-            {(!syncResult.success || bookingResults.some((result) => result.error)) && <p role="status" className="mb-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">예약 동기화 또는 조회가 지연되고 있어요. 잠시 후 새로고침해주세요.</p>}
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
-                  <Ticket className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold">내 티켓</h2>
-                  <p className="text-sm text-slate-500">예매 내역 {tickets.length}건</p>
-                </div>
-              </div>
-              <Link href="/performances" className="flex items-center gap-0.5 text-sm font-semibold text-purple-700 hover:text-purple-800">
-                공연 보기
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-
-            {tickets.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center">
-                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm">
-                  <Ticket className="h-5 w-5" />
-                </div>
-                <p className="mt-3 font-semibold text-slate-800">아직 예매한 티켓이 없어요</p>
-                <p className="mt-1 text-sm text-slate-500">공연을 둘러보고 첫 티켓을 예매해 보세요.</p>
-                <Link href="/performances" className="mt-4 inline-flex rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-                  공연 둘러보기
-                </Link>
-              </div>
-            ) : (
-              <ul className="space-y-3">
-                {tickets.map((ticket) => (
-                  <li key={`${ticket.musicalTitle}-${ticket.id}`} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                    <div className="flex items-stretch">
-                      <div className="w-1.5 shrink-0 bg-purple-600" />
-                      <div className="min-w-0 flex-1 p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate font-bold text-slate-900">{ticket.musicalTitle}</p>
-                            <p className="mt-1 text-sm text-slate-600">
-                              {ticket.seat_grade} · {ticket.selected_seats.join(", ")}
-                            </p>
-                          </div>
-                          <span className="shrink-0 rounded-full bg-purple-50 px-2.5 py-1 text-xs font-bold text-purple-700">
-                            {getStatusLabel(ticket.status)}
-                          </span>
-                        </div>
-                        <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
-                          <CalendarDays className="h-3.5 w-3.5" />
-                          {new Date(ticket.booking_date).toLocaleString("ko-KR")}
-                        </p>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section className="rounded-3xl border border-red-100 bg-red-50 p-5">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-100 text-red-700">
-                <Trash2 className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-red-900">계정 탈퇴</h2>
-                <p className="mt-0.5 text-sm leading-5 text-red-700">
-                  계정을 삭제하면 예매 내역이 익명화되고 복구할 수 없습니다. 신중히 결정해주세요.
-                </p>
-              </div>
-            </div>
-            <AccountDeleteButton />
-          </section>
-
-          <LogoutButton />
-        </div>
-      </main>
-
-      <footer className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl">
-        <AppBottomNav active="profile" />
-      </footer>
-    </div>
+      <Card className="border-red-200 bg-white shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg text-red-700"><Trash2 className="h-5 w-5" aria-hidden="true" />계정 탈퇴</CardTitle>
+          <p className="text-sm leading-6 text-gray-600">계정을 삭제하면 개인정보가 삭제되고 예매 내역은 익명화됩니다. 복구할 수 없으니 신중히 결정해주세요.</p>
+        </CardHeader>
+        <CardContent><AccountDeleteButton /></CardContent>
+      </Card>
+      <LogoutButton />
+    </AccountPageShell>
   )
 }

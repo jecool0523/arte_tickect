@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Keep the retained development preview from overwriting production manifests.
+  distDir: process.env.NODE_ENV === 'development' ? '.next-dev' : '.next',
   outputFileTracingRoot: dirname(fileURLToPath(import.meta.url)),
   images: {
     unoptimized: true,

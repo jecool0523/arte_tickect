@@ -42,7 +42,7 @@ export default function AccountDeleteButton() {
     <div className="space-y-3">
       <Button
         variant="destructive"
-        className="w-full"
+        className="h-11 w-full rounded-lg"
         onClick={() => setShowConfirm(true)}
         disabled={pending}
       >
@@ -51,7 +51,7 @@ export default function AccountDeleteButton() {
       </Button>
 
       {showConfirm && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
             <div className="flex-1">

@@ -46,7 +46,7 @@ export default function SyncProfileButton() {
         variant="outline"
         onClick={handleSync}
         disabled={pending}
-        className="w-full gap-2"
+        className="h-11 w-full gap-2 rounded-lg border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
       >
         <RefreshCw className={pending ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
         {pending ? "동기화 중..." : "Google 프로필 사진 동기화"}
