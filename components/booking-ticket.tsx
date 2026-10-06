@@ -26,6 +26,8 @@ interface BookingTicketProps {
   ticket: BookingTicketData
   variant?: "success" | "list"
   shareToken?: string | null
+  showShareActions?: boolean
+  showSeatMap?: boolean
 }
 
 function maskStudentId(studentId: string) {
@@ -138,7 +140,7 @@ function SeatLocationMap({ selectedSeats }: { selectedSeats: string[] }) {
   )
 }
 
-export default function BookingTicket({ ticket, variant = "list", shareToken }: BookingTicketProps) {
+export default function BookingTicket({ ticket, variant = "list", shareToken, showShareActions = true, showSeatMap = true }: BookingTicketProps) {
   const ticketRef = useRef<HTMLElement>(null)
   const [fallbackUrl, setFallbackUrl] = useState("")
   const [copied, setCopied] = useState(false)
@@ -335,20 +337,20 @@ export default function BookingTicket({ ticket, variant = "list", shareToken }: 
           </div>
         </div>
 
-        <SeatLocationMap selectedSeats={ticket.selectedSeats} />
+        {showSeatMap && <SeatLocationMap selectedSeats={ticket.selectedSeats} />}
 
         <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">예매 일시: {bookingDateText}</div>
 
-        <div data-ticket-capture-exclude="true" className="sm:hidden">
+        {showShareActions && <div data-ticket-capture-exclude="true" className="sm:hidden">
           <Button onClick={handleShare} className="h-11 w-full bg-purple-600 font-bold text-white hover:bg-purple-700">
             <Share2 className="mr-2 h-4 w-4" />
             공유하기
           </Button>
-        </div>
+        </div>}
 
         <div
           data-ticket-capture-exclude="true"
-          className={cn("hidden gap-2 sm:grid", shareToken && "sm:grid-cols-2")}
+          className={cn(showShareActions ? "hidden gap-2 sm:grid" : "grid gap-2", showShareActions && shareToken && "sm:grid-cols-2")}
         >
           <Button
             onClick={handleImageDownload}
@@ -358,7 +360,7 @@ export default function BookingTicket({ ticket, variant = "list", shareToken }: 
             {isSavingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
             {isSavingImage ? "이미지 저장 중..." : "티켓 이미지 저장"}
           </Button>
-          {shareToken && (
+          {showShareActions && shareToken && (
             <Button onClick={copyShareUrl} variant="outline" className="h-11 w-full border-purple-200 font-bold text-purple-700">
               {copied ? <Check className="mr-2 h-4 w-4" /> : <Link2 className="mr-2 h-4 w-4" />}
               {copied ? "URL 복사 완료" : "티켓 URL 복사"}

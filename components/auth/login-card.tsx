@@ -15,7 +15,6 @@ export default function LoginCard({ next, error }: { next: string; error?: strin
       <CardContent>
         {error && <p role="alert" className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">로그인을 완료하지 못했습니다. 다시 시도해주세요.</p>}
         <OAuthLoginButton next={next} />
-        <p className="mt-5 text-sm leading-6 text-gray-500">이메일 도메인 제한 없이 로그인할 수 있어요. 처음 로그인하면 아이디·이름·학번·연락처를 입력하고 이전 예약을 연결합니다.</p>
         <Link href="/" className="mt-5 block text-center text-sm font-medium text-purple-600 hover:text-purple-700">홈으로 돌아가기</Link>
       </CardContent>
     </Card>

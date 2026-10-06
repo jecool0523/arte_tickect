@@ -13,6 +13,8 @@ function load(filename, mocks = {}) {
   return exports
 }
 const profile = load("lib/profile.ts")
+const reservationModel = load("lib/reservations.ts", { "@/data/musicals": { getMusicalById: () => null } })
+const reservationQueries = load("lib/server/reservations.ts", { "server-only": {}, "@/lib/reservations": reservationModel })
 const stub = (name) => ({ __esModule: true, default: (props) => React.createElement("div", { "data-component": name }, name === "ProfileForm" ? props.initialUsername : props.children) })
 let user = null, savedProfile = null, syncCalls = 0
 const reads = []
@@ -26,6 +28,7 @@ const client = {
 }
 const mocks = {
   "@/lib/profile": profile,
+  "@/lib/server/reservations": reservationQueries,
   "@/lib/server/supabase-auth": { createAuthServerClient: async () => client },
   "@/lib/server/supabase-admin": { createServerClient: () => ({ rpc: async () => ({ data: { success: true, email_confirmed: true }, error: null }) }) },
   "@/lib/server/profile-onboarding": { syncLegacyBookings: async (id) => { assert.equal(id, "self"); syncCalls++; return { success: true } } },
@@ -46,7 +49,7 @@ assert.match(incomplete, /Alice123/)
 assert.equal(syncCalls, 0, "Incomplete users do not claim bookings")
 assert.equal(reads.filter((r) => r.table !== "profiles").length, 0)
 savedProfile = { ...savedProfile, display_name: "테스트", student_id: "1323", username: "Alice123", contact_number: "01012345678", profile_completed_at: "2026-10-06" }
-assert.match(renderToStaticMarkup(await Page()), /내 티켓/)
+assert.match(renderToStaticMarkup(await Page()), /내 예약 내역 보기/)
 assert.equal(syncCalls, 1)
 assert.equal(reads.filter((r) => r.column === "user_id").length, 4)
 const Login = load("app/login/page.tsx", { ...mocks, "next/navigation": { redirect: (location) => { throw new Error(`REDIRECT:${location}`) } } }).default

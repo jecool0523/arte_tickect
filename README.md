@@ -46,6 +46,7 @@
 - Google 로그인 후 아이디·이름·학번·연락처를 등록합니다. 아이디는 이메일의 @ 앞부분을 기본값으로 넣고 영문·숫자로 수정할 수 있습니다. 이메일 도메인 제한은 없습니다.
 - 입력한 이름·학번과 모두 일치하는 미연결 이전 예약을 계정에 자동 연결합니다. 이미 다른 계정에 연결된 예약은 이동하지 않습니다. 이 대조 방식은 별도의 본인 인증을 의미하지 않습니다.
 - 프로필·로그인·내 정보 등록 UI는 기존 공연/아르떼 화면과 같은 회색 배경, 흰색 헤더, 카드, 보라색 버튼 및 하단 내비게이션을 사용합니다.
+- 홈 제목을 ‘아르떼’로 바꾸고 검색창·검색 버튼 및 긴 로그인 안내 문구를 제거했습니다. ‘내 예약 내역 보기’는 `/profile/bookings`로 연결되며 완료된 본인 예약에서 티켓·좌석 확인과 이미지 저장이 가능합니다.
 - Sites 배포용 Worker 빌드, 환경 변수 검증, 개인 응답 캐시 금지 및 비밀키 노출 방지 검사를 추가했습니다. Supabase DB 변경 이력과 검증 절차도 문서화했습니다.
 
 [전체 작업 정리](docs/work-summary-2026-10-06.md) · [프로필 및 예약 연결 규칙](docs/profile-onboarding.md) · [Sites 배포 및 설정](docs/sites-deployment.md)
@@ -58,6 +59,8 @@ pnpm dev
 node scripts/test-profile-inputs.mjs
 node scripts/test-profile-form.mjs
 node scripts/test-profile-api.mjs
+node scripts/test-profile-navigation.mjs
+node scripts/test-reservations.mjs
 node scripts/security-regression.mjs
 node scripts/test-sites-settings.mjs
 pnpm build:sites

@@ -2,11 +2,10 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { CheckCircle2, Info, Search } from "lucide-react"
+import { CheckCircle2, Info } from "lucide-react"
 import AppBottomNav from "@/components/app-bottom-nav"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { getAllMusicals } from "@/data/musicals"
 
 function formatDate(date: string) {
@@ -19,29 +18,15 @@ export default function HomeScreen() {
   return (
     <div className="flex h-[100dvh] w-full flex-col bg-gray-50 dark:bg-gray-900">
       <header className="shrink-0 bg-gray-50 dark:bg-gray-900">
-        <div className="flex items-center justify-between p-4">
-          <div className="w-10" />
-          <h1 className="text-lg font-bold text-gray-900 dark:text-white">뮤지컬</h1>
-          <Button variant="ghost" size="icon" className="text-gray-900 dark:text-white">
-            <Search className="h-6 w-6" />
-          </Button>
-        </div>
-
-        <div className="px-4 pb-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-            <Input
-              placeholder="공연 검색"
-              className="rounded-lg border-transparent bg-gray-200 py-2.5 pl-10 pr-4 text-gray-900 placeholder-gray-400 focus:border-purple-600 focus:ring-purple-600 dark:bg-gray-800/50 dark:text-white dark:placeholder-gray-500"
-            />
-          </div>
+        <div className="p-4 text-center">
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">아르떼</h1>
         </div>
 
         <div className="px-4 pb-4">
           <Button asChild className="w-full rounded-lg bg-purple-600 py-3 font-semibold text-white shadow-md hover:bg-purple-700">
-            <Link href="/profile#tickets">
+            <Link href="/profile/bookings" prefetch={false}>
               <CheckCircle2 className="mr-2 h-5 w-5" />
-              내 티켓 확인
+              내 예약 내역 보기
             </Link>
           </Button>
         </div>

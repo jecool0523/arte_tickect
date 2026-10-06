@@ -8,6 +8,8 @@ const base = "http://127.0.0.1:8799"
 const cases = [
   ["/", 200], ["/performances", 200], ["/club", 200], ["/login", 200],
   ["/profile", 200], ["/profile/setup", [200, 307]], ["/performances/rent/booking", 307],
+  ["/profile/bookings", 200],
+  ["/profile/bookings/rent/1", [200, 307]],
   ["/api/profile/sync", 401, "POST"],
   ["/api/profile", 401, "PATCH"], ["/api/bookings/rent", 401, "POST"],
   ["/api/reviews?musicalId=rent", 200], ["/api/seats/rent", 200],
@@ -20,10 +22,11 @@ for (const [pathname, expected, method = "GET"] of cases) {
     assert.match(response.headers.get("Cache-Control"), /private.*no-store/, pathname)
   }
   const body = await response.text()
-  if (pathname === "/profile/setup" && response.status === 200) {
+  if ((pathname === "/profile/setup" || pathname === "/profile/bookings/rent/1") && response.status === 200) {
     // A parent loading boundary can stream HTTP 200 before Next emits its auth redirect.
     assert.match(body, /<meta[^>]*http-equiv="refresh"[^>]*url=\/login\?next=/)
     assert.ok(!body.includes('id="studentId"'), "Anonymous setup must not render the private form")
+    assert.ok(!body.includes("ARTE TICKET"), "Anonymous visitors must not see a private ticket")
   }
   if (pathname === "/profile" || pathname === "/login") {
     assert.ok(body.includes("Google로 계속하기"), `${pathname}: Google login preserved`)
@@ -31,11 +34,18 @@ for (const [pathname, expected, method = "GET"] of cases) {
     assert.ok(!body.includes("이메일로 회원가입"), `${pathname}: no email signup`)
   }
   if (pathname === "/") {
+    assert.match(body, /<h1[^>]*>아르떼<\/h1>/)
+    assert.ok(!body.includes("공연 검색"), "Removed home search field")
+    assert.ok(body.includes("내 예약 내역 보기"), "Reservation history CTA")
+    assert.ok(body.includes('href="/profile/bookings"'), "History destination")
     for (const label of ["홈", "공연", "아르떼", "프로필"]) assert.ok(body.includes(label), `Bottom nav: ${label}`)
     const script = body.match(/<script[^>]*src="([^"]+\.js)"/)
     assert.ok(script, "Home has a JS asset")
     const asset = await fetch(new URL(script[1], base))
     assert.equal(asset.status, 200, "JS asset")
+  }
+  if (pathname === "/profile" || pathname === "/login" || pathname === "/profile/bookings") {
+    assert.ok(!body.includes("이메일 도메인 제한 없이 로그인할 수 있어요."), "Removed login explanation")
   }
   console.log(`${method} ${pathname}: ${response.status}`)
 }

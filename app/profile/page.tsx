@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { CalendarDays, Mail, ShieldAlert, Ticket, Trash2, UserRound } from "lucide-react"
+import { Mail, ShieldAlert, Ticket, Trash2, UserRound } from "lucide-react"
 import AccountPageShell from "@/components/auth/account-page-shell"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ import { createAuthServerClient } from "@/lib/server/supabase-auth"
 import { createServerClient } from "@/lib/server/supabase-admin"
 import { defaultUsername, isProfileComplete } from "@/lib/profile"
 import { syncLegacyBookings } from "@/lib/server/profile-onboarding"
+import { getOwnedReservations } from "@/lib/server/reservations"
 
 export const metadata: Metadata = {
   title: "프로필",
@@ -21,24 +22,6 @@ export const metadata: Metadata = {
 }
 
 export const dynamic = "force-dynamic"
-
-const bookingSources = [
-  { table: "dead_poets_society_bookings" as const, title: "죽은 시인의 사회" },
-  { table: "rent_bookings" as const, title: "RENT" },
-  { table: "toctoc_bookings" as const, title: "TOC TOC" },
-  { table: "arte_musical_tickets" as const, title: "아르떼 이전 공연" },
-]
-
-function getStatusLabel(status: string) {
-  const labels: Record<string, string> = {
-    confirmed: "예매 완료",
-    completed: "예매 완료",
-    cancelled: "취소됨",
-    canceled: "취소됨",
-  }
-
-  return labels[status.toLowerCase()] ?? status
-}
 
 async function getEmailStatus(userId: string) {
   const supabase = createServerClient()
@@ -75,22 +58,10 @@ export default async function ProfilePage() {
   }
 
   const syncResult = await syncLegacyBookings(user.id)
-  const [emailStatus, ...bookingResults] = await Promise.all([
+  const [emailStatus, { reservations: tickets, unavailable }] = await Promise.all([
     getEmailStatus(user.id),
-    ...bookingSources.map(({ table }) =>
-      supabase
-        .from(table)
-        .select("id, booking_date, seat_grade, selected_seats, status")
-        .eq("user_id", user.id)
-        .order("booking_date", { ascending: false }),
-    ),
+    getOwnedReservations(supabase, user.id),
   ])
-
-  const tickets = bookingResults
-    .flatMap((result, index) =>
-      (result.data ?? []).map((booking) => ({ ...booking, musicalTitle: bookingSources[index].title })),
-    )
-    .sort((a, b) => new Date(b.booking_date).getTime() - new Date(a.booking_date).getTime())
 
   const displayName = profile?.display_name ?? user.user_metadata.full_name ?? user.user_metadata.name ?? "아르떼 관객"
   const avatarUrl = profile?.avatar_url ?? user.user_metadata.avatar_url ?? user.user_metadata.picture
@@ -134,34 +105,15 @@ export default async function ProfilePage() {
       <Card id="tickets" className="scroll-mt-4 border-gray-200 bg-white shadow-sm">
         <CardHeader className="flex-row flex-wrap items-center justify-between gap-3 space-y-0">
           <div>
-            <CardTitle className="flex items-center gap-2 text-lg"><Ticket className="h-5 w-5 text-purple-600" aria-hidden="true" />내 티켓</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-lg"><Ticket className="h-5 w-5 text-purple-600" aria-hidden="true" />예약 내역</CardTitle>
             <p className="mt-1 text-sm text-gray-500">예매 내역 {tickets.length}건</p>
           </div>
           <Link href="/performances" className="text-sm font-medium text-purple-600 hover:text-purple-700">공연 보기</Link>
         </CardHeader>
         <CardContent>
-          {(!syncResult.success || bookingResults.some((result) => result.error)) && <p role="status" className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">예약 동기화 또는 조회가 지연되고 있어요. 잠시 후 새로고침해주세요.</p>}
-          {tickets.length === 0 ? (
-            <div className="rounded-lg bg-gray-50 px-4 py-8 text-center">
-              <Ticket className="mx-auto h-8 w-8 text-gray-400" aria-hidden="true" />
-              <p className="mt-3 font-semibold text-gray-900">아직 예매한 티켓이 없어요</p>
-              <p className="mt-1 text-sm leading-6 text-gray-500">이전 예약이 없다면 공연을 둘러보고 예매해 보세요.</p>
-              <Button asChild className="mt-4 rounded-lg bg-purple-600 text-white hover:bg-purple-700"><Link href="/performances">공연 둘러보기</Link></Button>
-            </div>
-          ) : (
-            <ul className="space-y-3">
-              {tickets.map((ticket) => (
-                <li key={`${ticket.musicalTitle}-${ticket.id}`} className="rounded-lg border border-gray-200 p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <p className="min-w-0 break-words font-bold text-gray-900">{ticket.musicalTitle}</p>
-                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${["cancelled", "canceled"].includes(ticket.status.toLowerCase()) ? "bg-gray-100 text-gray-600" : "bg-purple-100 text-purple-700"}`}>{getStatusLabel(ticket.status)}</span>
-                  </div>
-                  <p className="mt-2 break-words text-sm leading-6 text-gray-600">{ticket.seat_grade} · {ticket.selected_seats.join(", ")}</p>
-                  <p className="mt-3 flex items-start gap-1.5 text-xs leading-5 text-gray-500"><CalendarDays className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />{new Date(ticket.booking_date).toLocaleString("ko-KR")}</p>
-                </li>
-              ))}
-            </ul>
-          )}
+          {(!syncResult.success || unavailable) && <p role="status" className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">예약 동기화 또는 조회가 지연되고 있어요. 잠시 후 새로고침해주세요.</p>}
+          <p className="text-sm leading-6 text-gray-500">예약 내역에서 공연별 티켓과 좌석을 확인할 수 있어요.</p>
+          <Button asChild className="mt-4 h-11 w-full rounded-lg bg-purple-600 text-white hover:bg-purple-700"><Link href="/profile/bookings" prefetch={false}>내 예약 내역 보기</Link></Button>
         </CardContent>
       </Card>
 
