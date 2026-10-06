@@ -5,3 +5,8 @@ node_modules
 !.env.example
 .pnpm-store
 tsconfig.tsbuildinfo
+.open-next/
+.wrangler/
+.sites-runtime/
+dist/
+.dev.vars*

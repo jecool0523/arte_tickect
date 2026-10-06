@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/server/supabase-admin"
+import { createAuthServerClient } from "@/lib/server/supabase-auth"
 import { enforceRateLimit } from "@/lib/server/rate-limit"
 import { z } from "zod"
 
@@ -20,6 +21,16 @@ const querySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
+    const authClient = await createAuthServerClient()
+    const { data: { user }, error: authError } = await authClient.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ code: "AUTH_REQUIRED", error: "로그인이 필요합니다." }, { status: 401, headers })
+    }
+    const { data: isAdmin, error: adminError } = await authClient.rpc("is_current_user_admin")
+    if (adminError || !isAdmin) {
+      return NextResponse.json({ code: "FORBIDDEN", error: "관리자 권한이 필요합니다." }, { status: 403, headers })
+    }
+
     const { searchParams } = new URL(request.url)
     const query = querySchema.parse(Object.fromEntries(searchParams))
 
@@ -32,7 +43,7 @@ export async function GET(request: NextRequest) {
     if (rate.unavailable) return NextResponse.json({ error: "Rate limiting is unavailable." }, { status: 503, headers })
     if (!rate.allowed) return NextResponse.json({ error: "Too many requests." }, { status: 429, headers })
 
-    const { data, error } = await supabase.rpc("admin_get_all_users", {
+    const { data, error } = await authClient.rpc("admin_get_all_users", {
       p_limit: query.limit,
       p_offset: query.offset,
       p_search: query.search ?? null,

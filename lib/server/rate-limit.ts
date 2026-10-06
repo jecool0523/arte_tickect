@@ -12,6 +12,9 @@ export type RateLimitRule = {
 }
 
 function getClientAddress(request: Request) {
+  if (process.env.ARTE_DEPLOY_TARGET === "sites") {
+    return request.headers.get("cf-connecting-ip")?.trim() || "unknown"
+  }
   return (
     request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
     request.headers.get("x-real-ip")?.trim() ||

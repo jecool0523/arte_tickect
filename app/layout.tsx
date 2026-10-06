@@ -10,7 +10,7 @@ import { AuthProvider } from "@/components/auth/auth-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://arte-tickecting.vercel.app"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://arte-tickecting.vercel.app"),
 
   title: {
     template: "%s | DIMI-ARTE",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "DIMI-ARTE",
     description: "디미고 연극/뮤지컬 동아리 ARTE의 공식 사이트",
-    url: "https://arte-tickecting.vercel.app",
+    url: process.env.NEXT_PUBLIC_SITE_URL || "https://arte-tickecting.vercel.app",
     siteName: "DIMI-ARTE",
     images: [
       {

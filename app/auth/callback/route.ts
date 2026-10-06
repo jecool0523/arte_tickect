@@ -1,9 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createAuthServerClient } from "@/lib/server/supabase-auth"
 import { syncProfileFromAuth } from "@/lib/server/sync-profile"
+import { getSiteOrigin } from "@/lib/site-url"
 
 function safeNextUrl(request: NextRequest) {
-  const origin = request.nextUrl.origin
+  const origin = getSiteOrigin(request.nextUrl.origin)
   try {
     const target = new URL(request.nextUrl.searchParams.get("next") || "/", origin)
     return target.origin === origin ? target : new URL("/", origin)
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const errorUrl = new URL("/login", request.url)
+  const errorUrl = new URL("/login", getSiteOrigin(request.nextUrl.origin))
   errorUrl.searchParams.set("error", "oauth_callback_failed")
   errorUrl.searchParams.set("next", `${next.pathname}${next.search}${next.hash}`)
   const response = NextResponse.redirect(errorUrl)
