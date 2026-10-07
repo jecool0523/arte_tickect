@@ -1,18 +1,9 @@
+// Application RPC JSON contracts. Exact live schema: database.generated.ts.
+import type { Database as GeneratedDatabase } from "./database.generated"
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
-type BookingRow = {
-  id: number
-  user_id: string | null
-  name: string
-  student_id: string
-  seat_grade: string
-  selected_seats: string[]
-  special_request: string | null
-  booking_date: string
-  status: string
-  created_at: string
-  updated_at: string
-}
+type BookingRow = GeneratedDatabase["public"]["Tables"]["toctoc_bookings"]["Row"]
 
 type BookingInsert = {
   id?: never
@@ -37,48 +28,13 @@ type BookingTable = {
   Relationships: []
 }
 
-export type ReviewRow = {
-  id: number
-  user_id: string | null
-  musical_id: string
-  user_name: string
-  password: string | null
-  password_hash: string | null
-  content: string
-  image_url: string | null
-  rating: number
-  created_at: string
-}
+export type ReviewRow = GeneratedDatabase["public"]["Tables"]["reviews"]["Row"]
 
 export type PublicReviewRow = Pick<ReviewRow, "id" | "musical_id" | "user_name" | "content" | "image_url" | "rating" | "created_at">
 
-export type PresaleAccessKeyRow = {
-  id: number
-  musical_id: string
-  key_hash: string
-  label: string | null
-  starts_at: string | null
-  ends_at: string | null
-  max_uses: number | null
-  max_seats_per_booking: number | null
-  used_count: number
-  is_active: boolean
-  created_at: string
-  updated_at: string
-}
+export type PresaleAccessKeyRow = GeneratedDatabase["public"]["Tables"]["presale_access_keys"]["Row"]
 
-export type ProfileRow = {
-  id: string
-  is_presale_user: boolean
-  username: string | null
-  contact_number: string | null
-  profile_completed_at: string | null
-  display_name: string | null
-  student_id: string | null
-  avatar_url: string | null
-  created_at: string
-  updated_at: string
-}
+export type ProfileRow = GeneratedDatabase["public"]["Tables"]["profiles"]["Row"]
 
 export type Database = {
   public: {
@@ -205,7 +161,7 @@ export type Database = {
       record_account_fan_visit: { Args: { p_user_id: string }; Returns: Json }
       create_account_review: {
         Args: { p_user_id: string; p_musical_id: string; p_user_name: string; p_deletion_token: string; p_content: string; p_rating: number; p_image_url: string | null }
-        Returns: PublicReviewRow
+        Returns: PublicReviewRow[]
       }
       save_admin_performance: { Args: { p_musical_id: string; p_details: Json; p_start: string; p_end: string }; Returns: undefined }
       book_musical_seats: {
@@ -259,7 +215,7 @@ export type Database = {
           p_rating: number
           p_image_url: string | null
         }
-        Returns: PublicReviewRow
+        Returns: PublicReviewRow[]
       }
       delete_review_with_token: {
         Args: { p_review_id: number; p_deletion_token: string }
@@ -378,46 +334,8 @@ export type Database = {
           code?: string
         }
       }
-      admin_get_booking_stats: {
-        Args: Record<string, never>
-        Returns: {
-          success: boolean
-          stats: {
-            dead_poets_society: {
-              total_bookings: number
-              total_seats: number
-              unique_users: number
-            }
-            rent: {
-              total_bookings: number
-              total_seats: number
-              unique_users: number
-            }
-            toctoc: {
-              total_bookings: number
-              total_seats: number
-              unique_users: number
-            }
-            periods: {
-              musical_name: string
-              start_time: string
-              end_time: string
-            }[]
-            presale_keys: {
-              musical_id: string
-              label: string | null
-              is_active: boolean
-              used_count: number
-              max_uses: number | null
-              max_seats_per_booking: number | null
-              starts_at: string | null
-              ends_at: string | null
-            }[]
-          }
-          error?: string
-          code?: string
-        }
-      }
+      // Historical endpoint contract only; RPC is NOT installed in the live DB.
+      // Do not grant/create this function without verified administrator authorization.
       admin_delete_review: {
         Args: { p_review_id: number }
         Returns: {
@@ -425,10 +343,6 @@ export type Database = {
           error?: string
           code?: string
         }
-      }
-      is_current_user_presale: {
-        Args: Record<string, never>
-        Returns: boolean
       }
       set_user_presale_status: {
         Args: {

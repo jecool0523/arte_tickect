@@ -1,0 +1,103 @@
+{
+  "project": "kwkhydnvbxvcfvhksxna",
+  "captured_on": "2026-10-07",
+  "source": "Supabase remote migration history; this file does not apply SQL",
+  "migrations": [
+    {
+      "version": "20260707061324",
+      "name": "review_password_security_v2"
+    },
+    {
+      "version": "20260707061417",
+      "name": "review_password_security_permissions"
+    },
+    {
+      "version": "20260707061448",
+      "name": "dedupe_review_read_policy"
+    },
+    {
+      "version": "20260707070804",
+      "name": "presale_access_keys"
+    },
+    {
+      "version": "20260713082854",
+      "name": "validate_presale_access_key"
+    },
+    {
+      "version": "20260713082915",
+      "name": "add_toctoc_presale_codes"
+    },
+    {
+      "version": "20260713085039",
+      "name": "add_toctoc_three_seat_presale_codes"
+    },
+    {
+      "version": "20260714001025",
+      "name": "add_toctoc_codes_reset_park_soeun"
+    },
+    {
+      "version": "20260714001200",
+      "name": "cancel_raced_park_soeun_booking"
+    },
+    {
+      "version": "20260714071314",
+      "name": "add_more_toctoc_three_seat_codes"
+    },
+    {
+      "version": "20260715004233",
+      "name": "reset_presale_codes_and_book_center_seats"
+    },
+    {
+      "version": "20260830013939",
+      "name": "oauth_readiness_and_pii_hardening"
+    },
+    {
+      "version": "20260830014116",
+      "name": "oauth_readiness_grant_cleanup"
+    },
+    {
+      "version": "20260830014213",
+      "name": "remove_redundant_arte_ticket_policy"
+    },
+    {
+      "version": "20260831010728",
+      "name": "require_booking_owner"
+    },
+    {
+      "version": "20261005133715",
+      "name": "profile_features_sites_readiness"
+    },
+    {
+      "version": "20261005233222",
+      "name": "review_token_rpc_sites_readiness"
+    },
+    {
+      "version": "20261006120723",
+      "name": "profile_onboarding_and_legacy_booking_sync"
+    },
+    {
+      "version": "20261006120948",
+      "name": "profile_legacy_booking_account_cleanup"
+    },
+    {
+      "version": "20261006121401",
+      "name": "profile_first_setup_existing_ticket_identity"
+    },
+    {
+      "version": "20261006231404",
+      "name": "admin_performance_management"
+    },
+    {
+      "version": "20261007020604",
+      "name": "account_fan_experience"
+    },
+    {
+      "version": "20261007023502",
+      "name": "account_presale_permissions"
+    },
+    {
+      "version": "20261007063616",
+      "name": "organize_database_structure"
+    }
+  ]
+}

@@ -1,0 +1,1821 @@
+{
+  "project": "kwkhydnvbxvcfvhksxna",
+  "captured_on": "2026-10-07",
+  "migration": {
+    "version": "20261007063616",
+    "name": "organize_database_structure"
+  },
+  "purpose": "Read-only metadata snapshot, not a reset or bootstrap script",
+  "tables": [
+    {
+      "rls": true,
+      "name": "fan_visits",
+      "schema": "private",
+      "description": "INTERNAL: one visit per account per Korea-calendar day; profile FK cascades on account removal. Server-only access."
+    },
+    {
+      "rls": true,
+      "name": "api_rate_limits",
+      "schema": "public",
+      "description": "INTERNAL: server-only request windows; subject_hash is not a raw address. RLS deny-by-default is intentional."
+    },
+    {
+      "rls": true,
+      "name": "arte_musical_application_period",
+      "schema": "public",
+      "description": "ACTIVE: unique musical_name with public booking start/end timestamps; settings reference this key."
+    },
+    {
+      "rls": true,
+      "name": "arte_musical_tickets",
+      "schema": "public",
+      "description": "LEGACY-COMPATIBLE: historical tickets still used by owner history, ticket display, profile sync and fan XP. Do not delete or renumber."
+    },
+    {
+      "rls": true,
+      "name": "bookings",
+      "schema": "public",
+      "description": "RETIRED: unused predecessor booking model. Retained with seat_status dependencies; not part of account booking history."
+    },
+    {
+      "rls": true,
+      "name": "dead_poets_society_bookings",
+      "schema": "public",
+      "description": "ACTIVE: dead-poets-society reservations. Existing IDs, seats and owner links are retained."
+    },
+    {
+      "rls": true,
+      "name": "performance_settings",
+      "schema": "public",
+      "description": "ACTIVE: public performance overrides; musical_id references booking-period musical_name. Admin-only writes."
+    },
+    {
+      "rls": true,
+      "name": "presale_access_keys",
+      "schema": "public",
+      "description": "RETIRED: historical code records retained. Current booking uses profiles.is_presale_user; code validation HTTP endpoint returns 410."
+    },
+    {
+      "rls": true,
+      "name": "profiles",
+      "schema": "public",
+      "description": "ACTIVE: one-to-one auth.users profile, completed identity and DB-managed admin/presale flags. Browser cannot update role flags."
+    },
+    {
+      "rls": true,
+      "name": "rent_bookings",
+      "schema": "public",
+      "description": "ACTIVE: rent reservations. Existing IDs, seats and owner links are retained."
+    },
+    {
+      "rls": true,
+      "name": "review-images",
+      "schema": "public",
+      "description": "RETIRED: unused predecessor metadata table, NOT the Storage review-images bucket. Storage files must remain untouched."
+    },
+    {
+      "rls": true,
+      "name": "reviews",
+      "schema": "public",
+      "description": "ACTIVE: public review text; ownership and deletion-token hash are server-only. Anonymous reviews are not inferred as account-owned."
+    },
+    {
+      "rls": true,
+      "name": "seat_status",
+      "schema": "public",
+      "description": "RETIRED: predecessor seats linked to bookings; existing records retained. Current seats derive from musical-specific bookings."
+    },
+    {
+      "rls": true,
+      "name": "toctoc_bookings",
+      "schema": "public",
+      "description": "ACTIVE: toctoc reservations. Existing IDs, seats and owner links are retained."
+    }
+  ],
+  "columns": [
+    {
+      "type": "uuid",
+      "table": "private.fan_visits",
+      "column": "user_id",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "date",
+      "table": "private.fan_visits",
+      "column": "visit_date",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "private.fan_visits",
+      "column": "created_at",
+      "default": "now()",
+      "nullable": "NO"
+    },
+    {
+      "type": "text",
+      "table": "public.api_rate_limits",
+      "column": "bucket",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "text",
+      "table": "public.api_rate_limits",
+      "column": "subject_hash",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.api_rate_limits",
+      "column": "window_started_at",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "int4",
+      "table": "public.api_rate_limits",
+      "column": "attempts",
+      "default": "0",
+      "nullable": "NO"
+    },
+    {
+      "type": "int8",
+      "table": "public.arte_musical_application_period",
+      "column": "id",
+      "default": "nextval('arte_musical_application_period_id_seq'::regclass)",
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.arte_musical_application_period",
+      "column": "musical_name",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.arte_musical_application_period",
+      "column": "start_time",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.arte_musical_application_period",
+      "column": "end_time",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.arte_musical_application_period",
+      "column": "created_at",
+      "default": "now()",
+      "nullable": "YES"
+    },
+    {
+      "type": "int4",
+      "table": "public.arte_musical_tickets",
+      "column": "id",
+      "default": "nextval('arte_musical_tickets_id_seq'::regclass)",
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.arte_musical_tickets",
+      "column": "name",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.arte_musical_tickets",
+      "column": "student_id",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.arte_musical_tickets",
+      "column": "seat_grade",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "_text",
+      "table": "public.arte_musical_tickets",
+      "column": "selected_seats",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "text",
+      "table": "public.arte_musical_tickets",
+      "column": "special_request",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.arte_musical_tickets",
+      "column": "booking_date",
+      "default": "now()",
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.arte_musical_tickets",
+      "column": "status",
+      "default": "'confirmed'::character varying",
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.arte_musical_tickets",
+      "column": "created_at",
+      "default": "now()",
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.arte_musical_tickets",
+      "column": "updated_at",
+      "default": "now()",
+      "nullable": "YES"
+    },
+    {
+      "type": "uuid",
+      "table": "public.arte_musical_tickets",
+      "column": "user_id",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "int4",
+      "table": "public.bookings",
+      "column": "id",
+      "default": "nextval('bookings_id_seq'::regclass)",
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.bookings",
+      "column": "name",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.bookings",
+      "column": "student_id",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.bookings",
+      "column": "seat_grade",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "_text",
+      "table": "public.bookings",
+      "column": "selected_seats",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "text",
+      "table": "public.bookings",
+      "column": "special_request",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamp",
+      "table": "public.bookings",
+      "column": "booking_date",
+      "default": "CURRENT_TIMESTAMP",
+      "nullable": "YES"
+    },
+    {
+      "type": "varchar",
+      "table": "public.bookings",
+      "column": "status",
+      "default": "'confirmed'::character varying",
+      "nullable": "YES"
+    },
+    {
+      "type": "int8",
+      "table": "public.dead_poets_society_bookings",
+      "column": "id",
+      "default": "nextval('dead_poets_society_bookings_id_seq'::regclass)",
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.dead_poets_society_bookings",
+      "column": "name",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.dead_poets_society_bookings",
+      "column": "student_id",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.dead_poets_society_bookings",
+      "column": "seat_grade",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "_text",
+      "table": "public.dead_poets_society_bookings",
+      "column": "selected_seats",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "text",
+      "table": "public.dead_poets_society_bookings",
+      "column": "special_request",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.dead_poets_society_bookings",
+      "column": "booking_date",
+      "default": "now()",
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.dead_poets_society_bookings",
+      "column": "status",
+      "default": "'confirmed'::character varying",
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.dead_poets_society_bookings",
+      "column": "created_at",
+      "default": "now()",
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.dead_poets_society_bookings",
+      "column": "updated_at",
+      "default": "now()",
+      "nullable": "YES"
+    },
+    {
+      "type": "uuid",
+      "table": "public.dead_poets_society_bookings",
+      "column": "user_id",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "text",
+      "table": "public.performance_settings",
+      "column": "musical_id",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "jsonb",
+      "table": "public.performance_settings",
+      "column": "details",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.performance_settings",
+      "column": "updated_at",
+      "default": "now()",
+      "nullable": "NO"
+    },
+    {
+      "type": "int8",
+      "table": "public.presale_access_keys",
+      "column": "id",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "text",
+      "table": "public.presale_access_keys",
+      "column": "musical_id",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "text",
+      "table": "public.presale_access_keys",
+      "column": "key_hash",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "text",
+      "table": "public.presale_access_keys",
+      "column": "label",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.presale_access_keys",
+      "column": "starts_at",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.presale_access_keys",
+      "column": "ends_at",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "int4",
+      "table": "public.presale_access_keys",
+      "column": "max_uses",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "int4",
+      "table": "public.presale_access_keys",
+      "column": "used_count",
+      "default": "0",
+      "nullable": "NO"
+    },
+    {
+      "type": "bool",
+      "table": "public.presale_access_keys",
+      "column": "is_active",
+      "default": "true",
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.presale_access_keys",
+      "column": "created_at",
+      "default": "now()",
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.presale_access_keys",
+      "column": "updated_at",
+      "default": "now()",
+      "nullable": "NO"
+    },
+    {
+      "type": "int4",
+      "table": "public.presale_access_keys",
+      "column": "max_seats_per_booking",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "uuid",
+      "table": "public.profiles",
+      "column": "id",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "text",
+      "table": "public.profiles",
+      "column": "display_name",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "text",
+      "table": "public.profiles",
+      "column": "student_id",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "text",
+      "table": "public.profiles",
+      "column": "avatar_url",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.profiles",
+      "column": "created_at",
+      "default": "now()",
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.profiles",
+      "column": "updated_at",
+      "default": "now()",
+      "nullable": "NO"
+    },
+    {
+      "type": "text",
+      "table": "public.profiles",
+      "column": "username",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "text",
+      "table": "public.profiles",
+      "column": "contact_number",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.profiles",
+      "column": "profile_completed_at",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "bool",
+      "table": "public.profiles",
+      "column": "is_admin",
+      "default": "false",
+      "nullable": "NO"
+    },
+    {
+      "type": "bool",
+      "table": "public.profiles",
+      "column": "is_presale_user",
+      "default": "false",
+      "nullable": "NO"
+    },
+    {
+      "type": "int8",
+      "table": "public.rent_bookings",
+      "column": "id",
+      "default": "nextval('rent_bookings_id_seq'::regclass)",
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.rent_bookings",
+      "column": "name",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.rent_bookings",
+      "column": "student_id",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.rent_bookings",
+      "column": "seat_grade",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "_text",
+      "table": "public.rent_bookings",
+      "column": "selected_seats",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "text",
+      "table": "public.rent_bookings",
+      "column": "special_request",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.rent_bookings",
+      "column": "booking_date",
+      "default": "now()",
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.rent_bookings",
+      "column": "status",
+      "default": "'confirmed'::character varying",
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.rent_bookings",
+      "column": "created_at",
+      "default": "now()",
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.rent_bookings",
+      "column": "updated_at",
+      "default": "now()",
+      "nullable": "YES"
+    },
+    {
+      "type": "uuid",
+      "table": "public.rent_bookings",
+      "column": "user_id",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "int8",
+      "table": "public.review-images",
+      "column": "id",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.review-images",
+      "column": "created_at",
+      "default": "now()",
+      "nullable": "NO"
+    },
+    {
+      "type": "int8",
+      "table": "public.reviews",
+      "column": "id",
+      "default": "nextval('reviews_id_seq'::regclass)",
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.reviews",
+      "column": "musical_id",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.reviews",
+      "column": "user_name",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.reviews",
+      "column": "password",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "text",
+      "table": "public.reviews",
+      "column": "content",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "text",
+      "table": "public.reviews",
+      "column": "image_url",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "int4",
+      "table": "public.reviews",
+      "column": "rating",
+      "default": "5",
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.reviews",
+      "column": "created_at",
+      "default": "now()",
+      "nullable": "NO"
+    },
+    {
+      "type": "text",
+      "table": "public.reviews",
+      "column": "password_hash",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "uuid",
+      "table": "public.reviews",
+      "column": "user_id",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "text",
+      "table": "public.reviews",
+      "column": "deletion_token_hash",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "int4",
+      "table": "public.seat_status",
+      "column": "id",
+      "default": "nextval('seat_status_id_seq'::regclass)",
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.seat_status",
+      "column": "seat_id",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.seat_status",
+      "column": "seat_grade",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.seat_status",
+      "column": "floor",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.seat_status",
+      "column": "status",
+      "default": "'available'::character varying",
+      "nullable": "YES"
+    },
+    {
+      "type": "int4",
+      "table": "public.seat_status",
+      "column": "booking_id",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamp",
+      "table": "public.seat_status",
+      "column": "reserved_at",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamp",
+      "table": "public.seat_status",
+      "column": "created_at",
+      "default": "CURRENT_TIMESTAMP",
+      "nullable": "YES"
+    },
+    {
+      "type": "int8",
+      "table": "public.toctoc_bookings",
+      "column": "id",
+      "default": "nextval('toctoc_bookings_id_seq'::regclass)",
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.toctoc_bookings",
+      "column": "name",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.toctoc_bookings",
+      "column": "student_id",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.toctoc_bookings",
+      "column": "seat_grade",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "_text",
+      "table": "public.toctoc_bookings",
+      "column": "selected_seats",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "type": "text",
+      "table": "public.toctoc_bookings",
+      "column": "special_request",
+      "default": null,
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.toctoc_bookings",
+      "column": "booking_date",
+      "default": "now()",
+      "nullable": "NO"
+    },
+    {
+      "type": "varchar",
+      "table": "public.toctoc_bookings",
+      "column": "status",
+      "default": "'confirmed'::character varying",
+      "nullable": "NO"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.toctoc_bookings",
+      "column": "created_at",
+      "default": "now()",
+      "nullable": "YES"
+    },
+    {
+      "type": "timestamptz",
+      "table": "public.toctoc_bookings",
+      "column": "updated_at",
+      "default": "now()",
+      "nullable": "YES"
+    },
+    {
+      "type": "uuid",
+      "table": "public.toctoc_bookings",
+      "column": "user_id",
+      "default": null,
+      "nullable": "YES"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "fan_visits_pkey",
+      "table": "private.fan_visits",
+      "definition": "CREATE UNIQUE INDEX fan_visits_pkey ON private.fan_visits USING btree (user_id, visit_date)"
+    },
+    {
+      "name": "api_rate_limits_pkey",
+      "table": "public.api_rate_limits",
+      "definition": "CREATE UNIQUE INDEX api_rate_limits_pkey ON public.api_rate_limits USING btree (bucket, subject_hash, window_started_at)"
+    },
+    {
+      "name": "arte_musical_application_period_musical_name_key",
+      "table": "public.arte_musical_application_period",
+      "definition": "CREATE UNIQUE INDEX arte_musical_application_period_musical_name_key ON public.arte_musical_application_period USING btree (musical_name)"
+    },
+    {
+      "name": "arte_musical_application_period_pkey",
+      "table": "public.arte_musical_application_period",
+      "definition": "CREATE UNIQUE INDEX arte_musical_application_period_pkey ON public.arte_musical_application_period USING btree (id)"
+    },
+    {
+      "name": "arte_musical_tickets_pkey",
+      "table": "public.arte_musical_tickets",
+      "definition": "CREATE UNIQUE INDEX arte_musical_tickets_pkey ON public.arte_musical_tickets USING btree (id)"
+    },
+    {
+      "name": "idx_arte_musical_tickets_owner_date",
+      "table": "public.arte_musical_tickets",
+      "definition": "CREATE INDEX idx_arte_musical_tickets_owner_date ON public.arte_musical_tickets USING btree (user_id, booking_date DESC) WHERE (user_id IS NOT NULL)"
+    },
+    {
+      "name": "idx_arte_tickets_booking_date",
+      "table": "public.arte_musical_tickets",
+      "definition": "CREATE INDEX idx_arte_tickets_booking_date ON public.arte_musical_tickets USING btree (booking_date)"
+    },
+    {
+      "name": "idx_arte_tickets_status",
+      "table": "public.arte_musical_tickets",
+      "definition": "CREATE INDEX idx_arte_tickets_status ON public.arte_musical_tickets USING btree (status)"
+    },
+    {
+      "name": "idx_arte_tickets_student_id",
+      "table": "public.arte_musical_tickets",
+      "definition": "CREATE INDEX idx_arte_tickets_student_id ON public.arte_musical_tickets USING btree (student_id)"
+    },
+    {
+      "name": "bookings_pkey",
+      "table": "public.bookings",
+      "definition": "CREATE UNIQUE INDEX bookings_pkey ON public.bookings USING btree (id)"
+    },
+    {
+      "name": "dead_poets_society_bookings_pkey",
+      "table": "public.dead_poets_society_bookings",
+      "definition": "CREATE UNIQUE INDEX dead_poets_society_bookings_pkey ON public.dead_poets_society_bookings USING btree (id)"
+    },
+    {
+      "name": "idx_dead_poets_booking_date",
+      "table": "public.dead_poets_society_bookings",
+      "definition": "CREATE INDEX idx_dead_poets_booking_date ON public.dead_poets_society_bookings USING btree (booking_date)"
+    },
+    {
+      "name": "idx_dead_poets_society_bookings_owner_date",
+      "table": "public.dead_poets_society_bookings",
+      "definition": "CREATE INDEX idx_dead_poets_society_bookings_owner_date ON public.dead_poets_society_bookings USING btree (user_id, booking_date DESC) WHERE (user_id IS NOT NULL)"
+    },
+    {
+      "name": "idx_dead_poets_status",
+      "table": "public.dead_poets_society_bookings",
+      "definition": "CREATE INDEX idx_dead_poets_status ON public.dead_poets_society_bookings USING btree (status)"
+    },
+    {
+      "name": "idx_dead_poets_student_id",
+      "table": "public.dead_poets_society_bookings",
+      "definition": "CREATE INDEX idx_dead_poets_student_id ON public.dead_poets_society_bookings USING btree (student_id)"
+    },
+    {
+      "name": "performance_settings_pkey",
+      "table": "public.performance_settings",
+      "definition": "CREATE UNIQUE INDEX performance_settings_pkey ON public.performance_settings USING btree (musical_id)"
+    },
+    {
+      "name": "idx_presale_access_keys_active_window",
+      "table": "public.presale_access_keys",
+      "definition": "CREATE INDEX idx_presale_access_keys_active_window ON public.presale_access_keys USING btree (musical_id, is_active, starts_at, ends_at)"
+    },
+    {
+      "name": "idx_presale_access_keys_musical_id",
+      "table": "public.presale_access_keys",
+      "definition": "CREATE INDEX idx_presale_access_keys_musical_id ON public.presale_access_keys USING btree (musical_id)"
+    },
+    {
+      "name": "presale_access_keys_pkey",
+      "table": "public.presale_access_keys",
+      "definition": "CREATE UNIQUE INDEX presale_access_keys_pkey ON public.presale_access_keys USING btree (id)"
+    },
+    {
+      "name": "profiles_completed_identity_unique",
+      "table": "public.profiles",
+      "definition": "CREATE UNIQUE INDEX profiles_completed_identity_unique ON public.profiles USING btree (btrim(display_name), btrim(student_id)) WHERE (profile_completed_at IS NOT NULL)"
+    },
+    {
+      "name": "profiles_pkey",
+      "table": "public.profiles",
+      "definition": "CREATE UNIQUE INDEX profiles_pkey ON public.profiles USING btree (id)"
+    },
+    {
+      "name": "profiles_student_id_unique",
+      "table": "public.profiles",
+      "definition": "CREATE UNIQUE INDEX profiles_student_id_unique ON public.profiles USING btree (student_id) WHERE (student_id IS NOT NULL)"
+    },
+    {
+      "name": "profiles_username_unique",
+      "table": "public.profiles",
+      "definition": "CREATE UNIQUE INDEX profiles_username_unique ON public.profiles USING btree (lower(username)) WHERE (username IS NOT NULL)"
+    },
+    {
+      "name": "idx_rent_booking_date",
+      "table": "public.rent_bookings",
+      "definition": "CREATE INDEX idx_rent_booking_date ON public.rent_bookings USING btree (booking_date)"
+    },
+    {
+      "name": "idx_rent_bookings_owner_date",
+      "table": "public.rent_bookings",
+      "definition": "CREATE INDEX idx_rent_bookings_owner_date ON public.rent_bookings USING btree (user_id, booking_date DESC) WHERE (user_id IS NOT NULL)"
+    },
+    {
+      "name": "idx_rent_status",
+      "table": "public.rent_bookings",
+      "definition": "CREATE INDEX idx_rent_status ON public.rent_bookings USING btree (status)"
+    },
+    {
+      "name": "idx_rent_student_id",
+      "table": "public.rent_bookings",
+      "definition": "CREATE INDEX idx_rent_student_id ON public.rent_bookings USING btree (student_id)"
+    },
+    {
+      "name": "rent_bookings_pkey",
+      "table": "public.rent_bookings",
+      "definition": "CREATE UNIQUE INDEX rent_bookings_pkey ON public.rent_bookings USING btree (id)"
+    },
+    {
+      "name": "review-images_pkey",
+      "table": "public.review-images",
+      "definition": "CREATE UNIQUE INDEX \"review-images_pkey\" ON public.\"review-images\" USING btree (id)"
+    },
+    {
+      "name": "idx_reviews_musical_created_at",
+      "table": "public.reviews",
+      "definition": "CREATE INDEX idx_reviews_musical_created_at ON public.reviews USING btree (musical_id, created_at DESC)"
+    },
+    {
+      "name": "idx_reviews_user_id",
+      "table": "public.reviews",
+      "definition": "CREATE INDEX idx_reviews_user_id ON public.reviews USING btree (user_id) WHERE (user_id IS NOT NULL)"
+    },
+    {
+      "name": "reviews_pkey",
+      "table": "public.reviews",
+      "definition": "CREATE UNIQUE INDEX reviews_pkey ON public.reviews USING btree (id)"
+    },
+    {
+      "name": "idx_seat_status_booking_id",
+      "table": "public.seat_status",
+      "definition": "CREATE INDEX idx_seat_status_booking_id ON public.seat_status USING btree (booking_id)"
+    },
+    {
+      "name": "seat_status_pkey",
+      "table": "public.seat_status",
+      "definition": "CREATE UNIQUE INDEX seat_status_pkey ON public.seat_status USING btree (id)"
+    },
+    {
+      "name": "seat_status_seat_id_key",
+      "table": "public.seat_status",
+      "definition": "CREATE UNIQUE INDEX seat_status_seat_id_key ON public.seat_status USING btree (seat_id)"
+    },
+    {
+      "name": "idx_toctoc_booking_date",
+      "table": "public.toctoc_bookings",
+      "definition": "CREATE INDEX idx_toctoc_booking_date ON public.toctoc_bookings USING btree (booking_date)"
+    },
+    {
+      "name": "idx_toctoc_bookings_owner_date",
+      "table": "public.toctoc_bookings",
+      "definition": "CREATE INDEX idx_toctoc_bookings_owner_date ON public.toctoc_bookings USING btree (user_id, booking_date DESC) WHERE (user_id IS NOT NULL)"
+    },
+    {
+      "name": "idx_toctoc_status",
+      "table": "public.toctoc_bookings",
+      "definition": "CREATE INDEX idx_toctoc_status ON public.toctoc_bookings USING btree (status)"
+    },
+    {
+      "name": "idx_toctoc_status_booking_date",
+      "table": "public.toctoc_bookings",
+      "definition": "CREATE INDEX idx_toctoc_status_booking_date ON public.toctoc_bookings USING btree (status, booking_date DESC)"
+    },
+    {
+      "name": "idx_toctoc_student_id",
+      "table": "public.toctoc_bookings",
+      "definition": "CREATE INDEX idx_toctoc_student_id ON public.toctoc_bookings USING btree (student_id)"
+    },
+    {
+      "name": "toctoc_bookings_pkey",
+      "table": "public.toctoc_bookings",
+      "definition": "CREATE UNIQUE INDEX toctoc_bookings_pkey ON public.toctoc_bookings USING btree (id)"
+    }
+  ],
+  "constraints": [
+    {
+      "name": "fan_visits_pkey",
+      "type": "p",
+      "table": "private.fan_visits",
+      "validated": true,
+      "definition": "PRIMARY KEY (user_id, visit_date)"
+    },
+    {
+      "name": "fan_visits_user_id_fkey",
+      "type": "f",
+      "table": "private.fan_visits",
+      "validated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "api_rate_limits_pkey",
+      "type": "p",
+      "table": "public.api_rate_limits",
+      "validated": true,
+      "definition": "PRIMARY KEY (bucket, subject_hash, window_started_at)"
+    },
+    {
+      "name": "arte_musical_application_period_musical_name_key",
+      "type": "u",
+      "table": "public.arte_musical_application_period",
+      "validated": true,
+      "definition": "UNIQUE (musical_name)"
+    },
+    {
+      "name": "arte_musical_application_period_pkey",
+      "type": "p",
+      "table": "public.arte_musical_application_period",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "booking_period_time_order",
+      "type": "c",
+      "table": "public.arte_musical_application_period",
+      "validated": true,
+      "definition": "CHECK ((start_time < end_time))"
+    },
+    {
+      "name": "arte_musical_tickets_pkey",
+      "type": "p",
+      "table": "public.arte_musical_tickets",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "arte_musical_tickets_seats_nonempty_check",
+      "type": "c",
+      "table": "public.arte_musical_tickets",
+      "validated": true,
+      "definition": "CHECK (((cardinality(selected_seats) > 0) AND (array_position(selected_seats, NULL::text) IS NULL)))"
+    },
+    {
+      "name": "arte_musical_tickets_status_check",
+      "type": "c",
+      "table": "public.arte_musical_tickets",
+      "validated": true,
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['confirmed'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[])))"
+    },
+    {
+      "name": "arte_musical_tickets_user_id_fkey",
+      "type": "f",
+      "table": "public.arte_musical_tickets",
+      "validated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "bookings_pkey",
+      "type": "p",
+      "table": "public.bookings",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "dead_poets_society_bookings_pkey",
+      "type": "p",
+      "table": "public.dead_poets_society_bookings",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "dead_poets_society_bookings_seats_nonempty_check",
+      "type": "c",
+      "table": "public.dead_poets_society_bookings",
+      "validated": true,
+      "definition": "CHECK (((cardinality(selected_seats) > 0) AND (array_position(selected_seats, NULL::text) IS NULL)))"
+    },
+    {
+      "name": "dead_poets_society_bookings_status_check",
+      "type": "c",
+      "table": "public.dead_poets_society_bookings",
+      "validated": true,
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['confirmed'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[])))"
+    },
+    {
+      "name": "dead_poets_society_bookings_user_id_fkey",
+      "type": "f",
+      "table": "public.dead_poets_society_bookings",
+      "validated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "performance_settings_details_check",
+      "type": "c",
+      "table": "public.performance_settings",
+      "validated": true,
+      "definition": "CHECK ((jsonb_typeof(details) = 'object'::text))"
+    },
+    {
+      "name": "performance_settings_musical_id_check",
+      "type": "c",
+      "table": "public.performance_settings",
+      "validated": true,
+      "definition": "CHECK ((musical_id = ANY (ARRAY['toctoc'::text, 'rent'::text, 'dead-poets-society'::text])))"
+    },
+    {
+      "name": "performance_settings_period_fkey",
+      "type": "f",
+      "table": "public.performance_settings",
+      "validated": true,
+      "definition": "FOREIGN KEY (musical_id) REFERENCES arte_musical_application_period(musical_name) ON DELETE RESTRICT"
+    },
+    {
+      "name": "performance_settings_pkey",
+      "type": "p",
+      "table": "public.performance_settings",
+      "validated": true,
+      "definition": "PRIMARY KEY (musical_id)"
+    },
+    {
+      "name": "presale_access_keys_max_seats_positive",
+      "type": "c",
+      "table": "public.presale_access_keys",
+      "validated": true,
+      "definition": "CHECK (((max_seats_per_booking IS NULL) OR (max_seats_per_booking > 0)))"
+    },
+    {
+      "name": "presale_access_keys_max_uses_positive",
+      "type": "c",
+      "table": "public.presale_access_keys",
+      "validated": true,
+      "definition": "CHECK (((max_uses IS NULL) OR (max_uses > 0)))"
+    },
+    {
+      "name": "presale_access_keys_pkey",
+      "type": "p",
+      "table": "public.presale_access_keys",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "presale_access_keys_time_range",
+      "type": "c",
+      "table": "public.presale_access_keys",
+      "validated": true,
+      "definition": "CHECK (((starts_at IS NULL) OR (ends_at IS NULL) OR (starts_at <= ends_at)))"
+    },
+    {
+      "name": "presale_access_keys_used_count_nonnegative",
+      "type": "c",
+      "table": "public.presale_access_keys",
+      "validated": true,
+      "definition": "CHECK ((used_count >= 0))"
+    },
+    {
+      "name": "profiles_completed_fields",
+      "type": "c",
+      "table": "public.profiles",
+      "validated": true,
+      "definition": "CHECK (((profile_completed_at IS NULL) OR ((username IS NOT NULL) AND (display_name IS NOT NULL) AND (student_id IS NOT NULL) AND (contact_number IS NOT NULL))))"
+    },
+    {
+      "name": "profiles_contact_format",
+      "type": "c",
+      "table": "public.profiles",
+      "validated": true,
+      "definition": "CHECK (((contact_number IS NULL) OR (contact_number ~ '^\\+?[0-9]{9,15}$'::text)))"
+    },
+    {
+      "name": "profiles_display_name_check",
+      "type": "c",
+      "table": "public.profiles",
+      "validated": true,
+      "definition": "CHECK (((display_name IS NULL) OR ((char_length(display_name) >= 1) AND (char_length(display_name) <= 100))))"
+    },
+    {
+      "name": "profiles_id_fkey",
+      "type": "f",
+      "table": "public.profiles",
+      "validated": true,
+      "definition": "FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "profiles_pkey",
+      "type": "p",
+      "table": "public.profiles",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "profiles_student_id_check",
+      "type": "c",
+      "table": "public.profiles",
+      "validated": true,
+      "definition": "CHECK (((student_id IS NULL) OR (student_id ~ '^[A-Za-z0-9_-]{1,20}$'::text)))"
+    },
+    {
+      "name": "profiles_username_format",
+      "type": "c",
+      "table": "public.profiles",
+      "validated": true,
+      "definition": "CHECK (((username IS NULL) OR (username ~ '^[A-Za-z0-9]{1,30}$'::text)))"
+    },
+    {
+      "name": "rent_bookings_pkey",
+      "type": "p",
+      "table": "public.rent_bookings",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "rent_bookings_seats_nonempty_check",
+      "type": "c",
+      "table": "public.rent_bookings",
+      "validated": true,
+      "definition": "CHECK (((cardinality(selected_seats) > 0) AND (array_position(selected_seats, NULL::text) IS NULL)))"
+    },
+    {
+      "name": "rent_bookings_status_check",
+      "type": "c",
+      "table": "public.rent_bookings",
+      "validated": true,
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['confirmed'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[])))"
+    },
+    {
+      "name": "rent_bookings_user_id_fkey",
+      "type": "f",
+      "table": "public.rent_bookings",
+      "validated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "review-images_pkey",
+      "type": "p",
+      "table": "public.review-images",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "reviews_pkey",
+      "type": "p",
+      "table": "public.reviews",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "reviews_rating_range",
+      "type": "c",
+      "table": "public.reviews",
+      "validated": true,
+      "definition": "CHECK (((rating >= 1) AND (rating <= 5)))"
+    },
+    {
+      "name": "reviews_user_id_fkey",
+      "type": "f",
+      "table": "public.reviews",
+      "validated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "seat_status_booking_id_fkey",
+      "type": "f",
+      "table": "public.seat_status",
+      "validated": true,
+      "definition": "FOREIGN KEY (booking_id) REFERENCES bookings(id)"
+    },
+    {
+      "name": "seat_status_pkey",
+      "type": "p",
+      "table": "public.seat_status",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "seat_status_seat_id_key",
+      "type": "u",
+      "table": "public.seat_status",
+      "validated": true,
+      "definition": "UNIQUE (seat_id)"
+    },
+    {
+      "name": "toctoc_bookings_pkey",
+      "type": "p",
+      "table": "public.toctoc_bookings",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "toctoc_bookings_seats_nonempty_check",
+      "type": "c",
+      "table": "public.toctoc_bookings",
+      "validated": true,
+      "definition": "CHECK (((cardinality(selected_seats) > 0) AND (array_position(selected_seats, NULL::text) IS NULL)))"
+    },
+    {
+      "name": "toctoc_bookings_status_check",
+      "type": "c",
+      "table": "public.toctoc_bookings",
+      "validated": true,
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['confirmed'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[])))"
+    },
+    {
+      "name": "toctoc_bookings_user_id_fkey",
+      "type": "f",
+      "table": "public.toctoc_bookings",
+      "validated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL"
+    }
+  ],
+  "functions": [
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "name": "arte_admin_users",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "schema": "private",
+      "definer": true,
+      "identity": "p_limit integer, p_offset integer, p_search text"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "admin_get_all_users",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "schema": "public",
+      "definer": false,
+      "identity": "p_limit integer, p_offset integer, p_search text"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "book_musical_seats",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "schema": "public",
+      "definer": false,
+      "identity": "p_musical_id text, p_name text, p_student_id text, p_seat_grade text, p_selected_seats text[], p_special_request text, p_user_id uuid"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "check_rate_limit",
+      "config": [
+        "search_path=public"
+      ],
+      "result": "boolean",
+      "schema": "public",
+      "definer": true,
+      "identity": "p_bucket text, p_subject_hash text, p_limit integer, p_window_seconds integer"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "consume_presale_access_key",
+      "config": [
+        "search_path=public, extensions"
+      ],
+      "result": "boolean",
+      "schema": "public",
+      "definer": true,
+      "identity": "p_musical_id text, p_key text"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "create_account_review",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "TABLE(id bigint, musical_id text, user_name text, content text, image_url text, rating integer, created_at timestamp with time zone)",
+      "schema": "public",
+      "definer": false,
+      "identity": "p_user_id uuid, p_musical_id text, p_user_name text, p_deletion_token text, p_content text, p_rating integer, p_image_url text"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "create_presale_access_key",
+      "config": [
+        "search_path=public, extensions"
+      ],
+      "result": "bigint",
+      "schema": "public",
+      "definer": true,
+      "identity": "p_musical_id text, p_key text, p_label text, p_starts_at timestamp with time zone, p_ends_at timestamp with time zone, p_max_uses integer"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "create_review",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "TABLE(id bigint, musical_id text, user_name text, content text, image_url text, rating integer, created_at timestamp with time zone)",
+      "schema": "public",
+      "definer": false,
+      "identity": "p_musical_id text, p_user_name text, p_deletion_token text, p_content text, p_rating integer, p_image_url text"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "create_review_with_password_legacy",
+      "config": [
+        "search_path=public, extensions"
+      ],
+      "result": "TABLE(id bigint, musical_id text, user_name text, content text, image_url text, rating integer, created_at timestamp with time zone)",
+      "schema": "public",
+      "definer": true,
+      "identity": "p_musical_id text, p_user_name text, p_password text, p_content text, p_rating integer, p_image_url text"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "delete_account",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "schema": "public",
+      "definer": false,
+      "identity": "p_user_id uuid"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "delete_review_with_password",
+      "config": [
+        "search_path=public, extensions"
+      ],
+      "result": "boolean",
+      "schema": "public",
+      "definer": true,
+      "identity": "p_review_id bigint, p_password text"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "delete_review_with_token",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "boolean",
+      "schema": "public",
+      "definer": false,
+      "identity": "p_review_id bigint, p_deletion_token text"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "get_account_fan_activity",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "schema": "public",
+      "definer": false,
+      "identity": "p_user_id uuid"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "get_presale_access_key_seat_limit",
+      "config": [
+        "search_path=public, extensions"
+      ],
+      "result": "integer",
+      "schema": "public",
+      "definer": true,
+      "identity": "p_musical_id text, p_key text"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "get_user_email_status",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "schema": "public",
+      "definer": true,
+      "identity": "p_user_id uuid"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "handle_new_auth_user",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "trigger",
+      "schema": "public",
+      "definer": true,
+      "identity": ""
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "is_current_user_admin",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "boolean",
+      "schema": "public",
+      "definer": false,
+      "identity": ""
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "record_account_fan_visit",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "schema": "public",
+      "definer": false,
+      "identity": "p_user_id uuid"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "release_presale_access_key",
+      "config": [
+        "search_path=public, extensions"
+      ],
+      "result": "boolean",
+      "schema": "public",
+      "definer": true,
+      "identity": "p_musical_id text, p_key text"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "save_admin_performance",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "void",
+      "schema": "public",
+      "definer": false,
+      "identity": "p_musical_id text, p_details jsonb, p_start timestamp with time zone, p_end timestamp with time zone"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "save_profile_and_sync_bookings",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "schema": "public",
+      "definer": false,
+      "identity": "p_user_id uuid, p_username text, p_display_name text, p_student_id text, p_contact_number text"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "set_user_admin_status",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "schema": "public",
+      "definer": false,
+      "identity": "p_target_user_id uuid, p_is_admin boolean, p_by_admin_id uuid"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "set_user_presale_status",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "schema": "public",
+      "definer": false,
+      "identity": "p_target_user_id uuid, p_is_presale boolean, p_by_admin_id uuid"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "sync_legacy_bookings",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "schema": "public",
+      "definer": false,
+      "identity": "p_user_id uuid"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "touch_presale_access_keys_updated_at",
+      "config": [
+        "search_path=public"
+      ],
+      "result": "trigger",
+      "schema": "public",
+      "definer": false,
+      "identity": ""
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "touch_profile_updated_at",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "trigger",
+      "schema": "public",
+      "definer": false,
+      "identity": ""
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "update_profile",
+      "config": [
+        "search_path=\"\""
+      ],
+      "result": "jsonb",
+      "schema": "public",
+      "definer": true,
+      "identity": "p_user_id uuid, p_display_name text, p_student_id text, p_avatar_url text"
+    },
+    {
+      "acl": [
+        "=X/postgres",
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "update_updated_at_column",
+      "config": [
+        "search_path=public"
+      ],
+      "result": "trigger",
+      "schema": "public",
+      "definer": false,
+      "identity": ""
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "validate_presale_access_key",
+      "config": [
+        "search_path=public, extensions"
+      ],
+      "result": "boolean",
+      "schema": "public",
+      "definer": true,
+      "identity": "p_musical_id text, p_key text"
+    }
+  ]
+}

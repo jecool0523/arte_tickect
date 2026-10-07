@@ -68,6 +68,18 @@
 
 [최신 수정 및 검증 정리](docs/work-summary-2026-10-07.md)
 
+## 프로필 안내와 계정 선예매
+
+처음 프로필에 들어오면 기능 안내 레이어 팝업을 표시하며 안내 버튼으로 다시 볼 수 있습니다. 선예매 코드는 폐기하고 관리자 → 사용자 관리에서 계정별 권한을 부여·해제합니다. 모든 공연에 적용되며 일반 예매 시작 전만 사용할 수 있고 종료된 공연에는 적용되지 않습니다. 최종 예약 저장 시 DB에서 시간과 권한을 다시 확인합니다.
+
+## DB 구조와 변경 이력
+
+중복 인덱스 제거, 계정별 예약 조회 인덱스, 예약/리뷰/기간 제약 및 공연 정보–예매 기간 관계를 실제 DB에 정리했습니다. 기존 예약과 과거 코드 기록은 보존했습니다.
+
+[현재 DB 구조](docs/database-structure.md) · [적용 및 검증 안내](database/README.md) · [원격 적용 이력](database/migrations.snapshot.json)
+
+`scripts/*.sql`을 일괄 실행하지 마세요. 과거 초기화·일회성 데이터 변경 파일을 포함하며, 원격 적용 이력이 기준입니다. 스키마 스냅샷과 생성 타입에는 사용자 행·비밀키를 포함하지 않습니다.
+
 ### 실행과 확인
 
 ```bash
@@ -77,6 +89,9 @@ node scripts/test-profile-inputs.mjs
 node scripts/test-profile-form.mjs
 node scripts/test-profile-api.mjs
 node scripts/test-profile-navigation.mjs
+node scripts/test-profile-guide.mjs
+node scripts/test-account-presale.mjs
+node scripts/test-database-structure.mjs
 node scripts/test-reservations.mjs
 node scripts/test-admin-performances.mjs
 node scripts/test-fan-experience.mjs
