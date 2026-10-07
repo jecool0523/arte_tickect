@@ -13,7 +13,7 @@
 1. 공연 소개
 2. 공연 예매 (좌석 선택 및 정보 입력)
 3. 예매 정보 저장 (외부 DB)
-4. 예매 조회 (학번 이름 이용)
+4. 로그인한 계정의 예약 내역·본인 티켓 확인
 
 ## - 12.5일자 기준 추가된 기능
 1. PR 머지
@@ -55,6 +55,19 @@
 
 지정된 관리자 Google 계정은 프로필의 ‘관리자 · 공연 관리’에서 기존 공연 정보·포스터·줄거리와 일반 예매 기간(한국 시간)을 수정할 수 있습니다. 공연 정보와 기간을 함께 저장하고 기존 예약은 보존합니다. [관리자 권한과 관리 범위](docs/admin-performances.md)를 참고하세요.
 
+## 팬 경험치와 등급
+
+프로필에서 총 경험치, 활동별 적립 내역, 팬 등급과 다음 등급까지의 진행도를 확인합니다.
+
+- 계정에 연결된 완료 예약(`confirmed`/`completed`) 1건: 100 XP. 기존 예약도 포함하며 좌석 수가 아니라 예약 건수로 계산합니다.
+- 로그인 상태에서 작성한 리뷰 1개: 50 XP. 기존 익명 리뷰는 이름으로 추정해 연결하지 않습니다.
+- 로그인한 계정의 사이트 방문: 한국 시간 기준 하루 한 번 10 XP. 새로고침·탭 중복 방문은 추가 적립되지 않습니다.
+- 등급: 새싹 팬(0), 단골 팬(200), 열성 팬(500), 아르떼 서포터(1,000 XP 이상).
+
+예약·리뷰 경험치는 현재 유효한 활동을 집계하므로 취소·삭제 예약 및 삭제 리뷰는 제외됩니다. 방문 기록은 계정별로 보관하고 계정 탈퇴 시 제거합니다. 클라이언트가 계정 ID·점수·방문 날짜를 지정할 수 없습니다.
+
+[최신 수정 및 검증 정리](docs/work-summary-2026-10-07.md)
+
 ### 실행과 확인
 
 ```bash
@@ -66,6 +79,7 @@ node scripts/test-profile-api.mjs
 node scripts/test-profile-navigation.mjs
 node scripts/test-reservations.mjs
 node scripts/test-admin-performances.mjs
+node scripts/test-fan-experience.mjs
 node scripts/security-regression.mjs
 node scripts/test-sites-settings.mjs
 pnpm build:sites
