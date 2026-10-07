@@ -12,6 +12,7 @@ const cases = [
   ["/profile/bookings/rent/1", [200, 307]],
   ["/api/profile/sync", 401, "POST"],
   ["/api/profile", 401, "PATCH"], ["/api/bookings/rent", 401, "POST"],
+  ["/api/profile/fan-experience", 401], ["/api/profile/fan-experience", 401, "POST"],
   ["/api/reviews?musicalId=rent", 200], ["/api/seats/rent", 200],
   ["/api/admin/users", 401],
   ["/api/admin/performances", 401], ["/api/admin/performances", 401, "PATCH"],

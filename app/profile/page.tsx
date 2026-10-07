@@ -10,6 +10,7 @@ import AccountDeleteButton from "@/components/auth/account-delete-button"
 import ResendConfirmationButton from "@/components/auth/resend-confirmation-button"
 import SyncProfileButton from "@/components/auth/sync-profile-button"
 import LoginCard from "@/components/auth/login-card"
+import FanExperienceCard from "@/components/auth/fan-experience-card"
 import { createAuthServerClient } from "@/lib/server/supabase-auth"
 import { createServerClient } from "@/lib/server/supabase-admin"
 import { defaultUsername, isProfileComplete } from "@/lib/profile"
@@ -55,6 +56,7 @@ export default async function ProfilePage() {
             <ProfileForm initialUsername={profile?.username ?? defaultUsername(user.email)} initialDisplayName={profile?.display_name ?? ""} initialStudentId={profile?.student_id ?? ""} initialContactNumber={profile?.contact_number ?? ""} />
           </CardContent>
         </Card>
+        <FanExperienceCard />
         <LogoutButton />
       </AccountPageShell>
     )
@@ -95,6 +97,7 @@ export default async function ProfilePage() {
         </CardContent>
       </Card>
 
+      <FanExperienceCard />
       <Card className="border-gray-200 bg-white shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg"><UserRound className="h-5 w-5 text-purple-600" aria-hidden="true" />내 정보</CardTitle>

@@ -6,6 +6,7 @@ import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { BookingDraftProvider } from "@/components/booking-draft-provider"
 import { AuthProvider } from "@/components/auth/auth-provider"
+import { FanExperienceProvider } from "@/components/auth/fan-experience-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -74,7 +75,7 @@ export default function RootLayout({
     <html lang="ko">
       <body className={inter.className}>
         <AuthProvider>
-          <BookingDraftProvider>{children}</BookingDraftProvider>
+          <FanExperienceProvider><BookingDraftProvider>{children}</BookingDraftProvider></FanExperienceProvider>
           <Toaster />
           <Analytics />
         </AuthProvider>

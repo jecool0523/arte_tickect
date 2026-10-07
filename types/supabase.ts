@@ -200,6 +200,12 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      get_account_fan_activity: { Args: { p_user_id: string }; Returns: Json }
+      record_account_fan_visit: { Args: { p_user_id: string }; Returns: Json }
+      create_account_review: {
+        Args: { p_user_id: string; p_musical_id: string; p_user_name: string; p_deletion_token: string; p_content: string; p_rating: number; p_image_url: string | null }
+        Returns: PublicReviewRow
+      }
       save_admin_performance: { Args: { p_musical_id: string; p_details: Json; p_start: string; p_end: string }; Returns: undefined }
       book_musical_seats: {
         Args: {

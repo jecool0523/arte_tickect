@@ -37,7 +37,7 @@ const mocks = {
   "@/components/ui/button": { Button: stub("Button").default },
   "next/link": stub("Link"),
 }
-for (const name of ["account-page-shell", "login-card", "profile-form", "logout-button", "account-delete-button", "resend-confirmation-button", "sync-profile-button"]) mocks[`@/components/auth/${name}`] = stub(name)
+for (const name of ["account-page-shell", "login-card", "profile-form", "logout-button", "account-delete-button", "resend-confirmation-button", "sync-profile-button", "fan-experience-card"]) mocks[`@/components/auth/${name}`] = stub(name)
 const Page = load("app/profile/page.tsx", mocks).default
 assert.match(renderToStaticMarkup(await Page()), /data-component="login-card"/)
 assert.equal(syncCalls, 0)

@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/components/auth/auth-provider"
 
 interface Review {
   id: number
@@ -50,6 +51,7 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
   const [zoomedMedia, setZoomedMedia] = useState<PreviewMedia | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
+  const { user } = useAuth()
 
   const [form, setForm] = useState({
     name: "",
@@ -151,7 +153,8 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
       const created = Array.isArray(responseData.review) ? responseData.review[0] : responseData.review
       if (created?.id) localStorage.setItem(`review-deletion-token:${created.id}`, deletionToken)
 
-      toast({ title: "작성 완료", description: "리뷰가 등록되었습니다." })
+      window.dispatchEvent(new Event("arte-fan-activity-changed"))
+      toast({ title: "작성 완료", description: responseData.fanXpEligible ? "리뷰가 등록되고 팬 경험치 50 XP가 반영됐어요." : "리뷰가 등록되었습니다." })
       setForm({ name: "", password: "", content: "", rating: 5 })
       setSelectedFiles([])
       setPreviews([])
@@ -174,6 +177,7 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
     const secureResponse = await fetch(`/api/reviews/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ deletionToken }) })
     if (secureResponse.ok) {
       localStorage.removeItem(`review-deletion-token:${id}`)
+      window.dispatchEvent(new Event("arte-fan-activity-changed"))
       fetchReviews()
     } else {
       const data = await secureResponse.json().catch(() => ({}))
@@ -226,7 +230,7 @@ export default function ReviewSection({ musicalId }: { musicalId: string }) {
               ))}
             </div>
           </div>
-
+          <p className="text-sm text-purple-700 dark:text-purple-300">{user ? "리뷰를 등록하면 팬 경험치 50 XP가 반영돼요." : "로그인 후 리뷰를 작성하면 팬 경험치 50 XP를 받을 수 있어요."}</p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Input
               placeholder="이름 또는 닉네임"

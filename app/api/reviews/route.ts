@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { createServerClient } from "@/lib/server/supabase-admin"
+import { createAuthServerClient } from "@/lib/server/supabase-auth"
 import { enforceRateLimit } from "@/lib/server/rate-limit"
 import { readJsonBody, RequestBodyError } from "@/lib/security/request"
 import { createReviewSchema } from "@/lib/security/validation"
@@ -32,12 +33,18 @@ export async function POST(request: NextRequest) {
     const rate = await enforceRateLimit(supabase, request, { bucket: "review-create", limit: 5, windowSeconds: 600 }, body.musicalId)
     if (rate.unavailable) return NextResponse.json({ error: "Rate limiting is unavailable." }, { status: 503 })
     if (!rate.allowed) return NextResponse.json({ error: "Too many review attempts." }, { status: 429 })
-    const { data, error } = await supabase.rpc("create_review", {
+    const authClient = await createAuthServerClient()
+    const { data: { user }, error: authError } = await authClient.auth.getUser()
+    if (authError && authError.name !== "AuthSessionMissingError") return NextResponse.json({ error: "Please sign in again." }, { status: 401 })
+    const reviewArgs = {
       p_musical_id: body.musicalId, p_user_name: body.name, p_deletion_token: body.deletionToken,
       p_content: body.content, p_rating: body.rating, p_image_url: body.imageUrl || null,
-    })
+    }
+    const { data, error } = user
+      ? await supabase.rpc("create_account_review", { ...reviewArgs, p_user_id: user.id })
+      : await supabase.rpc("create_review", reviewArgs)
     if (error) { console.error("Create review RPC failed", { code: error.code }); return NextResponse.json({ error: "Review creation is unavailable." }, { status: 503 }) }
-    return NextResponse.json({ success: true, review: data })
+    return NextResponse.json({ success: true, review: data, fanXpEligible: Boolean(user) })
   } catch (error) {
     if (error instanceof RequestBodyError) return NextResponse.json({ error: error.message }, { status: error.status })
     return NextResponse.json({ error: "Invalid review request." }, { status: 400 })
