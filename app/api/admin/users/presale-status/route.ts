@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 const headers = {
-  "Cache-Control": "no-store, no-cache, must-revalidate",
+  "Cache-Control": "private, no-store, no-cache, must-revalidate",
   Pragma: "no-cache",
   Expires: "0",
 }
@@ -17,7 +17,7 @@ const headers = {
 const setPresaleSchema = z.object({
   targetUserId: z.string().uuid(),
   isPresaleUser: z.boolean(),
-})
+}).strict()
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -27,6 +27,9 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ code: "AUTH_REQUIRED", error: "로그인이 필요합니다." }, { status: 401, headers })
     }
 
+    const { data: isAdmin, error: adminError } = await authClient.rpc("is_current_user_admin")
+    if (adminError) return NextResponse.json({ error: "관리자 권한을 확인하지 못했습니다." }, { status: 503, headers })
+    if (isAdmin !== true) return NextResponse.json({ code: "FORBIDDEN", error: "관리자 권한이 필요합니다." }, { status: 403, headers })
     const body = await readJsonBody(request, setPresaleSchema)
     const supabase = createServerClient()
 
@@ -50,9 +53,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     const result = data as { success: boolean; error?: string; code?: string; is_presale_user?: boolean }
-    if (!result.success) {
+    if (!result?.success) {
       const status = result.code === "FORBIDDEN" ? 403 : result.code === "USER_NOT_FOUND" ? 404 : 400
-      return NextResponse.json({ error: result.error, code: result.code }, { status, headers })
+      return NextResponse.json({ error: result?.error || "선예매 권한을 변경하지 못했습니다.", code: result?.code }, { status, headers })
     }
 
     return NextResponse.json({ success: true, isPresaleUser: result.is_presale_user }, { headers })

@@ -14,8 +14,6 @@ export type BookingDraft = {
   attendees: BookingAttendee[]
   specialRequest: string
   userMemo: string
-  presaleKey: string
-  presaleSeatLimit: number | null
   accessGranted: boolean
 }
 
@@ -37,8 +35,6 @@ export function createEmptyBookingDraft(musicalId: string): BookingDraft {
     attendees: [],
     specialRequest: "",
     userMemo: "",
-    presaleKey: "",
-    presaleSeatLimit: null,
     accessGranted: false,
   }
 }
@@ -66,8 +62,6 @@ export function normalizeBookingDraft(musicalId: string, value: unknown): Bookin
     attendees,
     specialRequest: typeof draft.specialRequest === "string" ? draft.specialRequest : "",
     userMemo: typeof draft.userMemo === "string" ? draft.userMemo : "",
-    presaleKey: typeof draft.presaleKey === "string" ? draft.presaleKey : "",
-    presaleSeatLimit: typeof draft.presaleSeatLimit === "number" ? draft.presaleSeatLimit : null,
     accessGranted: draft.accessGranted === true,
   }
 }

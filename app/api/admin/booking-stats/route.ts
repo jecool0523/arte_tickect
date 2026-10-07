@@ -33,14 +33,13 @@ export async function GET(request: NextRequest) {
       supabase.from("rent_bookings").select("selected_seats, user_id").eq("status", "confirmed"),
       supabase.from("toctoc_bookings").select("selected_seats, user_id").eq("status", "confirmed"),
       supabase.from("arte_musical_application_period").select("musical_name, start_time, end_time"),
-      supabase.from("presale_access_keys").select("musical_id, label, is_active, used_count, max_uses, max_seats_per_booking, starts_at, ends_at"),
     ])
     if (results.some(result=>result.error)) throw new Error("Stats unavailable")
     const summary = (index: number) => {
       const rows = results[index].data as { selected_seats: string[]; user_id: string | null }[]
       return { total_bookings: rows.length, total_seats: rows.reduce((total,row)=>total+row.selected_seats.length,0), unique_users: new Set(rows.map(row=>row.user_id).filter(Boolean)).size }
     }
-    return NextResponse.json({ success: true, stats: { dead_poets_society: summary(0), rent: summary(1), toctoc: summary(2), periods: results[3].data ?? [], presale_keys: results[4].data ?? [] } }, { headers })
+    return NextResponse.json({ success: true, stats: { dead_poets_society: summary(0), rent: summary(1), toctoc: summary(2), periods: results[3].data ?? [] } }, { headers })
   } catch {
     console.error("Admin booking stats failed")
     return NextResponse.json({ error: "Failed to fetch booking stats." }, { status: 500, headers })

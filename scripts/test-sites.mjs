@@ -17,6 +17,9 @@ const cases = [
   ["/api/admin/users", 401],
   ["/api/admin/performances", 401], ["/api/admin/performances", 401, "PATCH"],
   ["/api/admin/booking-stats", 401],
+  ["/api/admin/users/presale-status", 401, "PATCH"],
+  ["/api/booking-period/toctoc", 200],
+  ["/api/presale-keys/validate", 410, "POST"],
 ]
 for (const [pathname, expected, method = "GET"] of cases) {
   const response = await fetch(new URL(pathname, base), { method, redirect: "manual", signal: AbortSignal.timeout(30000) })
@@ -25,6 +28,12 @@ for (const [pathname, expected, method = "GET"] of cases) {
     assert.match(response.headers.get("Cache-Control"), /private.*no-store/, pathname)
   }
   const body = await response.text()
+  if (pathname === "/api/booking-period/toctoc") {
+    const access = JSON.parse(body)
+    assert.equal(access.authenticated, false)
+    assert.equal(access.presale, false)
+    assert.ok(!body.includes("예매 코드"), "Account permission replaces code guidance")
+  }
   if ((pathname === "/profile/setup" || pathname === "/profile/bookings/rent/1") && response.status === 200) {
     // A parent loading boundary can stream HTTP 200 before Next emits its auth redirect.
     assert.match(body, /<meta[^>]*http-equiv="refresh"[^>]*url=\/login\?next=/)

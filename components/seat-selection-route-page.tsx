@@ -7,6 +7,7 @@ import { useBookingDrafts } from "@/components/booking-draft-provider"
 import { useToast } from "@/hooks/use-toast"
 import { createEmptyUnavailableSeats } from "@/lib/musical-config"
 import type { MusicalInfo } from "@/types/musical"
+import { MAX_BOOKING_SEATS } from "@/lib/security/validation"
 
 export default function SeatSelectionRoutePage({ musical }: { musical: MusicalInfo }) {
   const router = useRouter()
@@ -66,11 +67,11 @@ export default function SeatSelectionRoutePage({ musical }: { musical: MusicalIn
       return
     }
 
-    const maxSelectableSeats = draft.presaleKey.trim() ? (draft.presaleSeatLimit ?? 10) : 10
+    const maxSelectableSeats = MAX_BOOKING_SEATS
     if (draft.selectedSeats.length >= maxSelectableSeats && !draft.selectedSeats.includes(seatId)) {
       toast({
         title: "선택 제한",
-        description: maxSelectableSeats < 100 ? `이 예매 코드는 최대 ${maxSelectableSeats}석까지 예매할 수 있습니다.` : "최대 100개의 좌석까지 선택할 수 있습니다.",
+        description: `한 번에 최대 ${maxSelectableSeats}석까지 예매할 수 있습니다.`,
         variant: "destructive",
       })
       return

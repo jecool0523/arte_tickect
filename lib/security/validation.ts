@@ -21,8 +21,8 @@ export const bookingRequestSchema = z
     seatGrade: trimmedString(1, 10),
     selectedSeats: z.array(trimmedString(1, 40)).min(1).max(MAX_BOOKING_SEATS),
     specialRequest: z.string().trim().max(500).optional().default(""),
-    presaleKey: z.string().trim().max(128).optional().default(""),
   })
+  .strict()
   .superRefine((value, context) => {
     if (new Set(value.selectedSeats).size !== value.selectedSeats.length) {
       context.addIssue({ code: z.ZodIssueCode.custom, path: ["selectedSeats"], message: "Duplicate seats are not allowed." })
@@ -43,11 +43,6 @@ export const bookingRequestSchema = z
 
 export const shareTokenLookupSchema = z.object({
   shareToken: trimmedString(32, 1024),
-})
-
-export const presaleValidationSchema = z.object({
-  musicalId: z.string().trim().refine(isKnownMusicalId),
-  presaleKey: trimmedString(8, 128),
 })
 
 export const bookingVerificationSchema = z.object({

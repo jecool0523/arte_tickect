@@ -35,7 +35,7 @@ function PerformanceEditor({ musical, period }: { musical: MusicalInfo; period?:
       <fieldset className="rounded-lg border border-purple-100 p-4"><legend className="px-2 text-sm font-semibold">일반 예매 기간 · 한국 시간</legend><div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-2 text-sm"><span>예매 시작</span><Input type="datetime-local" step="1" required disabled={saving} value={start} onChange={(e)=>setStart(e.target.value)} /></label>
         <label className="space-y-2 text-sm"><span>예매 종료</span><Input type="datetime-local" step="1" required disabled={saving} value={end} onChange={(e)=>setEnd(e.target.value)} /></label>
-      </div><p className="mt-3 text-sm text-gray-500">기간을 변경하면 실제 일반 예매 가능 시간이 변경됩니다. 기존 예약과 선예매 코드는 유지됩니다.</p></fieldset>
+      </div><p className="mt-3 text-sm text-gray-500">기간을 변경하면 실제 일반 예매 가능 시간이 변경됩니다. 기존 예약과 계정별 선예매 권한은 유지됩니다.</p></fieldset>
       {message && <p role={failed ? "alert" : "status"} className={failed ? "text-sm text-red-700" : "text-sm text-purple-700"}>{message}</p>}
       <Button disabled={saving} className="h-11 w-full bg-purple-600 text-white hover:bg-purple-700">{saving ? "저장 중..." : "공연 정보 저장"}</Button>
     </form></CardContent></Card>

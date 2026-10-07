@@ -43,7 +43,7 @@ export function BookingDraftProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const storedDrafts = readSessionRecord<BookingDraft>(BOOKING_DRAFTS_STORAGE_KEY)
     const normalizedDrafts = Object.fromEntries(
-      Object.entries(storedDrafts).map(([musicalId, draft]) => [musicalId, normalizeBookingDraft(musicalId, draft)]),
+      Object.entries(storedDrafts).map(([musicalId, draft]) => [musicalId, { ...normalizeBookingDraft(musicalId, draft), accessGranted: false }]),
     )
 
     setDrafts(normalizedDrafts)

@@ -69,6 +69,7 @@ export type PresaleAccessKeyRow = {
 
 export type ProfileRow = {
   id: string
+  is_presale_user: boolean
   username: string | null
   contact_number: string | null
   profile_completed_at: string | null
@@ -222,6 +223,8 @@ export type Database = {
           bookingId?: number
           bookingDate?: string
           conflictSeats?: string[]
+          code?: string
+          presale?: boolean
           error?: string
         }
       }
@@ -361,6 +364,7 @@ export type Database = {
             student_id: string | null
             avatar_url: string | null
             is_admin: boolean
+            is_presale_user: boolean
             email_confirmed: boolean
             created_at: string
             updated_at: string

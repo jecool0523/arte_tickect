@@ -7,12 +7,13 @@ import { bookingRequestSchema } from "@/lib/security/validation"
 import { createTicketShareToken } from "@/lib/ticket-share-token"
 import { isKnownMusicalId } from "@/lib/musical-config"
 import { isProfileComplete } from "@/lib/profile"
+import { getBookingAccess } from "@/lib/server/booking-access"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 const headers = {
-  "Cache-Control": "no-store, no-cache, must-revalidate",
+  "Cache-Control": "private, no-store, no-cache, must-revalidate",
   Pragma: "no-cache",
   Expires: "0",
 }
@@ -45,54 +46,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (rate.unavailable) return NextResponse.json({ error: "Rate limiting is unavailable." }, { status: 503, headers })
     if (!rate.allowed) return NextResponse.json({ error: "Too many booking attempts." }, { status: 429, headers })
 
-    const { data: period, error: periodError } = await supabase
-      .from("arte_musical_application_period")
-      .select("start_time, end_time")
-      .eq("musical_name", musicalId)
-      .single()
-    if (periodError) {
-      console.error("Booking period load failed", { code: periodError.code })
-      return NextResponse.json({ error: "Booking period is unavailable." }, { status: 503, headers })
-    }
-
-    const now = new Date()
-    const start = new Date(period.start_time)
-    const end = new Date(period.end_time)
-    const inPublicPeriod = now >= start && now <= end
-    let consumedPresale = false
-
-    if (now > end) {
-      return NextResponse.json({ code: "BOOKING_CLOSED", error: "Booking is closed." }, { status: 403, headers })
-    }
-
-    // Check if user is a presale user (can book before public period without key)
-    const { data: isPresaleUser } = await supabase.rpc("is_current_user_presale")
-    const isUserPresale = isPresaleUser === true
-
-    if (!inPublicPeriod && !isUserPresale) {
-      if (!body.presaleKey) return NextResponse.json({ code: "PRESALE_KEY_REQUIRED", error: "A valid presale key is required." }, { status: 403, headers })
-
-      const presaleKey = body.presaleKey
-      const { data: maxSeats, error: limitError } = await supabase.rpc("get_presale_access_key_seat_limit", {
-        p_musical_id: musicalId,
-        p_key: presaleKey,
-      })
-      if (limitError || (typeof maxSeats === "number" && body.selectedSeats.length > maxSeats)) {
-        return NextResponse.json({ code: "INVALID_PRESALE_KEY", error: "Invalid presale key or seat limit exceeded." }, { status: 403, headers })
-      }
-
-      const { data: consumed, error: consumeError } = await supabase.rpc("consume_presale_access_key", {
-        p_musical_id: musicalId,
-        p_key: presaleKey,
-      })
-      if (consumeError || consumed !== true) {
-        return NextResponse.json({ code: "INVALID_PRESALE_KEY", error: "Invalid or expired presale key." }, { status: 403, headers })
-      }
-      consumedPresale = true
-    } else if (!inPublicPeriod && isUserPresale) {
-      // Presale user booking before public period - mark as presale but no key consumed
-      consumedPresale = true
-    }
+    let access
+    try { access = await getBookingAccess(musicalId, user.id) }
+    catch { return NextResponse.json({ error: "예매 권한을 확인하지 못했습니다." }, { status: 503, headers }) }
+    if (!access.isOpen) return NextResponse.json({ code: access.code, error: access.message }, { status: 403, headers })
 
     const { data: result, error } = await supabase.rpc("book_musical_seats", {
       p_musical_id: musicalId,
@@ -104,9 +61,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       p_user_id: user.id,
     })
     if (error || !result?.success) {
-      if (consumedPresale && !isUserPresale) {
-        await supabase.rpc("release_presale_access_key", { p_musical_id: musicalId, p_key: body.presaleKey || "" })
-      }
+      if (error) return NextResponse.json({ error: "예매를 완료하지 못했습니다. 잠시 후 다시 시도해주세요." }, { status: 503, headers })
+      if (result?.code === "BOOKING_CLOSED" || result?.code === "PRESALE_PERMISSION_REQUIRED")
+        return NextResponse.json({ code: result.code, error: result.error }, { status: 403, headers })
+      if (result?.code === "BOOKING_PERIOD_UNAVAILABLE")
+        return NextResponse.json({ code: result.code, error: "예매 기간을 확인하지 못했습니다." }, { status: 503, headers })
       if (result?.conflictSeats) return NextResponse.json({ error: "One or more seats are already booked.", conflictSeats: result.conflictSeats }, { status: 409, headers })
       return NextResponse.json({ error: "Booking could not be completed." }, { status: 409, headers })
     }
@@ -116,7 +75,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       bookingId: result.bookingId,
       bookingDate: result.bookingDate,
       shareToken: typeof result.bookingId === "number" ? createTicketShareToken(musicalId, result.bookingId) : null,
-      presale: consumedPresale,
+      presale: result.presale === true,
     }, { headers })
   } catch (error) {
     if (error instanceof RequestBodyError) return NextResponse.json({ error: error.message }, { status: error.status, headers })

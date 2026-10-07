@@ -20,6 +20,7 @@ type AdminUser = {
   student_id: string | null
   avatar_url: string | null
   is_admin: boolean
+  is_presale_user: boolean
   email_confirmed: boolean
   created_at: string
   updated_at: string
@@ -32,16 +33,6 @@ type BookingStats = {
   rent: { total_bookings: number; total_seats: number; unique_users: number }
   toctoc: { total_bookings: number; total_seats: number; unique_users: number }
   periods: { musical_name: string; start_time: string; end_time: string }[]
-  presale_keys: {
-    musical_id: string
-    label: string | null
-    is_active: boolean
-    used_count: number
-    max_uses: number | null
-    max_seats_per_booking: number | null
-    starts_at: string | null
-    ends_at: string | null
-  }[]
 }
 
 type Pagination = { total: number; limit: number; offset: number }
@@ -61,8 +52,7 @@ export default function AdminDashboard() {
   const [bookingStats, setBookingStats] = useState<BookingStats | null>(null)
   const [statsLoading, setStatsLoading] = useState(true)
 
-  // Presale state
-  const [presaleLoading, setPresaleLoading] = useState(false)
+  const [presalePending, setPresalePending] = useState<string | null>(null)
 
   // Fetch users
   const fetchUsers = async (offset = 0, search = "") => {
@@ -123,7 +113,7 @@ export default function AdminDashboard() {
   }, [userSearch, activeTab])
 
   useEffect(() => {
-    if (activeTab === "bookings" || activeTab === "presale") fetchBookingStats()
+    if (activeTab === "bookings") fetchBookingStats()
   }, [activeTab])
 
   // Toggle admin status
@@ -152,6 +142,23 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleTogglePresale = async (user: AdminUser) => {
+    if (presalePending) return
+    setPresalePending(user.id)
+    try {
+      const response = await fetch("/api/admin/users/presale-status", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUserId: user.id, isPresaleUser: !user.is_presale_user }),
+      })
+      const data = await response.json()
+      if (!response.ok || !data.success) throw new Error(data.error || "선예매 권한을 변경하지 못했습니다.")
+      setUsers(current => current.map(row => row.id === user.id ? { ...row, is_presale_user: data.isPresaleUser === true } : row))
+      toast({ title: data.isPresaleUser ? "선예매 권한 부여 완료" : "선예매 권한 해제 완료", description: user.email })
+    } catch (error) {
+      toast({ title: "선예매 권한 변경 실패", description: error instanceof Error ? error.message : "잠시 후 다시 시도해주세요.", variant: "destructive" })
+    } finally { setPresalePending(null) }
+  }
+
   // Format date
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
 
@@ -175,11 +182,10 @@ export default function AdminDashboard() {
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-3">
             <TabsTrigger value="performances"><CalendarDays className="mr-2 h-4 w-4" />공연 관리</TabsTrigger>
             <TabsTrigger value="users"><Users className="mr-2 h-4 w-4" />사용자 관리</TabsTrigger>
             <TabsTrigger value="bookings"><Ticket className="mr-2 h-4 w-4" />예매 현황</TabsTrigger>
-            <TabsTrigger value="presale"><Ticket className="mr-2 h-4 w-4" />선예매 코드</TabsTrigger>
           </TabsList>
 
           <TabsContent value="performances"><PerformanceManager /></TabsContent>
@@ -197,6 +203,8 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            <p className="text-sm leading-6 text-slate-600">선예매 권한을 부여하면 해당 계정으로 일반 예매 시작 전 예매할 수 있습니다. 모든 공연에 적용되며, 예매가 종료된 공연은 예매할 수 없습니다.</p>
+
             {usersLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
@@ -211,7 +219,7 @@ export default function AdminDashboard() {
                           <TableHead className="w-16">아바타</TableHead>
                           <TableHead>사용자 정보</TableHead>
                           <TableHead className="w-32">권한</TableHead>
-                          <TableHead className="w-28">이메일 인증</TableHead>
+                          <TableHead className="min-w-36">선예매 권한</TableHead>
                           <TableHead className="w-28">예매 / 후기</TableHead>
                           <TableHead className="w-36">가입일</TableHead>
                           <TableHead className="w-36">액션</TableHead>
@@ -251,9 +259,12 @@ export default function AdminDashboard() {
                                 </Badge>
                               </TableCell>
                               <TableCell>
-                                <Badge variant={user.email_confirmed ? "default" : "secondary"}>
-                                  {user.email_confirmed ? "인증됨" : "미인증"}
-                                </Badge>
+                                <div className="space-y-2">
+                                  <Badge variant={user.is_presale_user ? "default" : "outline"}>{user.is_presale_user ? "권한 있음" : "권한 없음"}</Badge>
+                                  <Button variant="outline" size="sm" disabled={presalePending !== null} aria-label={`${user.email} 선예매 권한 ${user.is_presale_user ? "해제" : "부여"}`} onClick={() => handleTogglePresale(user)} className="block text-purple-700">
+                                    {presalePending === user.id ? "변경 중..." : user.is_presale_user ? "권한 해제" : "권한 부여"}
+                                  </Button>
+                                </div>
                               </TableCell>
                               <TableCell className="text-sm text-slate-600">
                                 <div>{user.booking_count} 예매</div>
@@ -389,65 +400,6 @@ export default function AdminDashboard() {
             ) : null}
           </TabsContent>
 
-          {/* Presale Keys Tab */}
-          <TabsContent value="presale" className="space-y-6">
-            {presaleLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
-              </div>
-            ) : bookingStats ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Ticket className="h-5 w-5" />
-                    선예매 코드 현황
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>공연</TableHead>
-                        <TableHead>라벨</TableHead>
-                        <TableHead>상태</TableHead>
-                        <TableHead>사용/최대</TableHead>
-                        <TableHead>최대 좌석/예매</TableHead>
-                        <TableHead>시작일시</TableHead>
-                        <TableHead>종료일시</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {bookingStats.presale_keys.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={7} className="text-center py-8 text-slate-500">
-                            등록된 선예매 코드가 없습니다.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        bookingStats.presale_keys.map((key: { musical_id: string; label: string | null; is_active: boolean; used_count: number; max_uses: number | null; max_seats_per_booking: number | null; starts_at: string | null; ends_at: string | null }) => (
-                          <TableRow key={`${key.musical_id}-${key.label}`}>
-                            <TableCell className="font-medium">{key.musical_id}</TableCell>
-                            <TableCell>{key.label || "라벨 없음"}</TableCell>
-                            <TableCell>
-                              <Badge variant={key.is_active ? "default" : "secondary"}>
-                                {key.is_active ? "활성" : "비활성"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {key.used_count} / {key.max_uses ?? "무제한"}
-                            </TableCell>
-                            <TableCell>{key.max_seats_per_booking ?? "제한 없음"}</TableCell>
-                            <TableCell>{key.starts_at ? formatDate(key.starts_at) : "제한 없음"}</TableCell>
-                            <TableCell>{key.ends_at ? formatDate(key.ends_at) : "제한 없음"}</TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            ) : null}
-          </TabsContent>
         </Tabs>
       </main>
     </div>

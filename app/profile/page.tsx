@@ -41,13 +41,14 @@ export default async function ProfilePage() {
   const adminEntry = isAdmin ? <Button asChild className="h-11 w-full bg-purple-600 text-white hover:bg-purple-700"><Link href="/admin" prefetch={false}>관리자 · 공연 관리</Link></Button> : null
 
   const { data: profile, error: profileError } = await supabase.from("profiles")
-    .select("display_name, student_id, avatar_url, username, contact_number, profile_completed_at").eq("id", user.id).maybeSingle()
+    .select("display_name, student_id, avatar_url, username, contact_number, profile_completed_at, is_presale_user").eq("id", user.id).maybeSingle()
   if (profileError) throw new Error("Profile is temporarily unavailable")
   if (!isProfileComplete(profile)) {
     return (
       <AccountPageShell title="프로필">
         <ProfileGuide />
         {adminEntry}
+        {profile?.is_presale_user && <p className="rounded-lg bg-purple-50 p-4 text-sm font-medium text-purple-700">선예매 권한이 있는 계정입니다. 내 정보를 등록하면 일반 예매 시작 전 예매할 수 있어요.</p>}
         <Card className="border-gray-200 bg-white shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg">내 정보를 알려주세요</CardTitle>
@@ -78,6 +79,7 @@ export default async function ProfilePage() {
     <AccountPageShell title="프로필">
       <ProfileGuide />
       {adminEntry}
+      {profile?.is_presale_user && <p className="rounded-lg bg-purple-50 p-4 text-sm font-medium text-purple-700">선예매 권한이 있는 계정입니다. 일반 예매 시작 전 예매할 수 있어요.</p>}
       <Card className="border-gray-200 bg-white shadow-sm">
         <CardContent className="flex items-center gap-4 p-5">
           <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-purple-100 text-xl font-bold text-purple-700">
