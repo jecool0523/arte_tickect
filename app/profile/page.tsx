@@ -11,6 +11,7 @@ import ResendConfirmationButton from "@/components/auth/resend-confirmation-butt
 import SyncProfileButton from "@/components/auth/sync-profile-button"
 import LoginCard from "@/components/auth/login-card"
 import FanExperienceCard from "@/components/auth/fan-experience-card"
+import ProfileGuide from "@/components/auth/profile-guide"
 import { createAuthServerClient } from "@/lib/server/supabase-auth"
 import { createServerClient } from "@/lib/server/supabase-admin"
 import { defaultUsername, isProfileComplete } from "@/lib/profile"
@@ -35,7 +36,7 @@ export default async function ProfilePage() {
   // Always open the profile destination; private data still requires a verified user.
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return <AccountPageShell title="프로필"><LoginCard next="/profile" /></AccountPageShell>
+  if (!user) return <AccountPageShell title="프로필"><ProfileGuide /><LoginCard next="/profile" /></AccountPageShell>
   const { data: isAdmin } = await supabase.rpc("is_current_user_admin")
   const adminEntry = isAdmin ? <Button asChild className="h-11 w-full bg-purple-600 text-white hover:bg-purple-700"><Link href="/admin" prefetch={false}>관리자 · 공연 관리</Link></Button> : null
 
@@ -45,6 +46,7 @@ export default async function ProfilePage() {
   if (!isProfileComplete(profile)) {
     return (
       <AccountPageShell title="프로필">
+        <ProfileGuide />
         {adminEntry}
         <Card className="border-gray-200 bg-white shadow-sm">
           <CardHeader>
@@ -74,6 +76,7 @@ export default async function ProfilePage() {
 
   return (
     <AccountPageShell title="프로필">
+      <ProfileGuide />
       {adminEntry}
       <Card className="border-gray-200 bg-white shadow-sm">
         <CardContent className="flex items-center gap-4 p-5">
