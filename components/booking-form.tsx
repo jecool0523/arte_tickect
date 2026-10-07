@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useRef } from "react"
+import { useEffect } from "react"
 import { ArrowLeft, ArrowRight, CheckCircle2, MapPin, Ticket, Users } from "lucide-react"
 import AppBottomNav from "@/components/app-bottom-nav"
 import { Badge } from "@/components/ui/badge"
@@ -48,8 +48,6 @@ export default function BookingForm({
   onBack,
   isSubmitting,
 }: BookingFormProps) {
-  const previousSpecialRequestRef = useRef("")
-
   useEffect(() => {
     if (attendees.length === selectedSeats.length) return
 
@@ -70,8 +68,8 @@ export default function BookingForm({
     if (attendees.length === 0) return
 
     const representative = attendees[0]
-    onInputChange("name", representative.name)
-    onInputChange("studentId", representative.studentId)
+    if (bookingData.name !== representative.name) onInputChange("name", representative.name)
+    if (bookingData.studentId !== representative.studentId) onInputChange("studentId", representative.studentId)
 
     const attendeesList = attendees
       .map((attendee, index) => {
@@ -86,11 +84,10 @@ export default function BookingForm({
       ? `${userMemo}\n\n[관람자 명단]\n${attendeesList}`
       : `[관람자 명단]\n${attendeesList}`
 
-    if (previousSpecialRequestRef.current !== finalRequest) {
-      previousSpecialRequestRef.current = finalRequest
+    if (bookingData.specialRequest !== finalRequest) {
       onInputChange("specialRequest", finalRequest)
     }
-  }, [attendees, userMemo, selectedSeats, onInputChange])
+  }, [attendees, userMemo, selectedSeats, onInputChange, bookingData.name, bookingData.studentId, bookingData.specialRequest])
 
   const handleAttendeeChange = (index: number, field: "name" | "studentId", value: string) => {
     const next = [...attendees]

@@ -65,3 +65,19 @@ export function normalizeBookingDraft(musicalId: string, value: unknown): Bookin
     accessGranted: draft.accessGranted === true,
   }
 }
+
+// No-op updates must preserve references used by BookingForm's effects.
+export function isSameBookingDraft(left: BookingDraft, right: BookingDraft): boolean {
+  return left.musicalId === right.musicalId
+    && left.name === right.name
+    && left.studentId === right.studentId
+    && left.seatGrade === right.seatGrade
+    && left.specialRequest === right.specialRequest
+    && left.userMemo === right.userMemo
+    && left.accessGranted === right.accessGranted
+    && left.selectedSeats.length === right.selectedSeats.length
+    && left.selectedSeats.every((seat, index) => seat === right.selectedSeats[index])
+    && left.attendees.length === right.attendees.length
+    && left.attendees.every((attendee, index) => attendee.name === right.attendees[index].name
+      && attendee.studentId === right.attendees[index].studentId)
+}

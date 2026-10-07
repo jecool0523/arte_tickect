@@ -77,13 +77,16 @@ export default function SeatSelectionRoutePage({ musical }: { musical: MusicalIn
       return
     }
 
-    if (draft.selectedSeats.includes(seatId)) {
-      const selectedSeats = draft.selectedSeats.filter((seat) => seat !== seatId)
-      updateDraft(musical.id, { selectedSeats, seatGrade: selectedSeats.length ? draft.seatGrade : "" })
-      return
-    }
-
-    updateDraft(musical.id, { selectedSeats: [...draft.selectedSeats, seatId], seatGrade: draft.seatGrade || seatGrade })
+    updateDraft(musical.id, (current) => {
+      const removedIndex = current.selectedSeats.indexOf(seatId)
+      if (removedIndex !== -1) {
+        const selectedSeats = current.selectedSeats.filter((seat) => seat !== seatId)
+        return { ...current, selectedSeats, seatGrade: selectedSeats.length ? current.seatGrade : "",
+          attendees: current.attendees.filter((_, index) => index !== removedIndex) }
+      }
+      if ((current.seatGrade && current.seatGrade !== seatGrade) || current.selectedSeats.length >= MAX_BOOKING_SEATS) return current
+      return { ...current, selectedSeats: [...current.selectedSeats, seatId], seatGrade: current.seatGrade || seatGrade }
+    })
   }
 
   const handleConfirm = () => {
@@ -100,6 +103,9 @@ export default function SeatSelectionRoutePage({ musical }: { musical: MusicalIn
       seatGrades={musical.seatGrades}
       selectedSeats={draft.selectedSeats}
       onSeatClick={handleSeatClick}
+      onClearSeats={() => updateDraft(musical.id, (current) => ({
+        ...current, selectedSeats: [], seatGrade: "", attendees: [], name: "", studentId: "", specialRequest: current.userMemo,
+      }))}
       unavailableSeats={unavailableSeats}
       statistics={statistics}
       connectionStatus={connectionStatus}

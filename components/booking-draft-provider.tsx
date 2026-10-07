@@ -6,6 +6,7 @@ import {
   BOOKING_DRAFTS_STORAGE_KEY,
   createEmptyBookingDraft,
   normalizeBookingDraft,
+  isSameBookingDraft,
   type BookingCompletion,
   type BookingDraft,
 } from "@/lib/booking-draft"
@@ -70,7 +71,9 @@ export function BookingDraftProvider({ children }: { children: ReactNode }) {
     setDrafts((current) => {
       const previous = current[musicalId] ?? createEmptyBookingDraft(musicalId)
       const next = typeof updater === "function" ? updater(previous) : { ...previous, ...updater, musicalId }
-      return { ...current, [musicalId]: normalizeBookingDraft(musicalId, next) }
+      const normalized = normalizeBookingDraft(musicalId, next)
+      if (isSameBookingDraft(previous, normalized)) return current
+      return { ...current, [musicalId]: normalized }
     })
   }, [])
 

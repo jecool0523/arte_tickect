@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ArrowLeft, Check, MapPin, Minimize2, RotateCcw, Theater, X, ZoomIn, ZoomOut } from "lucide-react"
+import { ArrowLeft, Check, MapPin, Maximize2, Minimize2, RotateCcw, Theater, X, ZoomIn, ZoomOut } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,11 +13,13 @@ import {
 } from "@/lib/seat-map"
 import { FLOOR_1, type SeatFloor } from "@/lib/musical-config"
 import type { SeatGrade } from "@/types/musical"
+import { useFullscreen } from "@/hooks/use-fullscreen"
 
 interface SeatSelectionWindowProps {
   seatGrades: SeatGrade[]
   selectedSeats: string[]
   onSeatClick: (seatId: string, grade: string) => void
+  onClearSeats: () => void
   unavailableSeats: Record<string, Record<string, string[]>>
   statistics: {
     total_bookings: number
@@ -39,6 +41,7 @@ export default function SeatSelectionWindow({
   seatGrades,
   selectedSeats,
   onSeatClick,
+  onClearSeats,
   unavailableSeats,
   statistics,
   connectionStatus,
@@ -51,6 +54,7 @@ export default function SeatSelectionWindow({
   const [zoomLevel, setZoomLevel] = useState(0.7)
   const [isZoomMenuOpen, setIsZoomMenuOpen] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const fullscreen = useFullscreen()
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current
@@ -86,7 +90,8 @@ export default function SeatSelectionWindow({
         key={seat.id}
         type="button"
         title={`${seat.label} - ${status === "unavailable" ? "예매 완료" : status === "selected" ? "선택됨" : "선택 가능"}`}
-        onClick={() => status === "available" && onSeatClick(seat.id, seat.grade)}
+        aria-pressed={status === "selected"}
+        onClick={() => status !== "unavailable" && onSeatClick(seat.id, seat.grade)}
         disabled={status === "unavailable"}
         className={`h-8 w-8 shrink-0 rounded-md border-2 text-xs font-bold transition-all ${
           status === "selected"
@@ -102,7 +107,7 @@ export default function SeatSelectionWindow({
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-gray-50">
+    <div ref={fullscreen.containerRef} className="flex h-[100dvh] flex-col bg-gray-50">
       <header className="sticky top-0 z-30 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between p-3">
           <Button onClick={onBack} variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-gray-100">
@@ -188,12 +193,21 @@ export default function SeatSelectionWindow({
                 <Button size="sm" variant="ghost" onClick={() => handleZoomChange(0.7)} className="h-7 w-7 p-0">
                   <RotateCcw className="h-3.5 w-3.5" />
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => handleZoomChange(zoomLevel === 1 ? 0.7 : 1)} className="h-7 w-7 p-0">
-                  <Minimize2 className="h-3.5 w-3.5" />
+                <Button
+                  type="button" size="sm" variant="ghost"
+                  onClick={fullscreen.toggleFullscreen}
+                  disabled={!fullscreen.isSupported || fullscreen.isPending}
+                  aria-label={fullscreen.isFullscreen ? "전체 화면 종료" : "전체 화면"}
+                  aria-pressed={fullscreen.isFullscreen}
+                  title={!fullscreen.isSupported ? "이 브라우저에서는 전체 화면을 지원하지 않습니다." : fullscreen.isFullscreen ? "전체 화면 종료" : "전체 화면"}
+                  className="h-7 w-7 p-0"
+                >
+                  {fullscreen.isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
                 </Button>
               </div>
             </div>
 
+            {fullscreen.error && <p role="status" className="mb-2 text-sm text-red-600">{fullscreen.error}</p>}
             <div className="flex justify-center gap-3 text-xs text-gray-600">
               <span className="flex items-center gap-1">
                 <span className="h-3.5 w-3.5 rounded border-2 border-gray-300 bg-gray-100" />
@@ -282,7 +296,8 @@ export default function SeatSelectionWindow({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => selectedSeats.forEach((seat) => onSeatClick(seat, selectedSeatGrade))}
+                type="button"
+                onClick={onClearSeats}
                 className="h-auto p-1 text-xs text-purple-600 hover:text-purple-700"
               >
                 <X className="mr-1 h-3 w-3" />
@@ -291,8 +306,15 @@ export default function SeatSelectionWindow({
             </div>
             <div className="flex max-h-16 flex-wrap gap-1 overflow-y-auto">
               {selectedSeats.map((seatId) => (
-                <Badge key={seatId} className="bg-purple-600 px-1.5 py-0.5 text-xs text-white">
-                  {getSeatDisplayLabel(seatId)}
+                <Badge key={seatId} className="bg-purple-600 p-0 text-xs text-white">
+                  <button
+                    type="button"
+                    onClick={() => onSeatClick(seatId, selectedSeatGrade)}
+                    aria-label={`${getSeatDisplayLabel(seatId)} 선택 해제`}
+                    className="inline-flex min-h-8 items-center gap-1 rounded-full px-2 py-1 hover:bg-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700"
+                  >
+                    {getSeatDisplayLabel(seatId)}<X className="h-3 w-3" aria-hidden="true" />
+                  </button>
                 </Badge>
               ))}
             </div>
