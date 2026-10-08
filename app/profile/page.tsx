@@ -13,6 +13,7 @@ import LoginCard from "@/components/auth/login-card"
 import FanExperienceCard from "@/components/auth/fan-experience-card"
 import ProfileGuide from "@/components/auth/profile-guide"
 import ArteMembershipCard from "@/components/auth/arte-membership-card"
+import SupportInquiries from "@/components/auth/support-inquiries"
 import { createAuthServerClient } from "@/lib/server/supabase-auth"
 import { createServerClient } from "@/lib/server/supabase-admin"
 import { defaultUsername, isProfileComplete } from "@/lib/profile"
@@ -61,6 +62,7 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
         <FanExperienceCard />
+        <SupportInquiries compact />
         <LogoutButton />
       </AccountPageShell>
     )
@@ -138,6 +140,7 @@ export default async function ProfilePage() {
         </CardHeader>
         <CardContent><AccountDeleteButton /></CardContent>
       </Card>
+      <SupportInquiries compact />
       <LogoutButton />
     </AccountPageShell>
   )

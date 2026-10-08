@@ -37,7 +37,7 @@ const mocks = {
   "@/components/ui/button": { Button: stub("Button").default },
   "next/link": stub("Link"),
 }
-for (const name of ["account-page-shell", "login-card", "profile-form", "logout-button", "account-delete-button", "resend-confirmation-button", "sync-profile-button", "fan-experience-card", "profile-guide", "arte-membership-card"]) mocks[`@/components/auth/${name}`] = stub(name)
+for (const name of ["account-page-shell", "login-card", "profile-form", "logout-button", "account-delete-button", "resend-confirmation-button", "sync-profile-button", "fan-experience-card", "profile-guide", "arte-membership-card", "support-inquiries"]) mocks[`@/components/auth/${name}`] = stub(name)
 const Page = load("app/profile/page.tsx", mocks).default
 assert.match(renderToStaticMarkup(await Page()), /data-component="login-card"/)
 assert.equal(syncCalls, 0)
@@ -48,6 +48,7 @@ const incomplete = renderToStaticMarkup(await Page())
 assert.match(incomplete, /내 정보를 알려주세요/)
 assert.match(incomplete, /Alice123/)
 assert.equal(syncCalls, 0, "Incomplete users do not claim bookings")
+assert.match(incomplete, /data-component="support-inquiries"/, "Incomplete profiles can still contact support")
 assert.doesNotMatch(incomplete, /data-component="arte-membership-card"/, "Membership needs a saved profile")
 assert.equal(reads.filter((r) => r.table !== "profiles").length, 0)
 savedProfile = { ...savedProfile, display_name: "테스트", student_id: "1323", username: "Alice123", contact_number: "01012345678", profile_completed_at: "2026-10-06" }

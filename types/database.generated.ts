@@ -1,4 +1,4 @@
-// Generated from the live Supabase public schema on 2026-10-08 after member_presale_two_tickets.
+// Generated from the live Supabase public schema on 2026-10-08 after profile_admin_inquiries.
 export type Json =
   | string
   | number
@@ -615,10 +615,18 @@ export type Database = {
       get_user_email_status: { Args: { p_user_id: string }; Returns: Json }
       is_current_user_admin: { Args: never; Returns: boolean }
       list_arte_admin_requests: { Args: { p_admin_id: string }; Returns: Json }
+      list_support_inquiries: {
+        Args: { p_admin?: boolean; p_offset?: number; p_user_id: string }
+        Returns: Json
+      }
       record_account_fan_visit: { Args: { p_user_id: string }; Returns: Json }
       release_presale_access_key: {
         Args: { p_key: string; p_musical_id: string }
         Returns: boolean
+      }
+      reply_support_inquiry: {
+        Args: { p_admin_id: string; p_inquiry_id: string; p_reply: string }
+        Returns: Json
       }
       review_arte_admin_request: {
         Args: { p_admin_id: string; p_approve: boolean; p_request_id: string }
@@ -661,6 +669,10 @@ export type Database = {
       }
       submit_arte_membership_request: {
         Args: { p_is_member: boolean; p_user_id: string }
+        Returns: Json
+      }
+      submit_support_inquiry: {
+        Args: { p_content: string; p_request_key: string; p_user_id: string }
         Returns: Json
       }
       sync_legacy_bookings: { Args: { p_user_id: string }; Returns: Json }

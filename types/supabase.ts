@@ -1,6 +1,7 @@
 // Application RPC JSON contracts. Exact live schema: database.generated.ts.
 import type { Database as GeneratedDatabase } from "./database.generated"
 import type { MembershipState, AdminMembershipRequest } from "./admin-membership"
+import type { SupportInquiryPage } from "./support"
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
@@ -158,6 +159,18 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      submit_support_inquiry: {
+        Args: { p_user_id: string; p_request_key: string; p_content: string }
+        Returns: { success: boolean; code?: string; inquiryId?: string }
+      }
+      list_support_inquiries: {
+        Args: { p_user_id: string; p_admin?: boolean; p_offset?: number }
+        Returns: SupportInquiryPage
+      }
+      reply_support_inquiry: {
+        Args: { p_admin_id: string; p_inquiry_id: string; p_reply: string }
+        Returns: { success: boolean; code?: string }
+      }
       get_account_presale_allowance: {
         Args: { p_user_id: string; p_musical_id: string }
         Returns: { limit: number | null; used: number; remaining: number | null }

@@ -5,13 +5,13 @@ import AppBottomNav from "@/components/app-bottom-nav"
 import { Button } from "@/components/ui/button"
 
 // Match the existing ARTE/performance page frame, without changing global tokens.
-export default function AccountPageShell({ title, children }: { title: string; children: ReactNode }) {
+export default function AccountPageShell({ title, children, backHref = "/" }: { title: string; children: ReactNode; backHref?: string }) {
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-gray-50 text-gray-900">
       <header className="z-20 shrink-0 border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto flex max-w-2xl items-center p-4">
           <Button asChild variant="ghost" size="icon" className="shrink-0 rounded-full hover:bg-gray-100">
-            <Link href="/" aria-label="홈으로 돌아가기"><ArrowLeft className="h-5 w-5" /></Link>
+            <Link href={backHref} aria-label={backHref === "/" ? "홈으로 돌아가기" : "이전 화면으로 돌아가기"}><ArrowLeft className="h-5 w-5" /></Link>
           </Button>
           <h1 className="min-w-0 flex-1 pr-10 text-center text-lg font-bold">{title}</h1>
         </div>
