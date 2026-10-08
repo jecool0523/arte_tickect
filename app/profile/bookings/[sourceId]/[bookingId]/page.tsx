@@ -8,6 +8,7 @@ import { requireAuthUser } from "@/lib/server/require-auth"
 import { getOwnedReservation } from "@/lib/server/reservations"
 import { isTicketReady, reservationStatusLabel, reservationTicketData } from "@/lib/reservations"
 import { getLiveMusical } from "@/lib/server/performances"
+import ReservationActions from "@/components/auth/reservation-actions"
 
 export const metadata: Metadata = { title: "내 티켓", robots: { index: false, follow: false, nocache: true } }
 export const dynamic = "force-dynamic"
@@ -29,6 +30,7 @@ export default async function OwnedTicketPage({ params }: { params: Promise<{ so
           <p className="text-gray-600">완료된 예약만 티켓을 확인할 수 있어요.</p>
         </CardContent></Card>
       )}
+      <ReservationActions reservation={reservation} />
     </AccountPageShell>
   )
 }

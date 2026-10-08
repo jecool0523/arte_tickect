@@ -9,7 +9,8 @@ import { createAuthServerClient } from "@/lib/server/supabase-auth"
 import { syncLegacyBookings } from "@/lib/server/profile-onboarding"
 import { getOwnedReservations } from "@/lib/server/reservations"
 import { isProfileComplete } from "@/lib/profile"
-import { isTicketReady, reservationStatusLabel, reservationTicketPath } from "@/lib/reservations"
+import { isTicketReady, reservationStatusLabel } from "@/lib/reservations"
+import ReservationActions from "@/components/auth/reservation-actions"
 
 export const metadata: Metadata = { title: "예약 내역", robots: { index: false, follow: false } }
 export const dynamic = "force-dynamic"
@@ -48,7 +49,7 @@ export default async function ReservationHistoryPage() {
               </div>
               <p className="mt-2 break-words text-sm leading-6 text-gray-600">{reservation.seat_grade} · {reservation.selected_seats.join(", ")}</p>
               <p className="mt-3 flex items-center gap-1.5 text-xs text-gray-500"><CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />{new Date(reservation.booking_date).toLocaleString("ko-KR")}</p>
-              {isTicketReady(reservation.status) && <Button asChild className="mt-4 h-11 w-full bg-purple-600 text-white hover:bg-purple-700"><Link href={reservationTicketPath(reservation.sourceId, reservation.id)} prefetch={false}>내 티켓 확인하기</Link></Button>}
+              <ReservationActions reservation={reservation} showTicketLink />
             </li>
           ))}</ul>}
         </CardContent>

@@ -158,6 +158,10 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      cancel_owned_reservation: {
+        Args: { p_user_id: string; p_source_id: string; p_booking_id: number; p_for_rebooking?: boolean }
+        Returns: { success: boolean; code?: string; status?: string; alreadyCancelled?: boolean; rebooking?: { musicalId: string; name: string; studentId: string } | null }
+      }
       get_arte_membership_state: { Args: { p_user_id: string }; Returns: MembershipState }
       submit_arte_membership_request: { Args: { p_user_id: string; p_is_member: boolean }; Returns: { success: boolean; code?: string; state?: MembershipState } }
       list_arte_admin_requests: { Args: { p_admin_id: string }; Returns: { success: boolean; code?: string; requests?: AdminMembershipRequest[]; total?: number } }

@@ -13,6 +13,7 @@ const cases = [
   ["/profile/bookings/rent/1", [200, 307]],
   ["/api/profile/sync", 401, "POST"],
   ["/api/profile", 401, "PATCH"], ["/api/bookings/rent", 401, "POST"],
+  ["/api/profile/bookings/rent/1", 401, "PATCH"],
   ["/api/profile/fan-experience", 401], ["/api/profile/fan-experience", 401, "POST"],
   ["/api/profile/arte-membership", 401], ["/api/profile/arte-membership", 401, "POST"],
   ["/api/admin/member-requests", 401], ["/api/admin/member-requests", 401, "PATCH"],

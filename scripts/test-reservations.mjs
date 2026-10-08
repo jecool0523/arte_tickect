@@ -68,13 +68,20 @@ const mocks = {
   "@/lib/server/reservations": { getOwnedReservations: async () => ({ reservations, unavailable: false }), getOwnedReservation: async () => reservations[0] },
   "@/lib/server/require-auth": { requireAuthUser: async () => ({ user, supabase: client }) },
   "@/components/booking-ticket": { __esModule: true, default: ({ ticket, showShareActions, showSeatMap }) => React.createElement("article", { "data-sharing": String(showShareActions), "data-seat-map": String(showSeatMap) }, `${ticket.name}|${ticket.selectedSeats.join(",")}`) },
-  "next/navigation": { notFound: () => { throw new Error("NOT_FOUND") } },
+  "next/navigation": { notFound: () => { throw new Error("NOT_FOUND") }, useRouter: () => ({ push() {}, refresh() {} }) },
 }
+mocks["@/components/auth/reservation-actions"] = load("components/auth/reservation-actions.tsx", {
+  ...mocks,
+  "@/lib/booking-draft": load("lib/booking-draft.ts"),
+  "@/components/booking-draft-provider": { useBookingDrafts: () => ({ hydrated: true, updateDraft() {}, getCompletion: () => null, clearCompletion() {} }) },
+})
 const History = load("app/profile/bookings/page.tsx", mocks).default
 const html = renderToStaticMarkup(await History())
 assert.equal((html.match(/내 티켓 확인하기/g) ?? []).length, 1, "Cancelled reservations do not get valid-ticket links")
 assert.ok(html.includes('href="/profile/bookings/rent/12"'))
 assert.ok(html.includes("취소됨"))
+assert.ok(html.includes("예매 취소"))
+assert.ok(html.includes("취소 후 재예매"))
 user = null
 assert.match(renderToStaticMarkup(await History()), /Google 로그인/)
 assert.equal(syncCount, 1, "No anonymous sync")
