@@ -1,5 +1,7 @@
 # Supabase OAuth 준비 보고서
 
+> 과거 기록: 2026-08-30~31 점검 당시의 판단과 미완료 항목을 보존한다. 현재의 예약 연결·리뷰 소유권·프로필·선예매는 [로그인·계정 구조](login-db-structure.md)와 [DB 구조](database-structure.md)를 기준으로 확인한다. 아래 수량·Vercel 주소·남은 운영 작업을 현재 상태로 해석하거나 과거 SQL을 재실행하지 않는다. 현재 운영 callback은 [Sites 배포 안내](sites-deployment.md)에 있다.
+
 ## 확인 범위
 
 2026-08-30에 저장소의 SQL·생성 타입·API 데이터 접근 경로와 원격 Supabase 프로젝트 `arte musical ticket`(`kwkhydnvbxvcfvhksxna`)을 함께 확인했다. 원격 프로젝트는 정상 상태였고 `auth.users`와 모든 `public` 테이블의 행 수는 0이었다.

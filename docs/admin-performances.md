@@ -8,6 +8,8 @@ Google 로그인 후 프로필의 ‘관리자 · 공연 관리’ 또는 `/admi
 
 ## 권한과 검증
 
+관리자 화면의 **부원 승인**은 [기존 관리자 본인 확인·승인 절차](arte-member-approval.md)를 따르며, 승인된 부원에는 [공연별 선예매 2장](member-presale-two-tickets.md)이 적용된다. **사용자 문의** 탭에서는 [프로필 문의](profile-admin-inquiries.md)에 답변한다. 이름·학번 자체를 관리자 신원 증명으로 사용하지 않는다.
+
 Supabase 원격 migration `admin_performance_management`의 소스는 `scripts/admin-performance-schema.sql`이다. 공연 정보와 예매 기간은 세션 클라이언트의 SECURITY INVOKER RPC로 하나의 트랜잭션에서 저장된다. SELECT는 공개 정보에만 허용하고 INSERT/UPDATE는 관리자 RLS로 제한한다. 일반 사용자는 profiles를 직접 수정할 수 없으며 관리자 지정 함수는 service_role 전용이다. 관리자 사용자 목록은 관리자 확인이 있는 private 스키마 함수와 invoker 래퍼로 제공한다.
 
 DB에서 관리자 저장·사용자 목록, 일반 사용자 수정 거부 및 자기 권한 승격 차단을 검사했다. 테스트 변경은 모두 ROLLBACK했다. `scripts/test-admin-performances.mjs`는 API의 401/403, 입력 검증, 권한 위조, 세션 RPC, 오류/호출 제한 및 한국 시간 변환을 검사한다. 기존 프로필/예약 회귀 검사도 유지한다.

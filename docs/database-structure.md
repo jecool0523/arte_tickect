@@ -1,4 +1,6 @@
-# 현재 DB 구조와 정리 결과
+# 현재 DB 구조와 변경 이력
+
+현재 안내 기준: 2026-10-08. 아래 10월 7일 구조 정리 기록에 10월 8일 부원 승인·취소/재예매·선예매 수량·문의 구조를 추가했다. 수량과 advisors 검증 결과는 해당 날짜의 기록이며 이번 문서 갱신에서 원격 DB를 다시 조회하거나 변경하지 않았다.
 
 기준일: 2026-10-07(한국 시간). 원격 Supabase 카탈로그, 사용 코드와 정확한 행 수를 확인했다. 기존 예약 **522건**, 리뷰 **8건**, 과거 선예매 코드 **34건**을 보존했다. 수량은 확인 시점의 값이며 이후 정상 이용으로 바뀔 수 있다. 테이블 목록의 추정 `rows=0`을 빈 테이블의 근거로 사용하지 않았다.
 
@@ -17,6 +19,9 @@
 | 운영 | `public.reviews` | 리뷰와 계정 연결, 서버 전용 삭제 토큰 해시 |
 | 내부 | `public.api_rate_limits` | API 요청 제한. 브라우저 직접 접근 차단 |
 | 내부 | `private.fan_visits` | 계정별 한국 날짜 방문 기록, 하루 한 건 |
+| 내부 | `private.arte_member_roster` | 부원 후보 명단. 일반 사용자에게 전체 명단을 공개하지 않음 |
+| 내부 | `private.arte_admin_requests` | 계정별 부원 확인·승인 요청, 검토자와 신원 스냅샷 |
+| 내부 | `private.arte_support_inquiries` | 본인 문의·관리자 답변, 재시도 키와 답변자 |
 | 보존/종료 | `public.presale_access_keys` | 이전 코드 기록. 현재 예매 권한 판정에는 사용하지 않음 |
 | 보존/종료 | `public.bookings`, `public.seat_status` | 예전 예약 모델. bookings는 0건이지만 seat_status는 28건이라 자동 삭제하지 않음 |
 | 보존/종료 | `public."review-images"` | 예전 메타데이터 테이블. 실제 Storage 버킷/파일과 별개 |
@@ -28,7 +33,9 @@
 ```text
 auth.users.id
   ├─ profiles.id                         1:1, 계정 삭제 시 프로필 CASCADE
-  │   └─ private.fan_visits.user_id       프로필 삭제 시 방문 CASCADE
+  │   ├─ private.fan_visits.user_id       프로필 삭제 시 방문 CASCADE
+  │   ├─ private.arte_admin_requests     신청자 삭제 CASCADE, 검토자 삭제 SET NULL
+  │   └─ private.arte_support_inquiries  문의자 삭제 CASCADE, 답변자 삭제 SET NULL
   ├─ 공연별 예약.user_id                  계정 삭제 시 SET NULL
   ├─ arte_musical_tickets.user_id         계정 삭제 시 SET NULL
   └─ reviews.user_id                     계정 삭제 시 SET NULL
@@ -62,6 +69,10 @@ arte_musical_application_period.musical_name (고유)
 | 서버 | `set_user_admin_status`, `set_user_presale_status` | 서버가 확인한 요청자 ID를 넘기고 DB에서 관리자 여부 확인 |
 | 서버 | `create_review`, `create_account_review`, `delete_review_with_token` | 토큰 해시 검증, 로그인 리뷰는 실제 계정 소유권 연결 |
 | 서버 | `get_account_fan_activity`, `record_account_fan_visit` | 예약/리뷰 집계, 한국 날짜 방문 기록. 클라이언트가 XP/날짜 지정 불가 |
+| 서버 | `get_arte_membership_state`, `submit_arte_membership_request`, `list_arte_admin_requests`, `review_arte_admin_request` | 후보 확인·승인 요청, 현재 관리자 확인과 신원 재검사, 자기 승인 차단 |
+| 서버 | `cancel_owned_reservation` | 소유자 검증, 기록 보존 취소, 재예매 기간·권한·수량 사전 확인 |
+| 서버 | `get_account_presale_allowance` | 공연별 선예매 사용량 안내. 최종 예매 트랜잭션에서 재검사 |
+| 서버 | `submit_support_inquiry`, `list_support_inquiries`, `reply_support_inquiry` | 본인 문의, 관리자 목록·일회성 답변, 요청 키 중복 방지 |
 | 서버 | `delete_account`, `get_user_email_status`, `check_rate_limit` | 기존 제한과 서비스 역할 접근 유지 |
 
 브라우저는 관리자·선예매 권한 열이나 예약 테이블을 직접 수정할 수 없다. 자기 프로필/예약 SELECT RLS는 그대로 유지한다. 내부 테이블의 RLS 정책 없음 알림은 의도한 deny-by-default다.
@@ -70,14 +81,25 @@ arte_musical_application_period.musical_name (고유)
 
 ## 파일과 타입 정리
 
-- [원격 이력](../database/migrations.snapshot.json), [구조 스냅샷](../database/schema.snapshot.json)은 데이터가 아닌 메타데이터만 담는다.
-- [생성 타입](../types/database.generated.ts)은 실제 public/GraphQL 스키마의 열·관계·RPC를 Supabase에서 생성한 원본이다. private 내부 구조는 구조 스냅샷에서 확인한다.
+- [이력 스냅샷](../database/migrations.snapshot.json), [구조 스냅샷](../database/schema.snapshot.json)은 2026-10-07에 동결한 메타데이터만 담는다. 이후 변경이나 최신 전체 구조를 나타내지 않는다.
+- [생성 타입](../types/database.generated.ts)은 public/GraphQL 스키마의 열·관계·RPC를 Supabase에서 생성한 원본이며 10월 8일 문의 기능까지 갱신했다. private 내부 구조는 기능별 `database/changes/` 검토 SQL을 확인한다.
 - [앱 타입](../types/supabase.ts)은 기존 API JSON 계약을 유지하며 실제 생성된 예약·프로필·리뷰·과거 코드 Row 타입을 재사용한다. 존재하지 않는 미사용 `admin_get_booking_stats`/`is_current_user_presale` 계약을 제거했다. 리뷰 RPC의 실제 set-returning 반환은 배열로 수정했다.
-- 오래된 [로그인 DB 설명](login-db-structure.md)은 당시 설명이다. 권한·현재 스키마 판단에는 이 문서와 원격 카탈로그를 우선한다.
+- [로그인 DB 설명](login-db-structure.md)은 현재 계정·소유권 흐름으로 갱신했다. 실제 적용 여부와 권한은 원격 카탈로그·migration 이력으로 확인한다.
+
+## 2026-10-08 추가 구조
+
+- 부원 명단과 계정별 승인 요청은 private 스키마의 RLS 기본 거부 테이블이다. 기존 관리자가 확인 후 승인하면 `is_admin`과 `is_presale_user`를 부여한다. 명단 일치·대기·자기 신고는 권한 근거가 아니다. [부원 승인](arte-member-approval.md).
+- 본인 예약 취소는 네 출처의 상태를 `cancelled`로 바꾸고 행을 보존한다. 레거시 integer 예약 ID와 현대 bigint ID는 고정 bigint 변수로 처리한다. 재예매는 새 예약이며 이전 좌석을 보장하지 않는다. [예약 동작](owned-reservation-actions.md).
+- 세 공연별 예약 테이블에 `is_presale BOOLEAN NOT NULL DEFAULT false`를 추가했다. 승인된 부원은 `confirmed`/`completed` 선예매 좌석을 공연별 누적 2장까지 사용한다. 취소는 반환하며 일반 예매는 제외한다. 과거 예약을 수정 가능한 기간으로 추정해 선예매 표식에 백필하지 않았다. [선예매 수량](member-presale-two-tickets.md).
+- 문의는 private 테이블에 계정별 재시도 키, 문의 당시 표시 정보, 내용·답변·시각을 보관한다. 본인 조회와 현재 관리자 답변을 서버 전용 RPC로 제한하며 기존 답변 덮어쓰기를 차단한다. 이메일·외부 알림은 없다. [문의 구조](profile-admin-inquiries.md).
+
+검토 SQL, 여섯 원격 migration 버전과 ROLLBACK 검사 목록은 [DB 변경 관리](../database/README.md)에 모았다. 과거 적용 SQL이나 동결 스냅샷은 덮어쓰지 않았다.
 
 알려진 기존 불일치: 사용하지 않는 `/api/admin/reviews` 경로의 `admin_delete_review` RPC는 실제 DB에 없다. 앱 타입의 역사적 계약에만 남았고 호출은 현재 성공하지 않는다. 이번 작업에서 권한 확인 없는 삭제 함수를 새로 만들어 활성화하지 않았다. 관리자 리뷰 삭제 기능은 별도 인증/권한 처리와 함께 구현해야 한다.
 
 ## 검증과 남은 알림
+
+아래는 2026-10-07 기본 구조 정리 당시 검증 기록이다. 10월 8일 기능별 검증은 각 기능 문서와 [전체 검증 가이드](testing.md)에 따로 정리했다. 현재 로컬 회귀 검사는 19개이며 이번 문서 갱신이 새로운 DB 검사 결과를 의미하지 않는다.
 
 `database/tests/structure.sql`로 잘못된 상태·빈/NULL 좌석·NULL 상태·잘못된 기간·별점·참조된 기간 삭제를 거부하고, 과거 대량 예약 허용과 권한 보존을 검사했다. 테스트 데이터는 모두 ROLLBACK했다. 선예매·프로필 예약 연결·리뷰 삭제 토큰의 기존 DB 테스트도 통과했다. 로컬 회귀 검사 12개와 TypeScript 검사도 통과했으며 테스트 후 예약 522건·리뷰 8건·계정 1개·과거 코드 34건·레거시 좌석 28건을 다시 확인했다.
 

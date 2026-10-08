@@ -1,145 +1,53 @@
-# ARTE Ticketing Maintenance Notes
+# ARTE 운영·유지보수 안내
 
-Last checked: 2026-07-13
+기준일: 2026-10-08. 현재 구현 기준의 운영 절차입니다. 과거 작업 기록은 [문서 목차](docs/README.md)의 변경 이력에서 확인합니다.
 
-## Project Shape
+## 작업 전
 
-- Framework: Next.js 14 App Router, React 18, Tailwind CSS, shadcn-style UI primitives.
-- Main screen/state coordinator: `app/page.tsx`.
-- Core UI:
-  - `components/home-screen.tsx`: performance list, verification entry, ARTE info entry.
-  - `components/musical-detail.tsx`: performance detail, cast, reviews.
-  - `components/booking-form.tsx`: attendee info and booking submit form.
-  - `components/seat-selection-window.tsx`: manual seat map and selection.
-  - `components/booking-verification.tsx`: lookup existing reservations.
-  - `components/review-section.tsx`: Supabase-backed review/media feature.
-- Data:
-  - `data/musicals.ts`: static performance/cast/seat-grade metadata.
-  - `types/musical.ts`: shared musical data types.
-  - `lib/seat-map.ts`: shared floor/section/row/seat ID generation for desktop and mobile seat maps.
-- Backend/API:
-  - `app/api/bookings/[musicalId]/route.ts`: current musical-specific booking API using Supabase RPC.
-  - `app/api/seats/[musicalId]/route.ts`: musical-specific unavailable seat API.
-  - `app/api/bookings/verify/route.ts`: booking lookup.
-  - Legacy/general APIs still exist at `app/api/bookings/route.ts` and `app/api/seats/route.ts`.
-- Supabase project: `arte musical ticket` (`kwkhydnvbxvcfvhksxna`, ap-northeast-2).
-- Database scripts live in `scripts/`; the current path depends on musical-specific booking tables plus `arte_musical_application_period` and the `book_musical_seats` RPC.
-- Current musical-specific booking tables in app config: `dead_poets_society_bookings`, `rent_bookings`, and `toctoc_bookings`.
-- Presale booking keys are stored in `presale_access_keys` through hashed values only. The app submits a key to `/api/bookings/[musicalId]`, and the server validates/consumes it through service-role-only RPCs.
+1. `git status --short --branch`로 기존 변경과 작업 브랜치를 확인합니다.
+2. 환경을 구분합니다: Next 개발 서버는 3000, Sites 로컬 Worker는 8799, 운영은 Sites 도메인입니다.
+3. DB 변경이라면 원격 migration 이력과 현재 카탈로그·권한을 확인합니다. [동결된 스냅샷](database/README.md)은 최신 전체 스키마나 복원 파일이 아닙니다.
+4. 비밀키·세션 쿠키·예약·문의 내용은 로그나 커밋에 포함하지 않습니다.
 
-## Local Setup
+## 일반 개발·검증
 
-Install dependencies:
+설정은 [README](README.md), 코드 위치는 [코드 온보딩](docs/code-onboarding.md), 검증 범위와 실행 명령은 [검증 가이드](docs/testing.md)를 기준으로 합니다. `.env.example`의 이름만 공유하며 실제 `.env.local`은 공유하지 않습니다.
 
-```bash
-pnpm install --frozen-lockfile
-```
+Next 빌드와 타입 검사를 동시에 실행하지 않습니다. 회귀 스크립트의 성공은 실제 Google 로그인이나 운영 좌석 동시성 검사를 대신하지 않습니다. 현재 `pnpm lint`는 레거시 `next lint` 명령이므로 검증에는 직접 ESLint 또는 빌드 내 린트 검사를 사용합니다.
 
-Copy `.env.example` to `.env.local` and fill:
+## 관리자 운영
 
-```bash
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-```
+- 공연 관리: `/admin`에서 기존 3개 공연 정보와 일반 예매 기간을 수정합니다. 시간 입력은 한국 시간입니다. 신규 공연/좌석 배치 생성은 코드·DB 변경이 필요합니다. [공연 관리](docs/admin-performances.md).
+- 부원 승인: **부원 승인**에서 요청 이메일과 실제 이름·학번을 별도로 확인합니다. 이름만 있는 후보는 추가 확인이 필요합니다. 자기 승인이나 명단 일치만으로 자동 승격하지 않습니다. [승인 절차](docs/arte-member-approval.md).
+- 선예매: 승인된 부원은 공연별 누적 2장, 수동 권한을 부여한 비부원은 예약당 최대 10석의 기존 제한을 따릅니다. 권한 해제는 DB 판정에 반영되며 재로그인으로 복구되지 않습니다. 시작 전만 허용하고 종료를 우회하지 않습니다. 코드를 발급하지 않습니다. [수량 규칙](docs/member-presale-two-tickets.md).
+- 문의: **사용자 문의**를 관리자가 직접 확인합니다. 외부 알림은 없습니다. 답변은 이 창구에서 덮어쓰지 못하므로 내용을 확인한 뒤 등록합니다. [문의 운영](docs/profile-admin-inquiries.md).
 
-Supabase clients are created lazily in `lib/supabase.ts`, so importing route modules no longer fails just because build-time env vars are absent.
+## 예약·계정 문의 대응
 
-## Verification Baseline
+- 예약 연결 실패: 완료 프로필의 이름·학번과 미연결 예약의 값을 확인합니다. 입력 정보는 본인 인증이 아니므로 다른 계정 예약을 자동 이전하거나 일괄 연결하지 않습니다.
+- 취소: 본인이 `/profile/bookings`에서 확인 후 처리합니다. DB 행은 삭제하지 않고 상태만 취소하며 좌석·선예매 수량·팬 XP에 반영됩니다.
+- 재예매: 기간·권한·한도를 먼저 확인하지만 새 좌석 확보를 보장하지 않습니다. 이전 예약을 복구하는 작업이 아닙니다. [예약 동작](docs/owned-reservation-actions.md).
+- 탈퇴: 기존 서버 경로로 처리합니다. 예약/리뷰의 FK를 `SET NULL`하는 것만으로 개인정보가 익명화되는 것은 아닙니다. 문의와 방문은 계정 삭제 시 삭제됩니다.
 
-The current maintenance baseline passes:
+## 장애 확인
 
-```bash
-node_modules/.bin/tsc.CMD --noEmit
-pnpm lint
-pnpm build
-```
+| 증상 | 먼저 확인할 것 |
+| --- | --- |
+| OAuth `redirect_uri_mismatch` | Google에는 Supabase `/auth/v1/callback`, Supabase에는 앱 `/auth/callback` 등록 |
+| 로그인 후 다시 로그인 화면 | 현재 origin의 Redirect URL, 쿠키 전달·갱신, 서버 `getUser()` 검증 |
+| API 401/403 | 로그인, 프로필 완료, DB 권한, 예매 기간·부원 한도. 권한을 넓혀 우회하지 않음 |
+| API 409 | 좌석 충돌, 선예매 한도, 문의 재시도 키 변경, 이미 답변된 문의 등 응답 코드 |
+| Sites 503 | 공개 빌드/런타임 설정 일치, 활성 서버 키, 요청 제한 서비스 연결 |
+| 예약 목록이 비어 있음 | 로그인 UUID, 프로필 저장·동기화 결과, 예약 소유권 |
 
-Notes:
+증상·발생 시각·경로·상태 코드만 먼저 기록합니다. 비밀값과 개인정보를 제거한 뒤 원인을 조사합니다. 대응에 새 권한이나 데이터 수정이 필요하면 운영자 승인을 받습니다.
 
-- `next.config.mjs` no longer suppresses TypeScript or ESLint failures.
-- `.eslintrc.json` uses `next/core-web-vitals`.
-- Legacy `/api/seats` is marked dynamic and no longer tries to fetch Supabase during static prerender.
-- `package.json` pins previously `latest` dependencies to the versions already represented in the lockfile.
-- Supabase client creation is typed with `types/supabase.ts`.
-- Musical booking table names, seat availability aggregation, and seat-map generation are centralized in `lib/musical-config.ts` and `lib/seat-map.ts`.
-- Review creation/deletion now goes through server API routes and the `create_review` / `delete_review_with_password` SQL functions.
-- Presale booking before the public booking window goes through the `consume_presale_access_key` / `release_presale_access_key` SQL functions.
+## 배포와 복구
 
-## Fixed In This Batch
+GitHub 소스 동기화와 Sites 발행은 별개입니다. 문서만 수정할 때는 앱/DB 재배포가 필요하지 않습니다. 앱 배포는 [Sites 절차](docs/sites-deployment.md)에 따라 빌드·로컬 Worker 검사·발행 성공을 각각 확인하고 기존 접근 범위를 유지합니다.
 
-1. Added ESLint config and required lint dependencies.
-2. Re-enabled build-time type and lint validation.
-3. Fixed TypeScript errors in navigation callbacks, review deletion, API response typing, and missing separator UI primitive.
-4. Made Supabase browser/server clients lazy instead of creating clients at module import time.
-5. Marked API routes that depend on request/database state as dynamic.
-6. Added `.env.example` and updated `.gitignore` for local environment safety.
-7. Reduced review-list exposure by no longer selecting stored review passwords when displaying reviews.
+복구는 검증된 이전 앱 버전과 DB 호환성을 먼저 확인합니다. DB 변경을 취소해야 하면 데이터와 권한을 보존하는 후속 migration을 검토합니다. 이미 적용한 migration 이력 삭제, 스키마 reset, 과거 SQL 재실행, 강제 push를 복구 수단으로 사용하지 않습니다. 대상과 데이터 영향이 불명확하면 중단하고 운영자에게 확인합니다.
 
-## Fixed In Second Batch
+## 알려진 한계
 
-1. Added `types/supabase.ts` based on the current SQL scripts and API usage.
-2. Replaced the temporary untyped Supabase client wrapper with `SupabaseClient<Database>`.
-3. Added `lib/musical-config.ts` for performance-to-table mapping, seat grade normalization, unavailable-seat aggregation, and booking statistics.
-4. Updated booking verification and seat APIs to use the shared musical/seat configuration.
-5. Added `/api/reviews` and `/api/reviews/[reviewId]` so review writes and deletes run server-side with the service-role client.
-6. Added `scripts/20260704-review-password-security.sql` to create/backfill `password_hash` and verify delete passwords with `pgcrypto`.
-
-## Fixed In Third Batch
-
-1. Applied the review password security SQL to the Supabase project `kwkhydnvbxvcfvhksxna`.
-2. Backfilled 8 existing reviews into `password_hash`; follow-up verification showed 0 plaintext review passwords remaining.
-3. Hardened review write/delete access by removing legacy public insert/delete policies and granting review RPC execution only to `service_role`.
-4. Centralized seat ID/label/row generation in `lib/seat-map.ts` and updated desktop/mobile seat maps plus booking/verification displays to use it.
-5. Restored Korean UI copy and performance metadata in the main user-facing screens and data files.
-
-## Fixed In Fourth Batch
-
-1. Added `scripts/20260707-presale-access-keys.sql` and applied it to Supabase project `kwkhydnvbxvcfvhksxna`.
-2. Added the private `presale_access_keys` table with RLS enabled, no public table access, and hashed key storage using `pgcrypto`.
-3. Added service-role-only RPCs: `create_presale_access_key`, `consume_presale_access_key`, and `release_presale_access_key`.
-4. Updated `/api/bookings/[musicalId]` so booking is allowed when either the normal booking period is open or a valid presale key is supplied before the period starts.
-5. Updated the not-in-period UI to accept a presale key and retry the existing booking flow without exposing validation logic to the browser.
-6. Verified the DB path by creating, consuming, releasing, and deleting a temporary smoke-test key; `leftover_smoke_keys` returned 0.
-
-## Fixed In Fifth Batch
-
-1. Added the play `toctoc` (`< 톡톡 >`) to `data/musicals.ts`.
-2. Added `toctoc_bookings` to `lib/musical-config.ts` and `types/supabase.ts`.
-3. Added `scripts/20260708-add-toctoc.sql` for the `toctoc_bookings` table, service-role-only table access, booking period row, and `book_musical_seats` RPC mapping.
-4. Applied the same SQL to Supabase project `kwkhydnvbxvcfvhksxna`; the first public-policy version was rejected by security review, so the live DB and script use service-role-only access for the new bookings table.
-
-## Fixed In Sixth Batch
-
-1. Renamed the existing `talktalk_bookings` database table and all related musical IDs to `toctoc` without deleting the existing bookings.
-2. Removed the stale `your-lie-in-april` backend mapping because the performance is not present in the frontend and its database table is not present in Supabase.
-3. Added musical ID validation to booking, seat, booking-period, verification, and review APIs so unknown IDs cannot fall back to another performance's table.
-4. Removed missing `/toc-toc/*.png` cast image references so the detail page uses its built-in placeholder instead of requesting 404 assets.
-
-## Presale Key Operations
-
-Create a presale key from the Supabase SQL Editor or another trusted server-side context:
-
-```sql
-SELECT public.create_presale_access_key(
-  'dead-poets-society',
-  'CHANGE-THIS-KEY',
-  'staff preview',
-  NOW() - INTERVAL '1 day',
-  NULL,
-  30
-);
-```
-
-Notes:
-
-- Do not commit real presale keys to the repository.
-- `max_uses` can be `NULL` for unlimited use, or a positive number for a capped key.
-- Presale keys only bypass the start date. They do not allow booking after the normal booking period has ended.
-
-## Remaining Maintenance Work
-
-1. Consolidate legacy `arte_musical_tickets` APIs with the musical-specific table/RPC flow or remove the legacy endpoints after confirming they are unused.
-2. Add a small smoke test for the booking flow: select performance, select seats, submit booking, verify booking, and load unavailable seats.
-3. Review remaining Supabase advisor warnings outside the review-password task, especially legacy public tables/storage exposure and RPC `search_path` hardening.
-4. Refresh Browserslist data when convenient; the build passes, but `caniuse-lite` reports as outdated.
+이름·학번 기반 이전 예약 연결은 낮은 보증 수준입니다. 기존 GraphQL 발견 가능 경고·유출 비밀번호 보호 설정 경고와 내부 테이블 정책 없음/미사용 인덱스 정보가 남아 있습니다. 모두 해결됐다고 간주하지 않습니다. 사용하지 않는 관리자 리뷰 삭제 경로의 RPC 불일치와 레거시 테이블 통합도 별도 작업입니다. [DB 구조 및 남은 항목](docs/database-structure.md).
