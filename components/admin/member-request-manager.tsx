@@ -30,7 +30,7 @@ export default function MemberRequestManager() {
   useEffect(() => { void refresh() }, [refresh])
   const review = async (row: AdminMembershipRequest, approve: boolean) => {
     if (busy || (approve && (!confirmed[row.id] || !row.profileUnchanged))) return
-    if (!window.confirm(approve ? `${row.displayName} (${row.email}) 계정에 공연 관리 등 관리자 권한을 부여할까요?` : `${row.displayName}의 승인 요청을 거절할까요?`)) return
+    if (!window.confirm(approve ? `${row.displayName} (${row.email}) 계정에 관리자 권한과 공연별 선예매 2장을 부여할까요?` : `${row.displayName}의 승인 요청을 거절할까요?`)) return
     setBusy(row.id)
     setError("")
     setNotice("")
@@ -41,7 +41,7 @@ export default function MemberRequestManager() {
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || "요청을 처리하지 못했습니다.")
-      setNotice(approve ? "승인 완료. 해당 계정에 관리자 권한을 부여했습니다." : "요청을 거절했습니다.")
+      setNotice(approve ? "승인 완료. 관리자 권한과 공연별 선예매 2장을 부여했습니다." : "요청을 거절했습니다.")
       await refresh()
     } catch (failure) { setError(failure instanceof Error ? failure.message : "잠시 후 다시 시도해주세요.") }
     finally { setBusy(null) }
@@ -49,7 +49,7 @@ export default function MemberRequestManager() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-bold text-slate-900">부원 승인 요청 {total}건</h2><Button variant="outline" disabled={loading || !!busy} onClick={() => void refresh()}>새로고침</Button></div>
-      <p className="text-sm leading-6 text-slate-600">명단 일치만으로 본인을 확인할 수 없습니다. 실제 부원에게 로그인 이메일을 확인한 뒤 승인해주세요. 승인하면 공연·사용자 관리 등 기존 관리자 권한을 받습니다.</p>
+      <p className="text-sm leading-6 text-slate-600">명단 일치만으로 본인을 확인할 수 없습니다. 실제 부원에게 로그인 이메일을 확인한 뒤 승인해주세요. 승인하면 기존 관리자 권한과 공연별 선예매 2장을 받습니다.</p>
       {notice && <p role="status" className="rounded-lg bg-purple-50 p-3 text-sm text-purple-700">{notice}</p>}
       {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {loading ? <p role="status" className="py-8 text-sm text-slate-500">요청을 불러오는 중…</p> : !error && requests.length === 0 ? <p className="py-8 text-sm text-slate-500">대기 중인 승인 요청이 없습니다.</p> : requests.map(row => (

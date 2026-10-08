@@ -53,7 +53,7 @@ export default function ArteMembershipCard({ initialState, nextPath }: { initial
       </CardHeader>
       <CardContent className="space-y-4">
         {asking && <>
-          <p className="text-sm leading-6 text-gray-600">부원이 맞다면 승인 요청을 보내주세요. 기존 관리자가 본인 확인 후 승인하면 공연 관리 권한을 받을 수 있어요. 승인 전에는 일반 계정으로 이용해요.</p>
+          <p className="text-sm leading-6 text-gray-600">부원이 맞다면 승인 요청을 보내주세요. 기존 관리자가 본인 확인 후 승인하면 공연 관리 권한과 공연별 선예매 2장을 받을 수 있어요. 승인 전에는 일반 계정으로 이용해요.</p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button disabled={pending} onClick={() => void answer(true)} className="h-11 bg-purple-600 text-white hover:bg-purple-700">{pending ? "처리 중…" : "네, 승인 요청하기"}</Button>
             <Button disabled={pending} onClick={() => void answer(false)} variant="outline" className="h-11">아니요</Button>

@@ -21,6 +21,8 @@ type BookingPeriodResponse = {
   authenticated?: boolean
   isBeforeStart?: boolean
   presale?: boolean
+  presaleLimit?: number | null
+  presaleRemaining?: number | null
   message?: string
   error?: string
 }
@@ -35,6 +37,7 @@ export default function BookingRoutePage({ musical }: { musical: MusicalInfo }) 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [needsLogin, setNeedsLogin] = useState(false)
   const [isPresale, setIsPresale] = useState(false)
+  const [allowance, setAllowance] = useState<{ limit: number; remaining: number } | null>(null)
 
   useEffect(() => {
     if (!hydrated) return
@@ -56,6 +59,8 @@ export default function BookingRoutePage({ musical }: { musical: MusicalInfo }) 
 
         setNeedsLogin(data.isBeforeStart === true && data.authenticated !== true)
         setIsPresale(data.presale === true)
+        setAllowance(typeof data.presaleLimit === "number" && typeof data.presaleRemaining === "number"
+          ? { limit: data.presaleLimit, remaining: data.presaleRemaining } : null)
         if (data.isOpen) {
           updateDraft(musical.id, { accessGranted: true })
           setStatus("open")
@@ -99,6 +104,8 @@ export default function BookingRoutePage({ musical }: { musical: MusicalInfo }) 
 
     setIsSubmitting(true)
     try {
+      if (isPresale && allowance && draft.selectedSeats.length > allowance.remaining)
+        throw new Error(`선예매는 ${allowance.remaining}장까지 가능합니다. 좌석 선택을 수정해주세요.`)
       const response = await fetch(`/api/bookings/${musical.id}?t=${Date.now()}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
@@ -114,6 +121,12 @@ export default function BookingRoutePage({ musical }: { musical: MusicalInfo }) 
       const data = await response.json().catch(() => ({}))
 
       if (!response.ok) {
+        if (data.code === "PRESALE_LIMIT_EXCEEDED") {
+          if (typeof data.presaleLimit === "number" && typeof data.presaleRemaining === "number")
+            setAllowance({ limit: data.presaleLimit, remaining: data.presaleRemaining })
+          // Keep attendee data and seats so the user can reduce the selection.
+          throw new Error(data.error || "선예매 한도를 모두 사용했습니다. 예매 내역을 확인해주세요.")
+        }
         if (response.status === 409 && Array.isArray(data.conflictSeats)) {
           const conflicts = new Set<string>(data.conflictSeats)
           updateDraft(musical.id, (current) => ({
@@ -191,6 +204,7 @@ export default function BookingRoutePage({ musical }: { musical: MusicalInfo }) 
               <p className="mt-2 text-sm leading-6 text-gray-600">{blockMessage}</p>
             </div>
             {needsLogin && <Button onClick={() => router.push(`/login?next=/performances/${musical.id}/booking`)} className="w-full bg-purple-600 text-white">로그인하고 선예매 권한 확인하기</Button>}
+            {!needsLogin && <Button variant="outline" onClick={() => router.push("/profile/bookings")} className="w-full">내 예약 내역 보기</Button>}
             <Button variant="outline" onClick={() => router.push(`/performances/${musical.id}`)} className="w-full">공연 정보로 돌아가기</Button>
           </CardContent>
         </Card>
@@ -200,7 +214,9 @@ export default function BookingRoutePage({ musical }: { musical: MusicalInfo }) 
 
   return (
     <>
-    {isPresale && <div role="status" className="bg-purple-50 px-4 py-3 text-center text-sm font-medium text-purple-700">계정의 선예매 권한으로 예매 중입니다.</div>}
+    {isPresale && <div role="status" className="bg-purple-50 px-4 py-3 text-center text-sm font-medium text-purple-700">
+      {allowance ? `부원 선예매: 공연별 ${allowance.limit}장 · 현재 ${allowance.remaining}장 예매 가능` : "계정의 선예매 권한으로 예매 중입니다."}
+    </div>}
     <BookingForm
       musicalInfo={musical}
       bookingData={draft}

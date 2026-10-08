@@ -15,6 +15,30 @@ export default function SeatSelectionRoutePage({ musical }: { musical: MusicalIn
   const { hydrated, getDraft, updateDraft } = useBookingDrafts()
   const draft = getDraft(musical.id)
   const guardShownRef = useRef(false)
+  const [maxSelectableSeats, setMaxSelectableSeats] = useState(0)
+
+  useEffect(() => {
+    if (!hydrated || !draft.accessGranted) return
+    let cancelled = false
+    setMaxSelectableSeats(0)
+    void (async () => {
+      try {
+        const response = await fetch(`/api/booking-period/${musical.id}`, { cache: "no-store" })
+        const data = await response.json()
+        if (cancelled) return
+        if (!response.ok || !data.success) throw new Error("quota unavailable")
+        if (!data.isOpen) { router.replace(`/performances/${musical.id}/booking`); return }
+        setMaxSelectableSeats(data.presale && typeof data.presaleRemaining === "number"
+          ? Math.min(MAX_BOOKING_SEATS, data.presaleRemaining) : MAX_BOOKING_SEATS)
+      } catch {
+        if (!cancelled) {
+          toast({ title: "선택 한도 확인 실패", description: "예매 화면에서 다시 시도해주세요.", variant: "destructive" })
+          router.replace(`/performances/${musical.id}/booking`)
+        }
+      }
+    })()
+    return () => { cancelled = true }
+  }, [draft.accessGranted, hydrated, musical.id, router, toast])
   const [unavailableSeats, setUnavailableSeats] = useState<Record<string, Record<string, string[]>>>(createEmptyUnavailableSeats())
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "demo" | "error">("connected")
   const [statistics, setStatistics] = useState({ total_bookings: 0, total_seats_booked: 0, unique_students: 0 })
@@ -67,11 +91,10 @@ export default function SeatSelectionRoutePage({ musical }: { musical: MusicalIn
       return
     }
 
-    const maxSelectableSeats = MAX_BOOKING_SEATS
     if (draft.selectedSeats.length >= maxSelectableSeats && !draft.selectedSeats.includes(seatId)) {
       toast({
         title: "선택 제한",
-        description: `한 번에 최대 ${maxSelectableSeats}석까지 예매할 수 있습니다.`,
+        description: maxSelectableSeats === 0 ? "선택 가능한 수량을 확인 중입니다." : `현재 최대 ${maxSelectableSeats}석까지 예매할 수 있습니다.`,
         variant: "destructive",
       })
       return
@@ -84,12 +107,16 @@ export default function SeatSelectionRoutePage({ musical }: { musical: MusicalIn
         return { ...current, selectedSeats, seatGrade: selectedSeats.length ? current.seatGrade : "",
           attendees: current.attendees.filter((_, index) => index !== removedIndex) }
       }
-      if ((current.seatGrade && current.seatGrade !== seatGrade) || current.selectedSeats.length >= MAX_BOOKING_SEATS) return current
+      if ((current.seatGrade && current.seatGrade !== seatGrade) || current.selectedSeats.length >= maxSelectableSeats) return current
       return { ...current, selectedSeats: [...current.selectedSeats, seatId], seatGrade: current.seatGrade || seatGrade }
     })
   }
 
   const handleConfirm = () => {
+    if (draft.selectedSeats.length > maxSelectableSeats) {
+      toast({ title: "선택 제한", description: `현재 ${maxSelectableSeats}석까지 가능합니다. 선택 수량을 줄여주세요.`, variant: "destructive" })
+      return
+    }
     if (!draft.selectedSeats.length) {
       toast({ title: "좌석 미선택", description: "좌석을 선택해주세요.", variant: "destructive" })
       return

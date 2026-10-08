@@ -148,6 +148,29 @@ tree.props.onClearSeats(); settle()
 assert.deepEqual(context.getDraft("rent").selectedSeats, []); assert.deepEqual(context.getDraft("rent").attendees, [])
 assert.equal(context.getDraft("rent").name, ""); assert.equal(context.getDraft("rent").specialRequest, "요청")
 
+// The account quota is fetched independently of the device-local draft.
+let quota = { success: true, isOpen: true, presale: true, presaleLimit: 2, presaleRemaining: 2 }
+window.setInterval = () => 1; window.clearInterval = () => {}
+globalThis.fetch = async url => ({ ok: true, json: async () => url.includes("booking-period") ? quota : { success: true, unavailableSeats: {}, statistics: {} } })
+const quotaHarness = harness()
+tree = render(quotaHarness, () => SeatRoute({ musical: { id: "rent", title: "fixture", seatGrades: [] } }))
+tree.props.onSeatClick(seat.id,"VIP")
+render(provider, () => Provider({ children: null }))
+assert.equal(context.getDraft("rent").selectedSeats.length,0,"Selection waits for account quota")
+await new Promise(setImmediate)
+tree = render(quotaHarness, () => SeatRoute({ musical: { id: "rent", title: "fixture", seatGrades: [] } }),false)
+tree.props.onSeatClick(seat.id,"VIP"); tree.props.onSeatClick("F1-VIP-R01-L02","VIP"); tree.props.onSeatClick("F1-VIP-R01-L03","VIP")
+render(provider, () => Provider({ children: null }))
+assert.equal(context.getDraft("rent").selectedSeats.length,2,"Rapid selections cannot exceed member quota")
+tree = render(quotaHarness, () => SeatRoute({ musical: { id: "rent", title: "fixture", seatGrades: [] } }),false)
+tree.props.onSeatClick(seat.id,"VIP")
+render(provider, () => Provider({ children: null }))
+assert.equal(context.getDraft("rent").selectedSeats.length,1,"Deselecting remains available at quota")
+quota = { success:true,isOpen:false,presale:true,presaleRemaining:0 }
+render(harness(), () => SeatRoute({ musical: { id: "rent", title: "fixture", seatGrades: [] } }))
+await new Promise(setImmediate)
+assert.equal(navigation.at(-1),"/performances/rent/booking","Exhausted account returns to booking explanation")
+
 const Fullscreen = load(path.join(root, "hooks/use-fullscreen.ts")).useFullscreen, fh = harness()
 let api = render(fh, Fullscreen), requests = 0
 const element = { async requestFullscreen() { requests++; document.fullscreenElement = element; listeners.get("fullscreenchange")?.() } }

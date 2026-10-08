@@ -6,6 +6,7 @@ const { NextRequest } = require("next/server")
 let user = null, isAdmin = false, adminError = null, presale = false, profileError = null, periodError = null
 let period = { start_time: "2099-01-01T00:00:00Z", end_time: "2099-01-02T00:00:00Z" }
 let calls = [], rate = { allowed: true }, result = { success: true, bookingId: 1, presale: true }
+let allowance = { limit: null, used: 0, remaining: null }, allowanceError = null
 const complete = { username: "test", display_name: "테스트", student_id: "1234", contact_number: "01012345678", profile_completed_at: "2026-01-01" }
 const query = (table) => ({ select: () => ({ eq: (_key, id) => ({
   single: async () => ({ data: period, error: periodError }),
@@ -14,7 +15,10 @@ const query = (table) => ({ select: () => ({ eq: (_key, id) => ({
 const mocks = {
   "server-only": {},
   "@/lib/server/supabase-auth": { createAuthServerClient: async () => ({ auth: { getUser: async () => ({ data: { user }, error: null }) }, from: query, rpc: async () => ({ data: isAdmin, error: adminError }) }) },
-  "@/lib/server/supabase-admin": { createServerClient: () => ({ from: query, rpc: async (name,args) => { calls.push({name,args}); return { data: name === "set_user_presale_status" ? { success: true, is_presale_user: args.p_is_presale } : result, error: null } } }) },
+  "@/lib/server/supabase-admin": { createServerClient: () => ({ from: query, rpc: async (name,args) => {
+    if (name === "get_account_presale_allowance") { assert.equal(args.p_user_id,"verified-user"); return { data: allowance, error: allowanceError } }
+    calls.push({name,args}); return { data: name === "set_user_presale_status" ? { success: true, is_presale_user: args.p_is_presale } : result, error: null }
+  } }) },
   "@/lib/server/rate-limit": { enforceRateLimit: async () => rate },
   "@/lib/ticket-share-token": { createTicketShareToken: () => "test-token" },
 }
@@ -28,6 +32,14 @@ const access = load("lib/server/booking-access.ts").getBookingAccess
 assert.equal((await access("toctoc",null)).code,"AUTH_REQUIRED")
 assert.equal((await access("toctoc","verified-user")).isOpen,false)
 presale = true; assert.equal((await access("toctoc","verified-user")).presale,true)
+allowance = { limit: 2, used: 1, remaining: 1 }
+assert.equal((await access("toctoc","verified-user")).presaleRemaining,1)
+allowance = { limit: 2, used: 2, remaining: 0 }
+assert.equal((await access("toctoc","verified-user")).code,"PRESALE_LIMIT_EXCEEDED")
+assert.equal((await access("toctoc","verified-user")).isOpen,false)
+allowanceError = {}; await assert.rejects(access("toctoc","verified-user")); allowanceError = null
+allowance = { limit: 2, used: 1, remaining: 2 }; await assert.rejects(access("toctoc","verified-user"))
+allowance = { limit: null, used: 0, remaining: null }
 profileError = {}; await assert.rejects(access("toctoc","verified-user")); profileError = null
 periodError = {}; await assert.rejects(access("toctoc","verified-user")); periodError = null
 period = {start_time:"invalid",end_time:"invalid"}; await assert.rejects(access("toctoc","verified-user"))
@@ -61,6 +73,9 @@ result = {success:false,code:"PRESALE_PERMISSION_REQUIRED",error:"권한 해제"
 assert.equal((await booking.POST(request(body,"POST"),params)).status,403,"Atomic DB revocation overrides preflight")
 result = {success:false,code:"BOOKING_CLOSED"}
 assert.equal((await booking.POST(request(body,"POST"),params)).status,403)
+result = {success:false,code:"PRESALE_LIMIT_EXCEEDED",error:"한도 초과",presaleLimit:2,presaleRemaining:1}
+const quotaDenied = await booking.POST(request(body,"POST"),params)
+assert.equal(quotaDenied.status,409); assert.equal((await quotaDenied.json()).presaleRemaining,1)
 rate = {unavailable:true}; assert.equal((await booking.POST(request(body,"POST"),params)).status,503)
 assert.equal(load("app/api/presale-keys/validate/route.ts").POST().status,410)
 const draft = load("lib/booking-draft.ts").normalizeBookingDraft("toctoc",{presaleKey:"old-code",presaleSeatLimit:1,name:"테스트"})

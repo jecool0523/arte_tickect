@@ -67,7 +67,7 @@ confirmation=true
 await click(button(tree,"승인"))
 assert.deepEqual(traffic[0],{url:"/api/admin/member-requests",method:"PATCH",body:{requestId:"request-1",approve:true,identityConfirmed:true}})
 tree=render(admin,Manager)
-assert.match(text(tree),/해당 계정에 관리자 권한을 부여했습니다/)
+assert.match(text(tree),/관리자 권한과 공연별 선예매 2장을 부여했습니다/)
 assert.match(text(tree),/대기 중인 승인 요청이 없습니다/)
 const stale=harness([[{...row,profileUnchanged:false}],1,false,null,{[row.id]:true},"",""])
 tree=render(stale,Manager)

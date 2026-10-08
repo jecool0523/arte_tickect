@@ -62,6 +62,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
     if (error || !result?.success) {
       if (error) return NextResponse.json({ error: "예매를 완료하지 못했습니다. 잠시 후 다시 시도해주세요." }, { status: 503, headers })
+      if (result?.code === "PRESALE_LIMIT_EXCEEDED")
+        return NextResponse.json({ code: result.code, error: result.error, presaleLimit: result.presaleLimit, presaleRemaining: result.presaleRemaining }, { status: 409, headers })
       if (result?.code === "BOOKING_CLOSED" || result?.code === "PRESALE_PERMISSION_REQUIRED")
         return NextResponse.json({ code: result.code, error: result.error }, { status: 403, headers })
       if (result?.code === "BOOKING_PERIOD_UNAVAILABLE")

@@ -11,6 +11,7 @@ export const revalidate = 0
 const headers = { "Cache-Control": "private, no-store, no-cache, must-revalidate", Vary: "Cookie" }
 const actionSchema = z.object({ action: z.enum(["cancel", "rebook"]) }).strict()
 const failures: Record<string, [number, string]> = {
+  PRESALE_LIMIT_EXCEEDED: [409, "선예매 2장을 모두 사용해 재예매할 수 없습니다. 기존 예약은 취소하지 않았습니다."],
   NOT_FOUND: [404, "예약을 찾을 수 없습니다."],
   INVALID_INPUT: [400, "예약 정보를 확인해주세요."],
   INVALID_STATUS: [409, "현재 상태에서는 취소할 수 없습니다. 운영자에게 문의해주세요."],

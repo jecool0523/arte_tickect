@@ -158,6 +158,10 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      get_account_presale_allowance: {
+        Args: { p_user_id: string; p_musical_id: string }
+        Returns: { limit: number | null; used: number; remaining: number | null }
+      }
       cancel_owned_reservation: {
         Args: { p_user_id: string; p_source_id: string; p_booking_id: number; p_for_rebooking?: boolean }
         Returns: { success: boolean; code?: string; status?: string; alreadyCancelled?: boolean; rebooking?: { musicalId: string; name: string; studentId: string } | null }
@@ -190,6 +194,8 @@ export type Database = {
           conflictSeats?: string[]
           code?: string
           presale?: boolean
+          presaleLimit?: number
+          presaleRemaining?: number
           error?: string
         }
       }
