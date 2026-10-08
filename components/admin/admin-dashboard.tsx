@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import PerformanceManager from "@/components/admin/performance-manager"
+import MemberRequestManager from "@/components/admin/member-request-manager"
 
 type AdminUser = {
   id: string
@@ -182,13 +183,15 @@ export default function AdminDashboard() {
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-3">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4">
             <TabsTrigger value="performances"><CalendarDays className="mr-2 h-4 w-4" />공연 관리</TabsTrigger>
             <TabsTrigger value="users"><Users className="mr-2 h-4 w-4" />사용자 관리</TabsTrigger>
             <TabsTrigger value="bookings"><Ticket className="mr-2 h-4 w-4" />예매 현황</TabsTrigger>
+            <TabsTrigger value="members"><UserCheck className="mr-2 h-4 w-4" />부원 승인</TabsTrigger>
           </TabsList>
 
           <TabsContent value="performances"><PerformanceManager /></TabsContent>
+          <TabsContent value="members"><MemberRequestManager /></TabsContent>
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

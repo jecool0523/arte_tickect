@@ -41,7 +41,7 @@ export default function ProfileForm(props: ProfileFormProps) {
       const data = await response.json()
       if (!response.ok) { setError(data.error || "프로필을 저장하지 못했습니다."); return }
       toast({ title: "저장 완료", description: data.linkedCount > 0 ? `이전 예약 ${data.linkedCount}건을 내 티켓에 연결했어요.` : "프로필을 저장하고 이전 예약을 확인했어요." })
-      if (props.nextPath) router.replace(safeProfileNext(props.nextPath))
+      if (props.nextPath) router.replace(`/profile/membership?next=${encodeURIComponent(safeProfileNext(props.nextPath))}`)
       router.refresh()
     } catch { setError("잠시 후 다시 시도해주세요.") }
     finally { setPending(false) }

@@ -12,6 +12,7 @@ import SyncProfileButton from "@/components/auth/sync-profile-button"
 import LoginCard from "@/components/auth/login-card"
 import FanExperienceCard from "@/components/auth/fan-experience-card"
 import ProfileGuide from "@/components/auth/profile-guide"
+import ArteMembershipCard from "@/components/auth/arte-membership-card"
 import { createAuthServerClient } from "@/lib/server/supabase-auth"
 import { createServerClient } from "@/lib/server/supabase-admin"
 import { defaultUsername, isProfileComplete } from "@/lib/profile"
@@ -79,6 +80,7 @@ export default async function ProfilePage() {
     <AccountPageShell title="프로필">
       <ProfileGuide />
       {adminEntry}
+      <ArteMembershipCard />
       {profile?.is_presale_user && <p className="rounded-lg bg-purple-50 p-4 text-sm font-medium text-purple-700">선예매 권한이 있는 계정입니다. 일반 예매 시작 전 예매할 수 있어요.</p>}
       <Card className="border-gray-200 bg-white shadow-sm">
         <CardContent className="flex items-center gap-4 p-5">

@@ -23,7 +23,7 @@ export function safeProfileNext(value?: string | null) {
   try {
     const base = "https://local.invalid"
     const target = new URL(value || "/profile", base)
-    if (target.origin !== base || target.pathname.startsWith("/profile/setup") || target.pathname.startsWith("/auth/")) return "/profile"
+    if (target.origin !== base || target.pathname.startsWith("/profile/setup") || target.pathname.startsWith("/profile/membership") || target.pathname.startsWith("/auth/")) return "/profile"
     return `${target.pathname}${target.search}${target.hash}`
   } catch { return "/profile" }
 }

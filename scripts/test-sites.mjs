@@ -9,10 +9,13 @@ const cases = [
   ["/", 200], ["/performances", 200], ["/club", 200], ["/login", 200],
   ["/profile", 200], ["/profile/setup", [200, 307]], ["/performances/rent/booking", 307],
   ["/profile/bookings", 200],
+  ["/profile/membership", [200, 307]],
   ["/profile/bookings/rent/1", [200, 307]],
   ["/api/profile/sync", 401, "POST"],
   ["/api/profile", 401, "PATCH"], ["/api/bookings/rent", 401, "POST"],
   ["/api/profile/fan-experience", 401], ["/api/profile/fan-experience", 401, "POST"],
+  ["/api/profile/arte-membership", 401], ["/api/profile/arte-membership", 401, "POST"],
+  ["/api/admin/member-requests", 401], ["/api/admin/member-requests", 401, "PATCH"],
   ["/api/reviews?musicalId=rent", 200], ["/api/seats/rent", 200],
   ["/api/admin/users", 401],
   ["/api/admin/performances", 401], ["/api/admin/performances", 401, "PATCH"],
@@ -34,11 +37,12 @@ for (const [pathname, expected, method = "GET"] of cases) {
     assert.equal(access.presale, false)
     assert.ok(!body.includes("예매 코드"), "Account permission replaces code guidance")
   }
-  if ((pathname === "/profile/setup" || pathname === "/profile/bookings/rent/1") && response.status === 200) {
+  if ((pathname === "/profile/setup" || pathname === "/profile/membership" || pathname === "/profile/bookings/rent/1") && response.status === 200) {
     // A parent loading boundary can stream HTTP 200 before Next emits its auth redirect.
     assert.match(body, /<meta[^>]*http-equiv="refresh"[^>]*url=\/login\?next=/)
     assert.ok(!body.includes('id="studentId"'), "Anonymous setup must not render the private form")
     assert.ok(!body.includes("ARTE TICKET"), "Anonymous visitors must not see a private ticket")
+    if (pathname === "/profile/membership") assert.ok(!body.includes("네, 승인 요청하기"), "Anonymous visitors cannot see the member question")
   }
   if (pathname === "/profile" || pathname === "/login") {
     assert.ok(body.includes("Google로 계속하기"), `${pathname}: Google login preserved`)

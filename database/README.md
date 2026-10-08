@@ -10,6 +10,7 @@
 - [이번 변경의 검토용 SQL](changes/schema-organization.sql)
 - [ROLLBACK 전용 DB 검사](tests/structure.sql)
 - [Supabase 생성 TypeScript 타입](../types/database.generated.ts)
+- [부원 관리자 승인 운영 및 검증](../docs/arte-member-approval.md): 2026-10-08 추가 기능, 검토용 SQL과 ROLLBACK 테스트 포함. 위 구조 스냅샷은 2026-10-07 시점의 동결 참고 자료다.
 
 ## 적용 원칙
 

@@ -37,7 +37,7 @@ const mocks = {
   "@/components/ui/button": { Button: stub("Button").default },
   "next/link": stub("Link"),
 }
-for (const name of ["account-page-shell", "login-card", "profile-form", "logout-button", "account-delete-button", "resend-confirmation-button", "sync-profile-button", "fan-experience-card", "profile-guide"]) mocks[`@/components/auth/${name}`] = stub(name)
+for (const name of ["account-page-shell", "login-card", "profile-form", "logout-button", "account-delete-button", "resend-confirmation-button", "sync-profile-button", "fan-experience-card", "profile-guide", "arte-membership-card"]) mocks[`@/components/auth/${name}`] = stub(name)
 const Page = load("app/profile/page.tsx", mocks).default
 assert.match(renderToStaticMarkup(await Page()), /data-component="login-card"/)
 assert.equal(syncCalls, 0)
@@ -48,11 +48,13 @@ const incomplete = renderToStaticMarkup(await Page())
 assert.match(incomplete, /내 정보를 알려주세요/)
 assert.match(incomplete, /Alice123/)
 assert.equal(syncCalls, 0, "Incomplete users do not claim bookings")
+assert.doesNotMatch(incomplete, /data-component="arte-membership-card"/, "Membership needs a saved profile")
 assert.equal(reads.filter((r) => r.table !== "profiles").length, 0)
 savedProfile = { ...savedProfile, display_name: "테스트", student_id: "1323", username: "Alice123", contact_number: "01012345678", profile_completed_at: "2026-10-06" }
 assert.match(renderToStaticMarkup(await Page()), /내 예약 내역 보기/)
-assert.equal(syncCalls, 1)
-assert.equal(reads.filter((r) => r.column === "user_id").length, 4)
+assert.match(renderToStaticMarkup(await Page()), /data-component="arte-membership-card"/)
+assert.equal(syncCalls, 2)
+assert.equal(reads.filter((r) => r.column === "user_id").length, 8)
 assert.doesNotMatch(renderToStaticMarkup(await Page()), /관리자 · 공연 관리/)
 isAdmin = true
 assert.match(renderToStaticMarkup(await Page()), /관리자 · 공연 관리/)

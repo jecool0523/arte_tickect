@@ -1,5 +1,6 @@
 // Application RPC JSON contracts. Exact live schema: database.generated.ts.
 import type { Database as GeneratedDatabase } from "./database.generated"
+import type { MembershipState, AdminMembershipRequest } from "./admin-membership"
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
@@ -157,6 +158,10 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      get_arte_membership_state: { Args: { p_user_id: string }; Returns: MembershipState }
+      submit_arte_membership_request: { Args: { p_user_id: string; p_is_member: boolean }; Returns: { success: boolean; code?: string; state?: MembershipState } }
+      list_arte_admin_requests: { Args: { p_admin_id: string }; Returns: { success: boolean; code?: string; requests?: AdminMembershipRequest[]; total?: number } }
+      review_arte_admin_request: { Args: { p_admin_id: string; p_request_id: string; p_approve: boolean }; Returns: { success: boolean; code?: string; status?: string } }
       get_account_fan_activity: { Args: { p_user_id: string }; Returns: Json }
       record_account_fan_visit: { Args: { p_user_id: string }; Returns: Json }
       create_account_review: {
