@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { createAuthServerClient } from "@/lib/server/supabase-auth"
 import { createServerClient } from "@/lib/server/supabase-admin"
 import { enforceRateLimit } from "@/lib/server/rate-limit"
-import { getLiveMusicals } from "@/lib/server/performances"
+import { getLiveMusicals, invalidatePerformanceSettings } from "@/lib/server/performances"
 import { performanceSaveSchema } from "@/lib/performance-settings"
 import { readJsonBody, RequestBodyError } from "@/lib/security/request"
 
@@ -36,6 +36,7 @@ export async function PATCH(request: NextRequest) {
     const body = await readJsonBody(request, performanceSaveSchema, 65536)
     const { error } = await auth.client!.rpc("save_admin_performance", { p_musical_id: body.musicalId, p_details: body.details, p_start: body.startTime, p_end: body.endTime })
     if (error) throw error
+    invalidatePerformanceSettings()
     return NextResponse.json({ success: true }, { headers })
   } catch (error) {
     if (error instanceof RequestBodyError) return NextResponse.json({ error: "입력한 공연 정보와 예매 기간을 확인해주세요." }, { status: error.status, headers })

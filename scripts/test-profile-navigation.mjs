@@ -16,15 +16,16 @@ const profile = load("lib/profile.ts")
 const reservationModel = load("lib/reservations.ts", { "@/data/musicals": { getMusicalById: () => null } })
 const reservationQueries = load("lib/server/reservations.ts", { "server-only": {}, "@/lib/reservations": reservationModel })
 const stub = (name) => ({ __esModule: true, default: (props) => React.createElement("div", { "data-component": name }, name === "ProfileForm" ? props.initialUsername : props.children) })
-let user = null, savedProfile = null, syncCalls = 0, isAdmin = false
+let user = null, savedProfile = null, syncCalls = 0, isAdmin = false, roleGate = null, profileGate = null, syncGate = null
+const events = []
 const reads = []
 const client = {
-  rpc: async () => ({ data: isAdmin, error: null }),
+  rpc: async () => { events.push("role"); if (roleGate) await roleGate; return { data: isAdmin, error: null } },
   auth: { getUser: async () => ({ data: { user }, error: null }) },
   from: (table) => ({ select: () => ({ eq: (column, id) => {
     reads.push({ table, column, id })
     assert.equal(id, "self", "Only the verified user's data is queried")
-    return { maybeSingle: async () => ({ data: savedProfile, error: null }), order: async () => ({ data: [], error: null }) }
+    return { maybeSingle: async () => { events.push("profile"); if (profileGate) await profileGate; return { data: savedProfile, error: null } }, order: async () => { events.push("booking"); return { data: [], error: null } } }
   } }) }),
 }
 const mocks = {
@@ -32,7 +33,7 @@ const mocks = {
   "@/lib/server/reservations": reservationQueries,
   "@/lib/server/supabase-auth": { createAuthServerClient: async () => client },
   "@/lib/server/supabase-admin": { createServerClient: () => ({ rpc: async () => ({ data: { success: true, email_confirmed: true }, error: null }) }) },
-  "@/lib/server/profile-onboarding": { syncLegacyBookings: async (id) => { assert.equal(id, "self"); syncCalls++; return { success: true } } },
+  "@/lib/server/profile-onboarding": { syncLegacyBookings: async (id) => { assert.equal(id, "self"); syncCalls++; events.push("sync"); if (syncGate) await syncGate; return { success: true } } },
   "@/components/ui/card": Object.fromEntries(["Card", "CardContent", "CardHeader", "CardTitle"].map((name) => [name, stub(name).default])),
   "@/components/ui/button": { Button: stub("Button").default },
   "next/link": stub("Link"),
@@ -60,6 +61,21 @@ assert.doesNotMatch(renderToStaticMarkup(await Page()), /관리자 · 공연 관
 isAdmin = true
 assert.match(renderToStaticMarkup(await Page()), /관리자 · 공연 관리/)
 isAdmin = false
+// Independent role/profile reads must overlap, but booking reads must wait for claiming.
+let releaseRole, releaseProfile, releaseSync
+roleGate = new Promise(resolve => { releaseRole = resolve })
+profileGate = new Promise(resolve => { releaseProfile = resolve })
+syncGate = new Promise(resolve => { releaseSync = resolve })
+events.length = 0
+const pendingPage = Page()
+await new Promise(setImmediate)
+assert.deepEqual(events, ["role", "profile"], "Role and profile reads start together after user verification")
+releaseRole(); releaseProfile()
+await new Promise(setImmediate)
+assert.deepEqual(events, ["role", "profile", "sync"], "No booking read races the legacy booking sync")
+releaseSync(); await pendingPage
+assert.equal(events.filter(event => event === "booking").length, 4)
+roleGate = null; profileGate = null; syncGate = null
 const Login = load("app/login/page.tsx", { ...mocks, "next/navigation": { redirect: (location) => { throw new Error(`REDIRECT:${location}`) } } }).default
 savedProfile = null
 await assert.rejects(Login({ searchParams: Promise.resolve({ next: "/profile" }) }), /REDIRECT:\/profile$/)

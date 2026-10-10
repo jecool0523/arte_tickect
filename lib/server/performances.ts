@@ -1,13 +1,33 @@
 import "server-only"
+import { revalidateTag, unstable_cache } from "next/cache"
 import { getAllMusicals } from "@/data/musicals"
 import { createServerClient } from "@/lib/server/supabase-admin"
 import { performanceDetailsSchema } from "@/lib/performance-settings"
 
+const settingsTag = "arte-public-performance-settings"
+
+async function readPerformanceSettings() {
+  // Only public presentation data: never cache accounts, permissions or inventory.
+  const { data, error } = await createServerClient().from("performance_settings").select("musical_id, details")
+  if (error) throw new Error("Performance settings unavailable")
+  return data
+}
+
+const getCachedPerformanceSettings = unstable_cache(
+  readPerformanceSettings,
+  [settingsTag, process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""],
+  { revalidate: 60, tags: [settingsTag] },
+)
+
+export function invalidatePerformanceSettings() {
+  revalidateTag(settingsTag)
+}
+
 export async function getLiveMusicals(strict = false) {
   const defaults = getAllMusicals()
   try {
-    const { data, error } = await createServerClient().from("performance_settings").select("musical_id, details")
-    if (error) { console.error("Performance settings unavailable", { code: error.code }); if (strict) throw new Error("Performance settings unavailable"); return defaults }
+    // Admin reads bypass the public cache. Failures fall back outside the cache.
+    const data = await (strict ? readPerformanceSettings() : getCachedPerformanceSettings())
     return defaults.map((musical) => {
       const saved = data?.find((row) => row.musical_id === musical.id)
       const parsed = performanceDetailsSchema.safeParse(saved?.details)

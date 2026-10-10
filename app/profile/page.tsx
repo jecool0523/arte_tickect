@@ -39,11 +39,13 @@ export default async function ProfilePage() {
   const supabase = await createAuthServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return <AccountPageShell title="프로필"><ProfileGuide /><LoginCard next="/profile" /></AccountPageShell>
-  const { data: isAdmin } = await supabase.rpc("is_current_user_admin")
+  const [{ data: isAdmin }, { data: profile, error: profileError }] = await Promise.all([
+    supabase.rpc("is_current_user_admin"),
+    supabase.from("profiles")
+      .select("display_name, student_id, avatar_url, username, contact_number, profile_completed_at, is_presale_user").eq("id", user.id).maybeSingle(),
+  ])
   const adminEntry = isAdmin ? <Button asChild className="h-11 w-full bg-purple-600 text-white hover:bg-purple-700"><Link href="/admin" prefetch={false}>관리자 · 공연 관리</Link></Button> : null
 
-  const { data: profile, error: profileError } = await supabase.from("profiles")
-    .select("display_name, student_id, avatar_url, username, contact_number, profile_completed_at, is_presale_user").eq("id", user.id).maybeSingle()
   if (profileError) throw new Error("Profile is temporarily unavailable")
   if (!isProfileComplete(profile)) {
     return (

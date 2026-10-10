@@ -57,7 +57,7 @@ node scripts/security-regression.mjs
 node scripts/test-database-structure.mjs
 ```
 
-전체 19개 로컬 회귀 검사와 DB·Worker 검사 방법은 [검증 가이드](docs/testing.md)에 있습니다. 타입 검사와 Next 빌드는 `.next/types` 생성 충돌을 피하기 위해 동시에 실행하지 않습니다.
+전체 21개 로컬 회귀 검사와 DB·Worker 검사 방법은 [검증 가이드](docs/testing.md)에 있습니다. 타입 검사와 Next 빌드는 `.next/types` 생성 충돌을 피하기 위해 동시에 실행하지 않습니다.
 
 일반 Next 빌드는 `pnpm build`, Sites 배포용 빌드는 `pnpm build:sites`, 로컬 Worker는 `pnpm preview:sites`(`http://127.0.0.1:8799`)입니다. 배포 전 공개 빌드 설정과 런타임 origin을 일치시켜야 합니다. [Sites 배포 안내](docs/sites-deployment.md)를 확인하세요. GitHub push만으로 Sites 게시본이 갱신되는 것은 아닙니다.
 

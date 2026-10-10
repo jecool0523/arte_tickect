@@ -2,7 +2,7 @@
 
 기준일: 2026-10-08. 로컬 회귀 검사, 타입/빌드, Worker 검사, 원격 DB 검사는 서로 다른 검증 단계입니다. 아래 명령은 저장소 루트에서 실행합니다.
 
-## 로컬 회귀 검사 19개
+## 로컬 회귀 검사 21개
 
 의존성을 `pnpm install --frozen-lockfile`로 설치합니다. 아래 PowerShell 목록은 API·UI 이벤트·입력·보안·메타데이터 회귀를 실행하며 실패한 검사에서 중단합니다. 실행 중인 웹 서버나 운영 계정은 필요하지 않습니다.
 
@@ -14,7 +14,8 @@ $arteRegressionTests = @(
   'security-regression', 'test-sites-settings', 'test-account-presale',
   'test-arte-member-approval', 'test-arte-member-ui',
   'test-reservation-actions', 'test-reservation-actions-ui', 'test-booking-ui',
-  'test-support-inquiries', 'test-support-ui'
+  'test-support-inquiries', 'test-support-ui', 'test-navigation-performance',
+  'test-fan-experience-provider'
 )
 foreach ($arteTest in $arteRegressionTests) {
   node "scripts/$arteTest.mjs"
@@ -23,6 +24,8 @@ foreach ($arteTest in $arteRegressionTests) {
 ```
 
 개별 검사는 `node scripts/test-support-ui.mjs`처럼 실행합니다. 스크립트 추가 시 목록과 이 문서를 갱신합니다. 현재 `package.json`에는 전체 검사용 `test` 명령이 없습니다.
+
+`test-navigation-performance`는 메뉴 이동 상태·접근성·로딩 화면, 공개 공연 정보 캐시와 저장 후 무효화·DB 실패 복구를 검사합니다. 프로필 검사는 독립 조회의 병렬 실행과 예약 연결 이후 목록 조회 순서도 확인합니다. `test-fan-experience-provider`는 경로 이동 후 재마운트 방지, 한국 날짜별 1회 방문 적립, 동일 날짜 재조회 방식을 검사합니다.
 
 `test-sites-settings`의 의도적 실패 케이스는 누락된 환경 변수 **이름**을 출력할 수 있습니다. 마지막 통과 결과와 종료 코드를 확인합니다. 실제 비밀값을 출력하거나 공유하지 않습니다. DB 구조 검사는 10월 7일의 동결 메타데이터를 검사하므로 최신 원격 전체 스키마 검사로 해석하지 않습니다.
 

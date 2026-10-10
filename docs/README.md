@@ -6,7 +6,7 @@
 
 - [프로젝트 README](../README.md): 기능, 설치, 환경 변수, 개발 참여.
 - [코드 온보딩](code-onboarding.md): 모듈 지도, 예매 파이프라인, API, 변경 주의점.
-- [검증 가이드](testing.md): 19개 로컬 회귀 검사, 타입·빌드, DB 및 Worker 검사.
+- [검증 가이드](testing.md): 21개 로컬 회귀 검사, 타입·빌드, DB 및 Worker 검사.
 - [유지보수 안내](../MAINTENANCE.md): 관리자 운영, 장애 확인, 배포·복구 원칙.
 - [Sites 배포](sites-deployment.md): 빌드/런타임 환경, OAuth 주소, Worker 확인, 발행 구분.
 
